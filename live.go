@@ -417,12 +417,12 @@ func (sh *Shell) analyze(line string) analysis {
 		if cur.start < 0 {
 			cur.start = t.pos
 		}
-		cur.cmd.args = append(cur.cmd.args, word{s: t.s, quoted: t.quoted})
+		cur.cmd.args = append(cur.cmd.args, word{s: t.s, quoted: t.quoted, raw: t.raw, pos: t.pos})
 	}
 	switch {
 	case lexErr != nil:
-		if cur.start < 0 {
-			cur.start = errPos
+		if cur.start < 0 || len(cur.cmd.args) > 0 && exprCommands[cur.cmd.args[0].s] {
+			cur.start = errPos // inside an expression: underline from the open quote
 		}
 		cur.err = lexErr
 		segs = append(segs, cur)
