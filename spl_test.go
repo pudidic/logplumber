@@ -125,7 +125,7 @@ func TestImplicitTimeOrder(t *testing.T) {
 			specs = append(specs, s)
 		}
 		var out []string
-		for _, s := range orderSPL(specs, live) {
+		for _, s := range orderSPL(specs, live, nil) {
 			n := s.Name
 			if f, ok := s.New().(*fieldSortStage); ok && f.limit > 0 {
 				n += "*" // a bounded sort
@@ -251,5 +251,29 @@ func TestDetailFields(t *testing.T) {
 	l = Line{Text: `k="` + strings.Repeat("x", 30) + `"`}
 	if got := fieldLines(l, 30); len(got) != 4 || got[3] != "              "+strings.Repeat("x", 14) {
 		t.Errorf("wrap: %q", got)
+	}
+}
+
+func TestEnterShowsAllEvents(t *testing.T) {
+	// The type-ahead preview keeps the newest 1000 events; Enter (the normal
+	// terminal display, which also draws live previews) must not.
+	limitOf := func(d display) int {
+		ast, _ := splParse("error")
+		r, err := (&Shell{}).plan(ast, d)
+		if err != nil {
+			t.Fatal(err)
+		}
+		for _, s := range r.specs {
+			if f, ok := s.New().(*fieldSortStage); ok {
+				return f.limit
+			}
+		}
+		return -1
+	}
+	if n := limitOf(&UI{active: true}); n != 0 {
+		t.Errorf("Enter: sort limit %d, want 0 (all events)", n)
+	}
+	if n := limitOf(&liveRun{}); n != liveEventLimit {
+		t.Errorf("type-ahead: sort limit %d, want %d", n, liveEventLimit)
 	}
 }

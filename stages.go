@@ -57,8 +57,9 @@ type Spec struct {
 	// sends partial results to the New instance (stats, top).
 	NewPartial func() Stage
 	Setup      func(pc planCtx, s *Spec)
-	limit      int    // head N (SPL): lets an implicit time sort keep only N lines
-	out        string // file written by the command (outputcsv)
+	limit      int        // head N (SPL): lets an implicit time sort keep only N lines
+	out        string     // file written by the command (outputcsv)
+	rt         *followCfg // real-time search (SPL earliest=rt...) or tail -f
 }
 
 // ---------------- grep ----------------

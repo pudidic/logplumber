@@ -240,12 +240,18 @@ const liveEventLimit = 1000
 // orderSPL adds what SPL does implicitly: events come newest first (as in
 // Splunk, a search returns events in reverse time order), and tables are
 // redrawn when a command changes their fields.
-func orderSPL(specs []*Spec, live bool) []*Spec {
+func orderSPL(specs []*Spec, live bool, rt *followCfg) []*Spec {
 	j := 1
 	for j < len(specs) && streamingSPL[specs[j].Name] {
 		j++
 	}
-	if j == len(specs) || !transformingSPL[specs[j].Name] {
+	if rt != nil && rt.window > 0 { // a sliding window before the first command that needs it
+		specs = append(specs[:j], append([]*Spec{windowSpec(rt.window)}, specs[j:]...)...)
+		j++
+	}
+	// Real-time events print as they arrive, unless type-ahead shows the newest.
+	streamRT := rt != nil && rt.window == 0 && !live
+	if !streamRT && (j == len(specs) || !transformingSPL[specs[j].Name]) {
 		limit := 0
 		if j < len(specs) && specs[j].Name == "head" {
 			limit = specs[j].limit

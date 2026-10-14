@@ -52,6 +52,7 @@ type runner struct {
 	ops         []word
 	batches     chan []Line
 	snap        *storeSnap // index snapshot taken when the run starts
+	follow      *followCfg // real-time: keep reading what is appended
 	exclude     string
 	errMu       sync.Mutex
 	errN        int
@@ -116,6 +117,12 @@ func (sh *Shell) plan(ast *pipelineAST, disp display) (*runner, error) {
 			}
 			r.ops = ops
 		}
+		if s.rt != nil {
+			if i > 0 || r.kind != kindContent {
+				return nil, fmt.Errorf("tail -f: only allowed as the first command (tail -f file | grep ...)")
+			}
+			r.follow = s.rt
+		}
 		r.specs = append(r.specs, s)
 	}
 	if ast.redirect != "" {
@@ -143,7 +150,11 @@ func (r *runner) planSPL(ast *pipelineAST) error {
 		}
 		r.specs = append(r.specs, s)
 	}
-	r.specs = orderSPL(r.specs, r.ui != nil && r.ui.Live())
+	if len(r.specs) > 0 {
+		r.follow = r.specs[0].rt
+	}
+	_, typeAhead := r.ui.(*liveRun) // a preview while typing, not the full output
+	r.specs = orderSPL(r.specs, typeAhead, r.follow)
 	return nil
 }
 
@@ -196,7 +207,16 @@ func (sh *Shell) runPipeline(userCtx context.Context, ast *pipelineAST, disp dis
 		r.snap = sh.store.snap.Load()
 	}
 
-	sink := &outSink{ui: r.ui, ctx: userCtx, prog: r.prog}
+	if r.follow != nil {
+		r.snap = nil // read the files themselves
+	}
+	// In real-time mode Ctrl+C (userCtx) only stops following; the results so far
+	// are still finished and shown.
+	runCtx := userCtx
+	if r.follow != nil {
+		runCtx = context.WithoutCancel(userCtx)
+	}
+	sink := &outSink{ui: r.ui, ctx: runCtx, prog: r.prog}
 	if ast.redirect != "" {
 		flag := os.O_CREATE | os.O_WRONLY | os.O_TRUNC
 		if ast.appendTo {
@@ -244,13 +264,13 @@ func (sh *Shell) runPipeline(userCtx context.Context, ast *pipelineAST, disp dis
 		return err
 	}
 
-	stoppedEarly := r.serial(userCtx, cancelSrc, sink)
+	stoppedEarly := r.serial(runCtx, cancelSrc, sink)
 	sink.flush()
 	close(stopStatus)
 	<-statusDone
 
-	r.ui.End(r.summary(userCtx.Err() != nil, stoppedEarly, ast.redirect))
-	if userCtx.Err() != nil {
+	r.ui.End(r.summary(runCtx.Err() != nil, stoppedEarly, ast.redirect))
+	if runCtx.Err() != nil {
 		return errInterrupted
 	}
 	return nil
@@ -342,7 +362,12 @@ func (r *runner) source(ctx context.Context, ready chan<- error) {
 			}
 			jobs, multi = c.jobs, true
 		} else {
-			jobs, multi, err = collectJobs(ctx, r.ops, r.exclude, r.prog, r.reportErr)
+			if r.follow != nil {
+				jobs, err = followJobs(ctx, r.ops, r.exclude, r.prog)
+				multi = true
+			} else {
+				jobs, multi, err = collectJobs(ctx, r.ops, r.exclude, r.prog, r.reportErr)
+			}
 		}
 		if err == nil && r.live && ctx.Err() == nil {
 			r.sh.storeJobs(&jobCache{key: key, jobs: jobs, multi: multi, bytes: r.prog.totalBytes.Load(), at: time.Now()})
@@ -358,6 +383,10 @@ func (r *runner) source(ctx context.Context, ready chan<- error) {
 	r.setup(multi)
 	ready <- nil
 	r.prog.phase.Store(1)
+	if r.follow != nil {
+		r.followSource(ctx, jobs)
+		return
+	}
 
 	jobCh := make(chan job)
 	var wg sync.WaitGroup
@@ -578,6 +607,9 @@ func (r *runner) statusLine(spin int) string {
 	switch p.phase.Load() {
 	case 0:
 		return fmt.Sprintf("%c scanning files… %s", sp, commas(p.scanned.Load()))
+	case 3:
+		return fmt.Sprintf("%c following %s files · %s new lines · out %s · %.0fs — Ctrl+C stops",
+			sp, commas(p.following.Load()), commas(p.newLines.Load()), commas(p.outLines.Load()), el.Seconds())
 	case 2:
 		name, _ := p.finalizing.Load().(string)
 		s := fmt.Sprintf("%s 100.0%%  %c finalizing", bar(100), sp)
@@ -604,6 +636,9 @@ func (r *runner) summary(interrupted, early bool, redirect string) string {
 	}
 	state := "done"
 	switch {
+	case r.follow != nil:
+		return fmt.Sprintf("stopped following · %s files · %s new lines · %s lines out · %.0fs",
+			commas(p.following.Load()), commas(p.newLines.Load()), commas(p.outLines.Load()), time.Since(r.start).Seconds())
 	case interrupted:
 		state = "interrupted"
 	case early:

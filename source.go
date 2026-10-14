@@ -516,7 +516,9 @@ type progress struct {
 	lines      atomic.Int64
 	outLines   atomic.Int64
 	errors     atomic.Int64
-	phase      atomic.Int32 // 0 scanning, 1 reading, 2 finalizing
+	phase      atomic.Int32 // 0 scanning, 1 reading, 2 finalizing, 3 following
+	following  atomic.Int64 // files followed (real-time)
+	newLines   atomic.Int64 // lines written to them while following
 	finalizing atomic.Value // string: name of the stage being finalized
 }
 
