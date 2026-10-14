@@ -40,7 +40,13 @@ func (u *UI) SetTimeline(t *timeline) {
 	u.timeline, u.tlPrinted = t, false
 }
 
-const timelineStyle = "\x1b[32m"
+// timelineLine draws the timeline in green (plain with -color=never).
+func timelineLine(tl string, w int) string {
+	if colorMode == colorNever {
+		return truncateWidth(tl, w-1)
+	}
+	return "\x1b[32m" + truncateWidth(tl, w-1) + "\x1b[0m"
+}
 
 func newUI() *UI {
 	u := &UI{out: bufio.NewWriterSize(os.Stdout, 256<<10)}
@@ -99,7 +105,7 @@ func (u *UI) drawRegion() {
 	u.drawn = len(lines) + 1
 	if !u.tlPrinted {
 		if tl := u.timeline.render(w); tl != "" {
-			u.out.WriteString(timelineStyle + truncateWidth(tl, w-1) + "\x1b[0m\n")
+			u.out.WriteString(timelineLine(tl, w) + "\n")
 			u.drawn++
 		}
 	}
@@ -146,15 +152,16 @@ func (u *UI) Print(lines []Line) {
 	u.mu.Lock()
 	defer u.mu.Unlock()
 	u.clearRegion()
-	if u.active && !u.tlPrinted && len(lines) > 0 {
+	styled := u.active || colorMode == colorAlways // -color=always: also in a pipe or file
+	if styled && !u.tlPrinted && len(lines) > 0 {
 		// the results of an event search come after all input: the timeline is complete
 		u.tlPrinted = true
 		w, _ := u.size()
 		if tl := u.timeline.render(w); tl != "" {
-			u.out.WriteString(timelineStyle + truncateWidth(tl, w-1) + "\x1b[0m\n")
+			u.out.WriteString(timelineLine(tl, w) + "\n")
 		}
 	}
-	if u.active {
+	if styled {
 		u.colWidth = max(u.colWidth, columnWidth(lines, u.srcCol))
 	}
 	for _, l := range lines {
@@ -162,7 +169,7 @@ func (u *UI) Print(lines []Line) {
 			u.header = h
 			u.out.WriteString(h.text + "\n" + h.rule + "\n")
 		}
-		if u.active {
+		if styled {
 			u.out.WriteString(ansiColors(displayLine(l, u.srcCol, u.colWidth)))
 		} else {
 			u.out.WriteString(l.Text) // a file or pipe: plain text
@@ -229,7 +236,9 @@ func truncateWidth(s string, w int) string {
 	cols := 0
 	for i := 0; i < len(s); {
 		if code, n := colorMarker(s, i); n > 0 { // a color marker (see columns.go): no width
-			b.WriteString("\x1b[" + code + "m")
+			if colorMode != colorNever {
+				b.WriteString("\x1b[" + code + "m")
+			}
 			i += n
 			continue
 		}
