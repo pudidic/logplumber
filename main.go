@@ -34,6 +34,8 @@ type Shell struct {
 	jobs    *jobCache
 	store   *store   // temporary on-disk index (interactive sessions only)
 	lang    langMode // SPL or shell syntax
+
+	indexAsked, indexDelete bool // the answer to "delete the index?" on exit
 }
 
 // langMode is the query language: SPL (Splunk's search language, the default)
@@ -98,14 +100,31 @@ func main() {
 		fmt.Printf("psh %s — parallel file shell (%d threads, %s mode). Type help for commands. Press Esc to exit.\n", version, sh.threads, sh.lang)
 	}
 	if interactive && !*noIndex {
-		st, err := openStore()
+		st, note, err := openIndex()
+		if note != "" {
+			fmt.Fprintln(os.Stderr, "psh:", note)
+		}
 		if err != nil {
 			fmt.Fprintln(os.Stderr, "psh: no index:", err)
 		} else {
 			sh.store = st
 			defer func() {
+				del := false
+				switch {
+				case !st.persistent:
+				case sh.indexAsked: // type-ahead mode asked already
+					del = sh.indexDelete
+				default:
+					del = askDeleteIndex(st)
+				}
+				if del {
+					if err := st.remove(); err != nil {
+						fmt.Fprintln(os.Stderr, "psh: could not delete the index:", err)
+					}
+					return
+				}
 				if err := st.close(); err != nil {
-					fmt.Fprintln(os.Stderr, "psh: could not delete the index:", err)
+					fmt.Fprintln(os.Stderr, "psh: could not save the index:", err)
 				}
 			}()
 			st.setRoot(".")
@@ -338,8 +357,22 @@ func (sh *Shell) builtin(args []word) (bool, error) {
 		if st.building {
 			state = fmt.Sprintf("building %d%%", 100*st.done/max(1, st.total))
 		}
-		fmt.Printf("index: %s\n  directory: %s\n  root:      %s\n  files:     %s\n  disk use:  %s\n",
-			state, sh.store.dir, st.root, commas(int64(st.files)), human(st.disk))
+		if len(args) > 1 && args[1].s == "clear" {
+			wd, _ := os.Getwd()
+			if err := sh.store.clear(wd); err != nil {
+				return true, fmt.Errorf("index clear: %v", err)
+			}
+			fmt.Println("index cleared; indexing the current directory again")
+			return true, nil
+		} else if len(args) > 1 {
+			return true, fmt.Errorf("index: unknown argument %q (index or index clear)", args[1].s)
+		}
+		kind := "kept across sessions"
+		if !sh.store.persistent {
+			kind = "temporary"
+		}
+		fmt.Printf("index: %s (%s)\n  directory: %s\n  root:      %s\n  files:     %s\n  disk use:  %s\n",
+			state, kind, sh.store.dir, st.root, commas(int64(st.files)), human(st.disk))
 		return true, nil
 	}
 	return false, nil
@@ -440,8 +473,12 @@ Sourcetypes: fields are extracted by the sourcetype of each line, detected
   ~/.config/psh/psh.conf add sourcetypes, aliases, calculated fields, macros
   (name in backquotes) and saved searches (savedsearch name); see README.
 
-Built-ins (both modes): spl, sh, config [reload], cd, pwd, threads [N], clear,
-  help, version, exit
+Built-ins (both modes): spl, sh, config [reload], index [clear], cd, pwd,
+  threads [N], clear, help, version, exit
+
+Index: kept across sessions (PSH_INDEX_DIR or the user cache directory), so
+  only new or changed files are indexed again. On exit psh asks whether to
+  delete it; Enter keeps it. psh -noindex turns it off.
 
 Real-time: earliest=rt... (SPL) and tail -f (shell) keep reading what is
   written to the files; new files are picked up and truncated files reread.

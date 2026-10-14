@@ -76,9 +76,12 @@ type store struct {
 	snap   atomic.Pointer[storeSnap]
 	status atomic.Pointer[storeStatus]
 	busy   atomic.Int32 // queries running; indexing waits while > 0
-	rootCh chan string
-	cancel context.CancelFunc
-	done   chan struct{}
+
+	persistent bool      // kept across sessions (see persist.go)
+	lastSave   time.Time // last manifest written
+	rootCh     chan string
+	cancel     context.CancelFunc
+	done       chan struct{}
 
 	// used only by the indexing goroutine
 	srcs        map[string]*srcEntry
@@ -151,10 +154,18 @@ func (s *store) setRoot(root string) {
 	s.rootCh <- abs
 }
 
-// close stops indexing and deletes the store directory.
+// close stops indexing; it saves a persistent store and deletes a temporary one.
 func (s *store) close() error {
 	s.cancel()
 	<-s.done
+	if s.persistent {
+		err := s.publish() // files indexed since the last publish are kept too
+		if err == nil {
+			err = s.saveManifest()
+		}
+		s.lock.Close()
+		return err
+	}
 	s.lock.Close()
 	var err error
 	for range 10 { // a query that just finished may still hold a file open (Windows)
@@ -334,6 +345,9 @@ func (s *store) publish() error {
 	}
 	s.st.files = len(s.srcs)
 	s.publishStatus()
+	if s.persistent && (!s.st.building || time.Since(s.lastSave) > saveEvery) {
+		return s.saveManifest()
+	}
 	return nil
 }
 

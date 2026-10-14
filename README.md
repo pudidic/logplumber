@@ -253,13 +253,27 @@ are local time. Tables show `_time` as a date, but the value stays numeric, so
 
 ## Index
 
-In an interactive session psh builds a temporary index in the background (the
-hint bar shows `index ready · N files`): archive and compressed members are
-unpacked once into a cache, and every file is split into chunks of about 256KB.
-For each chunk psh records its trigrams (3-byte sequences) in an inverted
-index, and its words (runs of ASCII letters, digits and `_`) in a Bloom filter.
-It is deleted when psh exits; `psh -noindex` turns it off, and `psh -c` does not
-build one.
+In an interactive session psh builds an index in the background (the hint bar
+shows `index ready · N files`): archive and compressed members are unpacked
+once into a cache, and every file is split into chunks of about 256KB. For each
+chunk psh records its trigrams (3-byte sequences) in an inverted index, and its
+words (runs of ASCII letters, digits and `_`) in a Bloom filter.
+
+The index is **kept across sessions** in the user cache directory
+(`~/.cache/psh/index` on Linux, `~/Library/Caches/psh/index` on macOS,
+`%LocalAppData%\psh\index` on Windows; `PSH_INDEX_DIR` overrides it). Files
+are recorded by absolute path, so every directory you searched stays indexed,
+and the next start only indexes new or changed files: on 1GB, the first build
+takes about 18s, the next start is ready at once. When psh exits it asks
+whether to delete the index; Enter keeps it.
+
+- `index` shows the index state, size and directory; `index clear` deletes it
+  and indexes the current directory again.
+- Cache files of changed or deleted files are removed at the next start; when
+  more than half of the index is stale, it is rebuilt from scratch.
+- If another psh is using the index, a temporary one is built and deleted on
+  exit, as before.
+- `psh -noindex` turns the index off; `psh -c` does not use one.
 
 A query whose first search requires literal text reads only the chunks that may
 contain it: the trigram index finds the chunks with all its trigrams, and the
@@ -338,7 +352,8 @@ appears at start-up and again whenever the line is cleared.
 | `follow.go` | Real-time: following files (appends, new files, truncation), `tail -f`, sliding window |
 | `timeline.go` | One-line event timeline above search results |
 | `run.go` | Execution engine: parallel/serial split, live previews, status line, file-list cache |
-| `store.go` | Temporary on-disk store of an interactive session: archive cache, background indexing |
+| `store.go` | On-disk store of an interactive session: archive cache, background indexing |
+| `persist.go` | Keeping the index across sessions: manifest, recovery, cleanup, the exit question |
 | `index.go`, `bucket.go` | Trigram index: chunks, bucket files, lookup of the chunks a query needs |
 | `wordbloom.go` | Per-chunk Bloom filters of words, used to narrow the trigram candidates |
 | `browse.go`, `rows.go` | Type-ahead result list and detail view; result storage that spills to disk |

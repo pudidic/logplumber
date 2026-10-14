@@ -223,7 +223,9 @@ func (sh *Shell) liveLoop(in io.Reader) error {
 		}
 		e.mu.Unlock()
 		e.clearRegion()
-		term.Restore(fd, old)
+		if old != nil {
+			term.Restore(fd, old)
+		}
 	}()
 	go readKeys(in, e.keys, sh)
 
@@ -241,6 +243,8 @@ func (sh *Shell) liveLoop(in io.Reader) error {
 			edited, quit, enter := e.handle(k)
 			if quit {
 				e.stopRun()
+				e.clearRegion()
+				e.askDeleteIndex()
 				return nil
 			}
 			if enter {
@@ -251,6 +255,10 @@ func (sh *Shell) liveLoop(in io.Reader) error {
 				term.Restore(fd, old)
 				err := e.commit(line)
 				if err == errExit {
+					if raw, err := term.MakeRaw(fd); err == nil { // one key for the question
+						e.askDeleteIndex()
+						term.Restore(fd, raw)
+					}
 					old = nil
 					return nil
 				}
@@ -284,6 +292,25 @@ func (sh *Shell) liveLoop(in io.Reader) error {
 			e.render()
 		}
 	}
+}
+
+// askDeleteIndex asks on exit whether to delete the persistent index. The key
+// reader owns stdin, so the answer is one key from e.keys: y deletes, anything
+// else keeps it.
+func (e *liveEditor) askDeleteIndex() {
+	st := e.sh.store
+	if st == nil || !st.persistent {
+		return
+	}
+	os.Stdout.WriteString("\r" + deleteIndexQuestion(st))
+	k, ok := <-e.keys
+	del := ok && k.kind == kRune && (k.r == 'y' || k.r == 'Y')
+	answer := "n"
+	if del {
+		answer = "y"
+	}
+	os.Stdout.WriteString(answer + "\r\n")
+	e.sh.indexAsked, e.sh.indexDelete = true, del
 }
 
 func (e *liveEditor) commit(line string) error {
