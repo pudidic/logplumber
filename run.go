@@ -37,22 +37,23 @@ const (
 )
 
 type runner struct {
-	sh      *Shell
-	ui      display
-	live    bool // started from the type-ahead editor (enables the job cache)
-	prog    *progress
-	start   time.Time
-	kind    srcKind
-	mode    srcMode
-	find    *findCfg
-	static  []string
-	specs   []*Spec
-	prefix  int // number of leading specs run in worker threads
-	ops     []word
-	batches chan []Line
-	exclude string
-	errMu   sync.Mutex
-	errN    int
+	sh          *Shell
+	ui          display
+	live        bool // started from the type-ahead editor (enables the job cache)
+	prog        *progress
+	start       time.Time
+	kind        srcKind
+	mode        srcMode
+	find        *findCfg
+	static      []string
+	specs       []*Spec
+	workerSpecs []*Spec // run in each worker thread
+	serialSpecs []*Spec // run in one goroutine after the workers
+	ops         []word
+	batches     chan []Line
+	exclude     string
+	errMu       sync.Mutex
+	errN        int
 }
 
 func (r *runner) reportErr(err error) {
@@ -101,7 +102,7 @@ func (sh *Shell) plan(ast *pipelineAST, disp display) (*runner, error) {
 		case "find", "ls", "echo":
 			return nil, fmt.Errorf("%s: only allowed as the first command of a pipeline", c.args[0].s)
 		}
-		s, ops, err := buildSpec(c)
+		s, ops, err := buildSpec(c, i == 0 && r.kind == kindContent)
 		if err != nil {
 			return nil, err
 		}
@@ -127,11 +128,17 @@ func (r *runner) setup(multi bool) {
 			s.Setup(planCtx{first: i == 0 && r.kind == kindContent, multi: multi}, s)
 		}
 	}
-	r.prefix = 0
+	p := 0
 	if r.kind != kindStatic {
-		for r.prefix < len(r.specs) && r.specs[r.prefix].Parallel {
-			r.prefix++
+		for p < len(r.specs) && r.specs[p].Parallel {
+			p++
 		}
+	}
+	r.workerSpecs, r.serialSpecs = r.specs[:p:p], r.specs[p:]
+	// An aggregation right after the parallel part is pre-aggregated per worker.
+	if r.kind != kindStatic && p < len(r.specs) && r.specs[p].NewPartial != nil {
+		s := r.specs[p]
+		r.workerSpecs = append(r.workerSpecs, &Spec{Name: s.Name, Parallel: true, New: s.NewPartial})
 	}
 }
 
@@ -328,7 +335,7 @@ func (r *runner) source(ctx context.Context, ready chan<- error) {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			w := newWorker(ctx, r, r.specs[:r.prefix])
+			w := newWorker(ctx, r, r.workerSpecs)
 			for j := range jobCh {
 				if w.doJob(j) == errStop {
 					break
@@ -357,7 +364,7 @@ feed:
 // renders live previews of blocking stages. It returns true if a stage (e.g. head)
 // stopped the input early.
 func (r *runner) serial(userCtx context.Context, cancelSrc context.CancelFunc, sink *outSink) bool {
-	specs := r.specs[r.prefix:]
+	specs := r.serialSpecs
 	st, emits := instantiate(specs)
 	chain(st, emits, sink.emit)
 	blockAt := -1
@@ -430,14 +437,18 @@ func (r *runner) preview(specs []*Spec, st []Stage, b int) {
 }
 
 type previewBuf struct {
-	rows  int
-	head  []string
-	last  string
-	count int
-	cut   bool
+	header *tableHeader
+	rows   int
+	head   []string
+	last   string
+	count  int
+	cut    bool
 }
 
 func (p *previewBuf) add(l Line) bool {
+	if p.header == nil && l.Rec != nil {
+		p.header = l.Rec.header
+	}
 	p.count++
 	if len(p.head) < p.rows {
 		p.head = append(p.head, l.Text)
@@ -456,6 +467,9 @@ func (p *previewBuf) render(stage string) []string {
 		more = "+"
 	}
 	out := []string{fmt.Sprintf("── live preview (%s, %s%s lines) ──", stage, commas(int64(p.count)), more)}
+	if p.header != nil {
+		out = append(out, p.header.text, p.header.rule)
+	}
 	if p.count <= p.rows {
 		return append(out, p.head...)
 	}
@@ -474,6 +488,7 @@ type outSink struct {
 	ctx       context.Context
 	prog      *progress
 	file      *bufio.Writer
+	header    *tableHeader // last table header written
 	pending   []string
 	lastFlush time.Time
 	n         int
@@ -484,17 +499,26 @@ func (o *outSink) emit(l Line) bool {
 		return false
 	}
 	o.prog.outLines.Add(1)
-	if o.file != nil {
-		o.file.WriteString(l.Text)
-		o.file.WriteByte('\n')
-		return true
+	if l.Rec != nil && l.Rec.header != nil && l.Rec.header != o.header {
+		o.header = l.Rec.header
+		o.write(o.header.text)
+		o.write(o.header.rule)
 	}
-	o.pending = append(o.pending, l.Text)
+	o.write(l.Text)
+	return true
+}
+
+func (o *outSink) write(text string) {
+	if o.file != nil {
+		o.file.WriteString(text)
+		o.file.WriteByte('\n')
+		return
+	}
+	o.pending = append(o.pending, text)
 	o.n++
 	if len(o.pending) >= 4096 || o.n&255 == 0 {
 		o.flushIfDue()
 	}
-	return true
 }
 
 func (o *outSink) flushIfDue() {

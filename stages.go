@@ -15,9 +15,11 @@ import (
 // Line is one line of text flowing through a pipeline.
 type Line struct {
 	Text string
-	Src  string // display name of the file the line came from
-	No   int    // 1-based line number within Src
-	Raw  int    // original byte length including newline (0 = unknown)
+	Src  string      // display name of the file the line came from
+	No   int         // 1-based line number within Src
+	Raw  int         // original byte length including newline (0 = unknown)
+	Rec  *Record     // extracted or computed fields (nil until first used)
+	Agg  *statsState // partial aggregation sent from a worker thread
 }
 
 // Emit passes a line downstream. It returns false when downstream wants no more input.
@@ -51,7 +53,10 @@ type Spec struct {
 	Parallel bool // stateless per line: may run inside worker threads
 	Blocking bool // emits only after all input (has Snapshot)
 	New      func() Stage
-	Setup    func(pc planCtx, s *Spec)
+	// NewPartial, when set, creates a worker-side instance that pre-aggregates and
+	// sends partial results to the New instance (stats, top).
+	NewPartial func() Stage
+	Setup      func(pc planCtx, s *Spec)
 }
 
 // ---------------- grep ----------------
@@ -72,6 +77,9 @@ type grepStage struct {
 
 func (g *grepStage) out(l Line, lineNo int, text string) Line {
 	c := g.c
+	if !c.withName && !c.number && text == l.Text {
+		return l // unchanged line keeps its fields
+	}
 	if c.withName || c.number {
 		var b strings.Builder
 		if c.withName {
@@ -337,7 +345,7 @@ func (s *sortStage) emitAll(emit Emit) {
 		if s.c.unique && i > 0 && s.cmpKey(&s.items[i-1], &s.items[i]) == 0 {
 			continue
 		}
-		if !emit(Line{Text: s.items[i].l.Text, Src: s.items[i].l.Src}) {
+		if !emit(s.items[i].l) {
 			return
 		}
 	}
@@ -412,6 +420,9 @@ func (u *uniqStage) flush(emit Emit) bool {
 	t := u.prev.Text
 	if u.c.count {
 		t = fmt.Sprintf("%7d %s", u.n, t)
+	}
+	if !u.c.count {
+		return emit(u.prev)
 	}
 	return emit(Line{Text: t, Src: u.prev.Src})
 }
@@ -528,7 +539,7 @@ func (h *headStage) Push(l Line, emit Emit) bool {
 		return false
 	}
 	h.seen++
-	return emit(Line{Text: l.Text, Src: l.Src}) && h.seen < h.n
+	return emit(l) && h.seen < h.n
 }
 func (h *headStage) Finish(Emit) {}
 
@@ -546,7 +557,7 @@ func (t *tailStage) Push(l Line, emit Emit) bool {
 	if t.ring == nil {
 		t.ring = make([]Line, t.n)
 	}
-	t.ring[t.pos] = Line{Text: l.Text, Src: l.Src}
+	t.ring[t.pos] = l
 	t.pos++
 	if t.pos == t.n {
 		t.pos, t.full = 0, true

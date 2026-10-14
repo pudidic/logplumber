@@ -8,9 +8,34 @@ import (
 )
 
 // buildSpec parses one command into a Spec and its file operands.
-func buildSpec(cmd rawCmd) (*Spec, []word, error) {
+// first tells whether the command starts the pipeline (and may take file operands).
+func buildSpec(cmd rawCmd, first bool) (*Spec, []word, error) {
 	name := cmd.args[0].s
 	args := cmd.args[1:]
+	var s *Spec
+	var err error
+	switch name {
+	case "where":
+		s, err = parseWhere(cmd.args)
+	case "eval":
+		s, err = parseEval(cmd.args)
+	case "rex":
+		s, err = parseRex(cmd.args)
+	case "stats":
+		s, err = parseStats(cmd.args)
+	case "top", "rare":
+		s, err = parseTop(name, cmd.args)
+	case "table":
+		s, err = parseTable(cmd.args)
+	case "fieldsummary":
+		s, err = parseFieldSummary(cmd.args)
+	}
+	if s != nil || err != nil {
+		return s, nil, err
+	}
+	if name == "sort" && fieldSortArgs(args) && (!first || strings.HasPrefix(args[len(args)-1].s, "-") || strings.HasPrefix(args[0].s, "-")) {
+		return parseFieldSort(args), nil, nil
+	}
 	switch name {
 	case "grep", "egrep", "fgrep":
 		return parseGrep(name, args)
@@ -168,6 +193,9 @@ func parseHeadTail(name string, args []word) (*Spec, []word, error) {
 		return nil, nil, err
 	}
 	nStr, _ := p.last('n')
+	if nStr == "" && len(p.ops) > 0 && isAllDigits(p.ops[0].s) {
+		nStr, p.ops = p.ops[0].s, p.ops[1:] // "head 20" or "head 20 file"
+	}
 	if nStr == "" {
 		nStr = "10"
 	}

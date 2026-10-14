@@ -448,6 +448,10 @@ func (sh *Shell) analyze(line string) analysis {
 		}
 		if err != nil {
 			a.badFrom, a.noteErr = s.start, true
+			var pe *posError
+			if errors.As(err, &pe) && pe.pos >= s.start {
+				a.badFrom = pe.pos // underline only the bad part of an expression
+			}
 			a.note = "incomplete: " + err.Error()
 			break
 		}
