@@ -40,7 +40,7 @@ func indexFixtures(t *testing.T, dir string) {
 			case r < 5:
 				fmt.Fprintf(&b, "%s needle %d found ÉRROR Fail-over\n", ts, i)
 			case r < 8:
-				fmt.Fprintf(&b, `{"ts":"%s","level":"error","user":"%s","msg":"failure %d"}`+"\n", ts, users[rnd.Intn(4)], i)
+				fmt.Fprintf(&b, `{"ts":"%s","level":"error","user":"%s","msg":"failure %d","trace":"%016x"}`+"\n", ts, users[rnd.Intn(4)], i, rnd.Uint64())
 			default:
 				fmt.Fprintf(&b, "%s level=info user=%s msg=\"%s %s\" status=200\n", ts, users[rnd.Intn(4)], words[rnd.Intn(8)], words[rnd.Intn(8)])
 			}
@@ -54,7 +54,10 @@ func indexFixtures(t *testing.T, dir string) {
 			t.Fatal(err)
 		}
 	}
-	write("a/app.log", []byte(gen(3000, "a")))
+	app := gen(3000, "a")
+	i := strings.Index(app, `"trace":"`) + 9
+	traceID = app[i : i+16]
+	write("a/app.log", []byte(app))
 	write("b/other.log", []byte(gen(1500, "b")))
 	write("c/old.log.gz", gzipBytes([]byte(gen(1500, "c"))))
 	writeFixtures(t, dir) // tar.gz, zip and binary members
@@ -82,6 +85,9 @@ func runQuery(t *testing.T, sh *Shell, q string) ([]string, string) {
 	sort.Strings(d.lines) // files are read in parallel; equal times have no fixed order
 	return d.lines, d.summary
 }
+
+// traceID is one of the trace IDs in indexFixtures (set when they are written).
+var traceID string
 
 func TestIndexedQueriesMatchFullReads(t *testing.T) {
 	old := chunkSize
@@ -122,6 +128,11 @@ func TestIndexedQueriesMatchFullReads(t *testing.T) {
 		{langSPL, `status>=503 | stats count`, false},
 		{langSPL, `ok`, false}, // shorter than a trigram
 		{langSPL, `zzzzqqq`, true},
+		{langSPL, traceID, true},            // hex: trigrams everywhere, the word filter narrows it
+		{langSPL, `trace=` + traceID, true}, // as field=value
+		{langSPL, `xq`, true},               // a short word: word filters only
+		{langSPL, `ok`, false},
+		{langSPL, `kim | stats count`, false},
 		{langSPL, `ERROR`, false},
 		{langShell, `grep needle`, true},
 		{langShell, `grep -n -i NEEDLE`, true},
@@ -133,6 +144,7 @@ func TestIndexedQueriesMatchFullReads(t *testing.T) {
 	}
 	full := &Shell{ui: &UI{}, threads: 2}
 	indexed := &Shell{ui: &UI{}, threads: 2, store: st}
+	_ = traceID
 	for _, c := range cases {
 		full.lang, indexed.lang = c.lang, c.lang
 		want, _ := runQuery(t, full, c.q)
@@ -155,19 +167,23 @@ func TestIndexedQueriesMatchFullReads(t *testing.T) {
 
 func TestIndexNeeds(t *testing.T) {
 	cases := []struct{ q, want string }{
-		{`error`, "[[error]]"},
-		{`"DB timeout"`, "[[db timeout]]"},
-		{`error user=kim`, "[[error kim]]"},
-		{`a OR b`, "none"},
-		{`error OR refused`, "[[error] [refused]]"},
-		{`(x1y OR abc) (def OR ghi)`, "[[x1y def] [x1y ghi] [abc def] [abc ghi]]"},
+		{`error`, "[error|error]"},
+		{`"DB timeout"`, "[db timeout|db timeout]"},
+		{`error user=kim`, "[error kim|error kim]"},
+		{`a OR b`, "[|a] [|b]"}, // short words: words only
+		{`error OR refused`, "[error|error] [refused|refused]"},
+		{`(x1y OR abc) (def OR ghi)`, "[x1y def|x1y def] [x1y ghi|x1y ghi] [abc def|abc def] [abc ghi|abc ghi]"},
 		{`NOT error`, "none"},
-		{`error NOT abc`, "[[error]]"},
-		{`fail*ure`, "[[fail ure]]"},
+		{`error NOT abc`, "[error|error]"},
+		{`fail*ure`, "[fail ure|]"}, // wildcard pieces are parts of words
+		{`fa*`, "none"},
+		{`INC-77fe31`, "[inc-77fe31|inc 77fe31]"},
+		{`trace=7f3a9c0e`, "[7f3a9c0e|7f3a9c0e]"},
 		{`status>=500`, "none"},
 		{`status=500`, "none"}, // numbers are compared numerically (500 = 500.0)
 		{`level IN (warn, error)`, "none"},
-		{`earliest=-1h error`, "[[error]]"},
+		{`earliest=-1h error`, "[error|error]"},
+		{`ok`, "[|ok]"},
 		{`*`, "none"},
 		{`ÉRROR`, "none"},
 	}
@@ -179,10 +195,40 @@ func TestIndexNeeds(t *testing.T) {
 		alts, ok := indexNeeds(n)
 		got := "none"
 		if ok {
-			got = fmt.Sprint(alts)
+			var parts []string
+			for _, a := range alts {
+				parts = append(parts, "["+strings.Join(a.lits, " ")+"|"+strings.Join(a.words, " ")+"]")
+			}
+			got = strings.Join(parts, " ")
 		}
 		if got != c.want {
 			t.Errorf("%s: got %s, want %s", c.q, got, c.want)
 		}
+	}
+}
+
+func TestWordFilter(t *testing.T) {
+	words := map[uint64]struct{}{}
+	for _, w := range []string{"error", "kim", "7f3a9c0e5b", "ok"} {
+		words[wordHash(w)] = struct{}{}
+	}
+	f := buildBloom(words)
+	for _, w := range []string{"error", "ERROR", "kim", "7f3a9c0e5b", "ok"} {
+		if !bloomHas(f, []uint64{wordHash(w)}) {
+			t.Errorf("%s: missing", w)
+		}
+	}
+	// false positives are possible but rare at 10 bits per word
+	fp := 0
+	for i := 0; i < 1000; i++ {
+		if bloomHas(f, []uint64{wordHash(fmt.Sprintf("absent%d", i))}) {
+			fp++
+		}
+	}
+	if fp > 50 {
+		t.Errorf("%d false positives in 1000", fp)
+	}
+	if got := strings.Join(asciiWords("INC-77fe31 user=kim, ÉRROR_x"), " "); got != "INC 77fe31 user kim RROR_x" {
+		t.Errorf("asciiWords: %q", got)
 	}
 }

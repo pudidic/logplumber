@@ -50,6 +50,7 @@ type config struct {
 	calcFields     map[string]bool // fields computed by eval (not literal text of _raw)
 	hasSourceRules bool
 	hasTimeRules   bool
+	customExtracts bool // extract= regexes may cut values out of the middle of words
 }
 
 var conf atomic.Pointer[config]
@@ -209,6 +210,7 @@ func (c *config) addSourcetype(s *confSection) error {
 				return s.errf("extract: %v", err)
 			}
 			st.extracts = append(st.extracts, re)
+			c.customExtracts = true
 		case "kv":
 			st.kv = v == "true"
 		case "json":

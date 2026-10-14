@@ -125,42 +125,65 @@ func newTerm(s string) snode {
 // with more is read in full.
 const maxNeedAlternatives = 32
 
-// indexNeeds returns the text a line must contain to match n, as alternatives
-// of literals that must all appear (case-insensitive ASCII), for the trigram
-// index. It is a superset condition: every matching line meets it, so lines
+// needAlt is one way a line can match: it contains all lits (as text, for the
+// trigram index) and all words (as whole words, for the word filters).
+type needAlt struct {
+	lits, words []string
+}
+
+func (a needAlt) and(b needAlt) needAlt {
+	return needAlt{lits: append(append([]string(nil), a.lits...), b.lits...),
+		words: append(append([]string(nil), a.words...), b.words...)}
+}
+
+// indexNeeds returns what a line must contain to match n, as alternatives, for
+// the index. It is a superset condition: every matching line meets it, so lines
 // that do not can be skipped. ok is false when nothing can be required.
-func indexNeeds(n snode) (alts [][]string, ok bool) {
+//
+// A search word matches only whole words, so its ASCII words are required as
+// words; its text (3+ bytes) is required as trigrams. Wildcard pieces are
+// parts of words: only trigrams. Non-ASCII text is not indexed yet.
+func indexNeeds(n snode) (alts []needAlt, ok bool) {
 	switch n := n.(type) {
 	case sTerm:
-		var lits []string
+		var a needAlt
 		if n.re == nil {
-			lits = []string{n.lit}
+			if !isASCII(n.lit) {
+				return nil, false
+			}
+			if len(n.lit) >= 3 {
+				a.lits = []string{n.lit}
+			}
+			a.words = asciiWords(n.lit)
 		} else {
-			lits = n.parts
-		}
-		var out []string
-		for _, l := range lits {
-			if len(l) >= 3 && isASCII(l) {
-				out = append(out, l)
+			for _, l := range n.parts {
+				if len(l) >= 3 && isASCII(l) {
+					a.lits = append(a.lits, l)
+				}
 			}
 		}
-		return [][]string{out}, len(out) > 0
+		return []needAlt{a}, len(a.lits)+len(a.words) > 0
 	case sCmp:
 		if n.lit != "" { // field=value whose value is literal text of the line
-			return [][]string{{n.lit}}, true
+			a := needAlt{lits: []string{n.lit}}
+			if !activeConfig().customExtracts {
+				// built-in extraction ends values at word boundaries
+				a.words = asciiWords(n.lit)
+			}
+			return []needAlt{a}, true
 		}
 	case sAnd:
-		alts = [][]string{nil}
+		alts = []needAlt{{}}
 		for _, x := range n {
 			xa, xok := indexNeeds(x)
 			if !xok {
 				continue // no requirement from this part
 			}
 			ok = true
-			var next [][]string
+			var next []needAlt
 			for _, a := range alts {
 				for _, b := range xa {
-					next = append(next, append(append([]string(nil), a...), b...))
+					next = append(next, a.and(b))
 				}
 			}
 			if len(next) > maxNeedAlternatives {
