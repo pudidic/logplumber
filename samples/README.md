@@ -15,12 +15,17 @@ All addresses use documentation ranges; nothing here is real data.
 | `syslog/messages` | BSD syslog (sshd, kernel, cron, systemd) |
 | `archives/support-bundle.tar.gz` | tar.gz bundle with a nested `.gz` log inside |
 | `archives/workers.zip` | zip with logs from two nodes |
+| `payments/payments.log` | a custom format; its sourcetype is defined in `.psh.conf` |
+| `.psh.conf` | sample configuration: the `payments` sourcetype, additions to `access_combined`, macros, saved searches |
 
 ## Example queries (SPL mode)
 
 ```
+# What kinds of lines are there?
+* | stats count by sourcetype
+
 # Apache status codes across the current log, the rotated .gz and the bundle
-source=access.log* | rex "\"(?<method>\w+) (?<path>\S+) [^\"]*\" (?<status>\d{3}) (?<bytes>\S+)" | stats count, sum(bytes) as bytes by status
+sourcetype=access_combined | stats count, sum(bytes) as bytes by status
 
 # JSON: slowest errors by service and message
 level=error | stats count, avg(ms), p95(ms) by service, msg
@@ -31,20 +36,34 @@ source=*.jsonl* | top 3 req.path by level
 # logfmt: failed jobs (also from both nodes inside workers.zip)
 source=worker.log* result!=ok | stats count, max(duration_ms) by job, result
 
-# syslog: where failed SSH logins come from
+# syslog: where failed SSH logins come from (also: savedsearch failed-logins)
 "Failed password" | rex "from (?<ip>\S+) port" | top ip
 
+# syslog programs per host
+sourcetype=syslog | stats count by host, process
+
+# Apache error log: which modules report errors
+sourcetype=apache_error log_level=error | top module
+
 # nginx response times
-source=nginx/access.log | rex "rt=(?<rt>[\d.]+)" | stats count, avg(rt), p99(rt)
+source=nginx/access.log | stats count, avg(rt), p99(rt) by method
 
 # Apache error log modules and severities
-source=apache/error.log | rex "\[(?<module>\w+):(?<sev>\w+)\]" | stats count by module, sev
+sourcetype=apache_error | stats count by module, log_level
 
 # Requests per 5 minutes by level, with a stacked bar chart
 source=app/app.jsonl | timechart span=5m count by level
 
 # 5xx errors over time, top 3 paths
-source=apache/access.log | rex "\"\w+ (?<path>\S+) [^\"]*\" (?<status>\d{3})" | where status >= 500 | timechart span=10m count by path limit=3
+source=apache/access.log status>=500 | timechart span=10m count by uri_path limit=3
+
+# The custom payments format (sourcetype from .psh.conf)
+sourcetype=payments | stats count, sum(amount) as won, avg(ms) by card, outcome | sort -count
+savedsearch declined-payments
+
+# Macros from .psh.conf
+`errors` | stats count by sourcetype
+source=access.log | stats count by status_class
 
 # Latest 5 errors from anywhere
 error | head 5 | table _time _src _raw

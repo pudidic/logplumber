@@ -112,7 +112,7 @@ func (c *collector) walk(root string, filters []string) error {
 			}
 			return nil
 		}
-		if !d.Type().IsRegular() {
+		if !d.Type().IsRegular() || d.Name() == ".psh.conf" { // configuration, not data
 			return nil
 		}
 		info, err := d.Info()

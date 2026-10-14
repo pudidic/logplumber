@@ -89,9 +89,10 @@ this out.
 | `fieldsummary` | fields with coverage, distinct count, min/max and top values |
 | `outputcsv file` | `outputcsv errors` writes `errors.csv` and passes the results on |
 
-- Fields: JSON lines (also a JSON object at the end of a line) and `key=value`
-  text are parsed automatically; nested JSON keys are joined with dots
-  (`req.path`). Every event also has `_raw`, `_src` (file name), `_line` and `_time`.
+- Fields are extracted automatically by the line's sourcetype (JSON,
+  key=value, access logs, error logs, syslog and your own formats; see below).
+  Every event also has `_raw`, `_src` (file name), `_line`, `_time`, `source`
+  and `sourcetype`.
 - **Events come newest first**, as in Splunk: a search is sorted by `_time`
   before the first command that depends on order (`head`, `dedup`, `table`, …).
   `head N` right after the search keeps only the newest N in memory. Commands
@@ -110,6 +111,70 @@ this out.
   `rename` or `fields` them; the table is redrawn with the new columns.
 - `stats`, `top` and `timechart` pre-aggregate in every worker thread and merge
   the partial results, and they update a live preview while reading.
+
+## Sourcetypes and `.psh.conf`
+
+Each line gets a **sourcetype** that decides which fields are extracted. The
+built-in ones are recognized from the line itself:
+
+| sourcetype | Lines | Fields |
+|---|---|---|
+| `_json` | a JSON object (also one that ends the line) | its keys; nested keys joined with dots (`req.path`) |
+| `access_combined` | Apache/nginx combined access log | `clientip ident user method uri uri_path uri_query version status bytes referer useragent`, plus `key=value` after it (nginx `rt=`) |
+| `apache_error` | Apache 2.4 error log | `module log_level pid clientip clientport error_code message` |
+| `nginx_error` | nginx error log | `log_level pid message clientip server request upstream host` |
+| `syslog` | BSD syslog | `host process pid message`, plus `key=value` in the message |
+| `kv` | `key=value` pairs (logfmt) | the pairs |
+
+Every event also has `sourcetype` and `source` (the file, same as `_src`), so
+`sourcetype=access_combined status>=500 | stats count by uri_path` and
+`* | stats count by sourcetype` work without `rex`. Lines that match none have no
+sourcetype and no automatic fields.
+
+`.psh.conf` in the current directory (re-read after `cd`) and
+`~/.config/psh/psh.conf` add to this; the `config` built-in shows what is loaded
+and `config reload` re-reads it. The file is INI style; `.psh.conf` itself is not
+searched.
+
+```ini
+# A new sourcetype, chosen by file name (source=) or line pattern (detect=)
+[sourcetype:payments]
+source = payments*.log
+extract = ^(?<ts>\S+ \S+) (?<level>\w+)\s+\[(?<service>[^\]]+)\] order (?<order>\d+) charged (?<amount>\d+)
+time_field = ts                          # _time from this field ...
+time_format = %d.%m.%Y %H:%M:%S,%3N      # ... with a strptime format
+eval = amount_k = round(amount / 1000, 1)  # calculated fields, in order
+
+# Additions to a built-in sourcetype (alias, eval, extract, time_field/time_format)
+[sourcetype:access_combined]
+alias = clientip AS src_ip
+eval = status_class = substr(status, 1, 1) + "xx"
+
+# Macros: `errors` and `slow(1000)` in a query
+[macro:errors]
+definition = (level=error OR log_level=error OR status>=500)
+
+[macro:slow(1)]
+args = ms
+definition = (ms>$ms$ OR duration_ms>$ms$)
+
+# Saved searches: savedsearch failed-logins [| more commands]
+[search:failed-logins]
+search = sourcetype=syslog "Failed password" | rex "from (?<ip>\S+) port" | top ip
+```
+
+| Key (`[sourcetype:…]`) | Meaning |
+|---|---|
+| `source` | file name glob; matches the path or the name, archive members too (repeatable) |
+| `detect` | regex that lines of this sourcetype match |
+| `extract` | regex whose named groups become fields (repeatable) |
+| `kv`, `json` | `true` to also extract `key=value` pairs, or to parse lines as JSON |
+| `time_field`, `time_format` | take `_time` from a field, with a strptime format (`%d %m %Y %H %M %S %3N %b %z` …); without a format the usual detection is applied to the field |
+| `alias` | `field AS other` (repeatable) |
+| `eval` | `name = expression`, as in `eval` (repeatable) |
+
+New sourcetypes are tried before the built-in ones, in file order. Macro
+arguments are written `$name$` in the definition; macros may use other macros.
 
 ## Shell mode
 
@@ -190,8 +255,10 @@ appears at start-up and again whenever the line is cleared.
 | `commands.go` | Shell mode: per-command option parsing into a Spec |
 | `spl.go` | SPL mode: query splitting, command dispatch, implicit time order, fields/rename/dedup/regex/sort/outputcsv |
 | `search.go` | SPL search language (terms, field comparisons, boolean operators, time range, source) |
+| `sourcetype.go` | Sourcetypes: built-in detection and parsers (JSON, access, error logs, syslog, kv), custom extraction |
+| `config.go` | `.psh.conf`: sourcetypes, aliases, calculated fields, macros, saved searches |
 | `stages.go` | grep, sort (parallel), uniq, wc, head, tail, cat, cut, tr, sed |
-| `record.go` | Fields of a line: automatic JSON/key=value extraction, aligned table output |
+| `record.go` | Fields of a line (automatic, set, filtered), aligned table output |
 | `expr.go` | Expression language of `where` and `eval` (lexer, parser, evaluator) |
 | `fieldcmds.go` | rex, where, eval, stats (mergeable), top, rare, table, fieldsummary, field sort |
 | `timeutil.go` | Timestamp detection, spans and bucketing, relative times, strftime/strptime |
@@ -225,7 +292,7 @@ appears at start-up and again whenever the line is cleared.
 - xz and zstd archives are not supported (they are not in the standard library).
 - In shell mode files are read in parallel, so the order of output between files
   can change from run to run. The order of lines within a file is preserved.
-- SPL mode has no sourcetypes yet: fields come from JSON and key=value only, so
-  for Apache or syslog lines use `rex` to extract them.
+- Formats other than the built-in sourcetypes need a `[sourcetype:…]` section
+  in `.psh.conf` (or `rex`) for their fields.
 - With very many files, each keystroke rereads all of them. After the first
   run, the OS file cache makes this fast.

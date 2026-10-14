@@ -209,7 +209,7 @@ func (s *store) pass(ctx context.Context, root string) error {
 			}
 			return nil
 		}
-		if !d.Type().IsRegular() {
+		if !d.Type().IsRegular() || d.Name() == ".psh.conf" {
 			return nil
 		}
 		fi, err := d.Info()

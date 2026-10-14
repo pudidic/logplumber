@@ -166,7 +166,7 @@ func TestSPLCommands(t *testing.T) {
 		{`stats count by level | eval twice = count * 2 | fields level, twice`, "level twice error 4 info 2 warn 2"},
 		{`stats count by level | fields - count`, "level error info warn"},
 		{`fields user | table *`, "_time user 2026-10-14 09:00:01 kim 2026-10-14 09:00:02 lee 2026-10-14 09:00:03 Kim 2026-10-14 09:00:04 park"},
-		{`fields - msg, status, level | head 1 | table *`, "_time user 2026-10-14 09:00:01 kim"},
+		{`fields - msg, status, level | head 1 | table *`, "_time sourcetype user 2026-10-14 09:00:01 kv kim"},
 		{`rename user AS who | head 1 | table who user`, "who user kim"},
 		{`table user, st*`, "user status kim 503 lee 200 Kim 200 park 502"},
 		{`sort - status, user | head 2 | table user`, "user kim park"},
@@ -233,7 +233,7 @@ func TestDetailFields(t *testing.T) {
 		return strings.Join(out, "|")
 	}
 	l := Line{Text: `2026-10-14T09:00:01Z level=error msg="db timeout"`, Src: "app.log", No: 7}
-	want := "_time 2026-10-14 09:00:01 (1791968401)|_src app.log|_line 7||level error|msg db timeout"
+	want := "_time 2026-10-14 09:00:01 (1791968401)|_src app.log|_line 7|sourcetype kv||level error|msg db timeout"
 	if got := join(fieldLines(l, 80)); got != want {
 		t.Errorf("event:\n got  %q\n want %q", got, want)
 	}
@@ -249,7 +249,7 @@ func TestDetailFields(t *testing.T) {
 	}
 	// long values wrap under the value column
 	l = Line{Text: `k="` + strings.Repeat("x", 30) + `"`}
-	if got := fieldLines(l, 20); len(got) != 2 || got[1] != "     "+strings.Repeat("x", 15) {
+	if got := fieldLines(l, 30); len(got) != 4 || got[3] != "              "+strings.Repeat("x", 14) {
 		t.Errorf("wrap: %q", got)
 	}
 }
