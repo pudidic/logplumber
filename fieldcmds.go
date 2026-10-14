@@ -177,6 +177,7 @@ type statsCfg struct {
 	rare     bool
 	limit    int
 	topField []string
+	tc       *timechartCfg // timechart: by[0] is the time bucket
 }
 
 type aggVal struct {
@@ -200,6 +201,9 @@ type group struct {
 type statsState struct {
 	groups map[string]*group
 	total  int64
+	// timechart without span: index into autoSpans, and the distinct time buckets
+	auto    int
+	buckets map[string]struct{}
 }
 
 func newStatsState() *statsState { return &statsState{groups: map[string]*group{}} }
@@ -209,6 +213,14 @@ const maxValues = 100
 func (st *statsState) add(c *statsCfg, l *Line) {
 	keys := make([]string, len(c.by))
 	for i, f := range c.by {
+		if i == 0 && c.tc != nil {
+			ms, ok := l.lineTime()
+			if !ok {
+				return
+			}
+			keys[0] = strconv.FormatInt(st.span(c).floor(time.UnixMilli(ms)).Unix(), 10)
+			continue
+		}
 		v, ok := l.Field(f)
 		if !ok {
 			return // like the original: events without a by-field are skipped
@@ -220,6 +232,10 @@ func (st *statsState) add(c *statsCfg, l *Line) {
 	if g == nil {
 		g = &group{keys: keys, vals: make([]aggVal, len(c.aggs))}
 		st.groups[k] = g
+		if st.newGroup(c, g) {
+			st.checkBuckets(c)
+			g = st.groups[strings.Join(g.keys, "\x00")]
+		}
 	}
 	st.total++
 	for i, a := range c.aggs {
@@ -267,42 +283,56 @@ func (st *statsState) add(c *statsCfg, l *Line) {
 }
 
 func (st *statsState) merge(c *statsCfg, o *statsState) {
+	if c.tc != nil && c.tc.span == nil {
+		switch { // bring both to the coarser automatic span
+		case o.auto < st.auto:
+			o.coarsen(c, st.auto)
+		case o.auto > st.auto:
+			st.coarsen(c, o.auto)
+		}
+	}
 	st.total += o.total
 	for k, og := range o.groups {
 		g := st.groups[k]
 		if g == nil {
 			st.groups[k] = og
+			st.newGroup(c, og)
 			continue
 		}
 		for i := range c.aggs {
-			a, b := &g.vals[i], &og.vals[i]
-			a.count += b.count
-			if b.nnum > 0 {
-				if a.nnum == 0 || b.min < a.min {
-					a.min = b.min
-				}
-				if a.nnum == 0 || b.max > a.max {
-					a.max = b.max
-				}
-			}
-			a.nnum += b.nnum
-			a.sum += b.sum
-			a.nums = append(a.nums, b.nums...)
-			for v := range b.set {
-				if a.set == nil {
-					a.set = map[string]struct{}{}
-				}
-				if c.aggs[i].fn == "dc" || len(a.set) < maxValues {
-					a.set[v] = struct{}{}
-				}
-			}
-			if !a.hasFirst && b.hasFirst {
-				a.first, a.hasFirst = b.first, true
-			}
-			if b.hasFirst {
-				a.last = b.last
-			}
+			mergeAgg(c.aggs[i].fn, &g.vals[i], &og.vals[i])
 		}
+	}
+	st.checkBuckets(c)
+}
+
+// mergeAgg adds the partial aggregation b to a.
+func mergeAgg(fn string, a, b *aggVal) {
+	a.count += b.count
+	if b.nnum > 0 {
+		if a.nnum == 0 || b.min < a.min {
+			a.min = b.min
+		}
+		if a.nnum == 0 || b.max > a.max {
+			a.max = b.max
+		}
+	}
+	a.nnum += b.nnum
+	a.sum += b.sum
+	a.nums = append(a.nums, b.nums...)
+	for v := range b.set {
+		if a.set == nil {
+			a.set = map[string]struct{}{}
+		}
+		if fn == "dc" || len(a.set) < maxValues {
+			a.set[v] = struct{}{}
+		}
+	}
+	if !a.hasFirst && b.hasFirst {
+		a.first, a.hasFirst = b.first, true
+	}
+	if b.hasFirst {
+		a.last = b.last
 	}
 }
 
@@ -406,6 +436,10 @@ func (s *statsStage) emitRows(emit Emit) {
 		s.emitTop(groups, emit)
 		return
 	}
+	if c.tc != nil {
+		s.emitTimechart(groups, emit)
+		return
+	}
 	// Biggest first by the first aggregation, then by group key.
 	vals := make(map[*group]string, len(groups))
 	for _, g := range groups {
@@ -505,10 +539,28 @@ func parseStats(args []word) (*Spec, error) {
 	}
 	p := &exprParser{toks: toks}
 	c := &statsCfg{}
+	if c.aggs, err = parseAggs(p, "stats"); err != nil {
+		return nil, err
+	}
+	if p.isKw("by") {
+		p.next()
+		if c.by, err = parseFieldList(p, "stats"); err != nil {
+			return nil, err
+		}
+	}
+	if p.peek().kind != tEOF {
+		return nil, p.errExpected("',', by or end of stats")
+	}
+	return statsSpec("stats", c), nil
+}
+
+// parseAggs parses "agg[(field)] [as name], ...".
+func parseAggs(p *exprParser, cmd string) ([]aggSpec, error) {
+	var aggs []aggSpec
 	for {
 		t := p.next()
 		if t.kind != tIdent {
-			return nil, errAt(t.pos, "stats: aggregation expected, e.g. stats count, avg(ms) by host")
+			return nil, errAt(t.pos, "%s: aggregation expected, e.g. %s count, avg(ms) by host", cmd, cmd)
 		}
 		low := strings.ToLower(t.s)
 		a := aggSpec{fn: aggFuncs[low]}
@@ -519,13 +571,13 @@ func parseStats(args []word) (*Spec, error) {
 			a.pct = 50
 		}
 		if a.fn == "" {
-			return nil, errAt(t.pos, "stats: unknown aggregation %q (count dc sum avg min max median pNN values first last)", t.s)
+			return nil, errAt(t.pos, "%s: unknown aggregation %q (count dc sum avg min max median pNN values first last)", cmd, t.s)
 		}
 		if p.isOp("(") {
 			p.next()
 			f := p.next()
 			if f.kind != tIdent && f.kind != tField {
-				return nil, errAt(f.pos, "stats: field name expected")
+				return nil, errAt(f.pos, "%s: field name expected", cmd)
 			}
 			a.field = f.s
 			if err := p.expectOp(")"); err != nil {
@@ -542,27 +594,17 @@ func parseStats(args []word) (*Spec, error) {
 			p.next()
 			n := p.next()
 			if n.kind != tIdent && n.kind != tField {
-				return nil, errAt(n.pos, "stats: name expected after as")
+				return nil, errAt(n.pos, "%s: name expected after as", cmd)
 			}
 			a.name = n.s
 		}
-		c.aggs = append(c.aggs, a)
+		aggs = append(aggs, a)
 		if p.isOp(",") {
 			p.next()
 			continue
 		}
-		break
+		return aggs, nil
 	}
-	if p.isKw("by") {
-		p.next()
-		if c.by, err = parseFieldList(p, "stats"); err != nil {
-			return nil, err
-		}
-	}
-	if p.peek().kind != tEOF {
-		return nil, p.errExpected("',', by or end of stats")
-	}
-	return statsSpec("stats", c), nil
 }
 
 func parseFieldList(p *exprParser, cmd string) ([]string, error) {

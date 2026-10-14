@@ -240,7 +240,7 @@ func (sh *Shell) builtin(args []word) (bool, error) {
 		}
 		return true, nil
 	case "help", "?":
-		fmt.Print(helpText)
+		os.Stdout.WriteString(helpText)
 		return true, nil
 	case "version":
 		fmt.Printf("psh %s (%s/%s, %s)\n", version, runtime.GOOS, runtime.GOARCH, runtime.Version())
@@ -336,10 +336,22 @@ automatically, nested JSON keys are joined with dots, e.g. req.path):
   table field...             fieldsummary (fields, coverage, distinct, top values)
   sort [N] -field +field     (field form; POSIX flags such as sort -rn still work)
   head N                     same as head -n N
-  Built-in fields: _raw _src _line. Missing fields are null; comparisons with
+
+Time (every line gets _time from its first timestamp: ISO 8601, Apache/nginx
+[14/Oct/2026:09:00:00 +0900], syslog "Oct 14 09:00:46", ctime, or an epoch
+time/ts/timestamp field; zoneless times are local):
+  search earliest=-24h [latest=now]   keep events in [earliest, latest)
+        times: now, -15m, -24h, -7d@d, @h, @d+9h, @w1, 2026-10-14T09:00:00, epoch
+  bin [field] span=5m [as name]       round _time down (numeric field: span=100)
+  timechart [span=5m] agg[(field)], ... [by field] [limit=N]
+        one row per time bucket, empty buckets filled, plus a bar chart;
+        span is picked automatically when omitted; extra series go to OTHER
+  sort -_time                         newest first
+  Built-in fields: _raw _src _line _time. Missing fields are null; comparisons with
   null are false. Operators: = == != < <= > >= + - * / %  and or not  in (..)  like
   Functions: if case coalesce isnull isnotnull isnum len lower upper trim substr
              round floor ceil abs tonumber tostring match like replace min max
+             now time relative_time(t, "-1d@d") strftime(t, "%F %T") strptime(s, fmt)
   Expression commands take no file operands: use  cat file | where ...
   '>' inside where/eval is a comparison; redirect after stats/top/table works.
 
@@ -364,4 +376,6 @@ Examples:
   where status >= 500 | stats count, avg(ms), p95(ms) by req.path
   cat access.log | rex "\" (?<status>\d{3}) (?<bytes>\d+)" | stats sum(bytes) by status
   fieldsummary
+  search earliest=-1h | timechart span=1m count by level
+  where status >= 500 | timechart count by req.path limit=5
 `

@@ -19,6 +19,8 @@ type Record struct {
 	parsed bool
 	row    bool         // produced by an aggregation: no automatic extraction
 	header *tableHeader // column header shared by the rows of one table
+	tm     int64        // _time in Unix milliseconds, valid when tState == 1
+	tState uint8        // 0 not looked for yet, 1 found, 2 none
 }
 
 type tableHeader struct {
@@ -58,6 +60,12 @@ func (l *Line) Field(name string) (string, bool) {
 		return l.Src, l.Src != ""
 	case "_line":
 		return strconv.Itoa(l.No), l.No > 0
+	case "_time":
+		ms, ok := l.lineTime()
+		if !ok {
+			return "", false
+		}
+		return epochString(ms), true
 	}
 	r := l.rec()
 	if r.row {
@@ -184,10 +192,29 @@ const maxColWidth = 60
 func makeTable(cols []string, rows [][]string, emit Emit) {
 	h := &tableHeader{cols: cols, align: make([]bool, len(cols))}
 	widths := make([]int, len(cols))
+	shown := rows // display values: _time columns are formatted as dates
+	copied := false
+	for i, c := range cols {
+		if c != "_time" {
+			continue
+		}
+		if !copied {
+			copied = true
+			shown = make([][]string, len(rows))
+			for j, r := range rows {
+				shown[j] = append([]string(nil), r...)
+			}
+		}
+		for _, r := range shown {
+			if r[i] != "" {
+				r[i] = formatTime(r[i])
+			}
+		}
+	}
 	for i, c := range cols {
 		widths[i] = min(strWidth([]rune(c)), maxColWidth)
-		numeric, any := true, false
-		for _, r := range rows {
+		numeric, any := c != "_time", false
+		for _, r := range shown {
 			if r[i] == "" {
 				continue
 			}
@@ -223,12 +250,12 @@ func makeTable(cols []string, rows [][]string, emit Emit) {
 		rule[i] = strings.Repeat("-", widths[i])
 	}
 	h.rule = render(rule)
-	for _, r := range rows {
+	for j, r := range rows {
 		set := make(map[string]string, len(cols))
 		for i, c := range cols {
 			set[c] = r[i]
 		}
-		if !emit(Line{Text: render(r), Rec: &Record{set: set, row: true, header: h}}) {
+		if !emit(Line{Text: render(shown[j]), Rec: &Record{set: set, row: true, header: h}}) {
 			return
 		}
 	}

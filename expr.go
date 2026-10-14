@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"time"
 	"unicode"
 )
 
@@ -197,6 +198,7 @@ type callNode struct {
 	name string
 	args []node
 	re   *regexp.Regexp // pre-compiled when the pattern is a literal
+	now  time.Time      // when the expression was parsed, for now()
 }
 
 func (n litNode) eval(*Line) value { return n.v }
@@ -339,6 +341,7 @@ var funcArity = map[string][2]int{
 	"substr": {2, 3}, "round": {1, 2}, "floor": {1, 1}, "ceil": {1, 1}, "abs": {1, 1},
 	"tonumber": {1, 1}, "tostring": {1, 1}, "match": {2, 2}, "like": {2, 2}, "replace": {3, 3},
 	"min": {1, -1}, "max": {1, -1}, "null": {0, 0}, "true": {0, 0}, "false": {0, 0},
+	"now": {0, 0}, "time": {0, 0}, "relative_time": {2, 2}, "strftime": {2, 2}, "strptime": {2, 2},
 }
 
 func (n *callNode) regex(l *Line, i int) (*regexp.Regexp, bool) {
@@ -379,6 +382,10 @@ func (n *callNode) eval(l *Line) value {
 		return boolV(arg(0).num)
 	case "null":
 		return nullV
+	case "now":
+		return numV(toEpoch(n.now))
+	case "time":
+		return numV(toEpoch(time.Now()))
 	case "true":
 		return boolV(true)
 	case "false":
@@ -458,6 +465,26 @@ func (n *callNode) eval(l *Line) value {
 			return nullV
 		}
 		return strV(re.ReplaceAllString(v.String(), sedReplacement(arg(2).String())))
+	case "relative_time":
+		if !v.num {
+			return nullV
+		}
+		t, err := parseTimeSpec(arg(1).String(), fromEpoch(v.n))
+		if err != nil {
+			return nullV
+		}
+		return numV(toEpoch(t))
+	case "strftime":
+		if !v.num {
+			return nullV
+		}
+		return value{s: strftime(fromEpoch(v.n).Local(), arg(1).String())}
+	case "strptime":
+		t, ok := strptime(v.String(), arg(1).String())
+		if !ok {
+			return nullV
+		}
+		return numV(toEpoch(t))
 	}
 	return nullV
 }
@@ -679,7 +706,7 @@ func (p *exprParser) parsePrimary() (node, error) {
 			return nil, errAt(t.pos, "unknown function %s()", t.s)
 		}
 		p.next()
-		n := &callNode{name: low}
+		n := &callNode{name: low, now: time.Now()}
 		if !p.isOp(")") {
 			for {
 				a, err := p.parseOr()
@@ -698,6 +725,13 @@ func (p *exprParser) parsePrimary() (node, error) {
 		}
 		if len(n.args) < ar[0] || ar[1] >= 0 && len(n.args) > ar[1] {
 			return nil, errAt(t.pos, "%s() takes %s argument(s)", low, arityText(ar))
+		}
+		if low == "relative_time" {
+			if lit, ok := n.args[1].(litNode); ok {
+				if _, err := parseTimeSpec(lit.v.String(), time.Now()); err != nil {
+					return nil, errAt(t.pos, "relative_time(): %v", err)
+				}
+			}
 		}
 		if low == "match" || low == "replace" {
 			if lit, ok := n.args[1].(litNode); ok {
