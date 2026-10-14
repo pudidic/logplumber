@@ -833,36 +833,87 @@ type sortTerm struct {
 type fieldSortStage struct {
 	terms []sortTerm
 	limit int
-	lines []Line
+	lines []sortedLine // with a limit: a heap whose root is the line that sorts last
+	seq   int
+}
+
+type sortedLine struct {
+	l   Line
+	seq int // arrival order, so equal keys keep their order
+}
+
+// less reports whether a sorts before b.
+func (s *fieldSortStage) less(a, b *sortedLine) bool {
+	for _, t := range s.terms {
+		x, okx := a.l.Field(t.field)
+		y, oky := b.l.Field(t.field)
+		if okx != oky {
+			return okx // missing values last
+		}
+		if r := compareValues(x, y); r != 0 {
+			return (r < 0) != t.desc
+		}
+	}
+	return a.seq < b.seq
 }
 
 func (s *fieldSortStage) Push(l Line, emit Emit) bool {
 	for _, t := range s.terms {
 		l.Field(t.field) // extract fields now, while the line is owned by this stage
 	}
-	s.lines = append(s.lines, l)
+	it := sortedLine{l: l, seq: s.seq}
+	s.seq++
+	if s.limit <= 0 {
+		s.lines = append(s.lines, it)
+		return true
+	}
+	// sort N: keep only the first N lines in a heap, so memory stays bounded
+	h := s.lines
+	if len(h) < s.limit {
+		h = append(h, it)
+		for i := len(h) - 1; i > 0; {
+			p := (i - 1) / 2
+			if !s.less(&h[p], &h[i]) {
+				break
+			}
+			h[p], h[i] = h[i], h[p]
+			i = p
+		}
+		s.lines = h
+		return true
+	}
+	if !s.less(&it, &h[0]) {
+		return true
+	}
+	h[0] = it
+	for i := 0; ; {
+		c := 2*i + 1
+		if c >= len(h) {
+			break
+		}
+		if c+1 < len(h) && s.less(&h[c], &h[c+1]) {
+			c++
+		}
+		if !s.less(&h[i], &h[c]) {
+			break
+		}
+		h[i], h[c] = h[c], h[i]
+		i = c
+	}
 	return true
 }
 
 func (s *fieldSortStage) emitAll(emit Emit) {
-	sort.SliceStable(s.lines, func(i, j int) bool {
-		for _, t := range s.terms {
-			a, oka := s.lines[i].Field(t.field)
-			b, okb := s.lines[j].Field(t.field)
-			if oka != okb {
-				return oka // missing values last
-			}
-			if r := compareValues(a, b); r != 0 {
-				return (r < 0) != t.desc
-			}
-		}
-		return false
-	})
-	for i, l := range s.lines {
+	out := s.lines
+	if s.limit > 0 {
+		out = append([]sortedLine(nil), s.lines...) // keep the heap intact for later snapshots
+	}
+	sort.Slice(out, func(i, j int) bool { return s.less(&out[i], &out[j]) })
+	for i := range out {
 		if s.limit > 0 && i >= s.limit {
 			return
 		}
-		if !emit(l) {
+		if !emit(out[i].l) {
 			return
 		}
 	}

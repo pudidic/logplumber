@@ -45,7 +45,7 @@ line also has `_raw`, `_src` (file name) and `_line`.
 | `top` / `rare [N] field... [by f...]` | `top 10 msg by level` |
 | `table field...` | `table _src status user` |
 | `fieldsummary` | fields with coverage, distinct count, min/max and top values |
-| `sort [N] -field +field` | `stats count by user \| sort -count` |
+| `sort [N] -field +field` | `stats count by user \| sort -count` — with N only the first N lines are kept in memory |
 
 - Aggregations: `count`, `dc`, `sum`, `avg`, `min`, `max`, `median`, `p50`…`p99`,
   `values`, `first`, `last`. Rows are ordered by the first aggregation, largest first.
@@ -96,6 +96,10 @@ are local time. Tables show `_time` as a date, but the value stays numeric, so
   `strftime(t, "%Y-%m-%d %H:%M")`, `strptime(s, "%d/%b/%Y:%H:%M:%S")`.
 
 ## Type-ahead mode
+
+With an empty command line psh shows the **latest events**: the 1000 newest lines
+that have a timestamp, newest first (`where isnotnull(_time) | sort 1000 -_time`).
+It appears at start-up and again whenever the line is cleared.
 
 | Key | Action |
 |---|---|
