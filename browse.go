@@ -179,14 +179,8 @@ func (e *liveEditor) buildDetail() {
 	for _, s := range wrapWidth(l.Text, width) {
 		out = append(out, "  "+s)
 	}
-	if names := l.FieldNames(); len(names) > 0 {
-		sort.Strings(names)
-		out = append(out, "", "\x00Hfields")
-		for _, n := range names {
-			v, _ := l.Field(n)
-			out = append(out, fmt.Sprintf("  %s = %s", n, v))
-		}
-	}
+	out = append(out, "", "\x00Hfields")
+	out = append(out, fieldLines(l, width)...)
 	if l.Src != "" && l.No > 0 {
 		lines, first, err := e.sh.contextLines(l.Src, l.No, contextRadius)
 		out = append(out, "", "\x00Hcontext")
@@ -203,6 +197,83 @@ func (e *liveEditor) buildDetail() {
 		}
 	}
 	e.detail = out
+}
+
+// maxFieldName caps the name column of the detail view.
+const maxFieldName = 24
+
+// fieldLines lists the fields of a result for the detail view: the built-in
+// fields, then the extracted or computed ones (in table column order for table
+// rows, otherwise sorted), with names aligned and long values wrapped.
+func fieldLines(l Line, width int) []string {
+	type kv struct{ k, v string }
+	var builtin, extracted []kv
+	row := l.Rec != nil && l.Rec.row
+	for _, n := range []string{"_time", "_src", "_line"} {
+		if v, ok := l.Field(n); ok && v != "" {
+			if n == "_time" {
+				v = formatTime(v) + "  (" + v + ")"
+			}
+			builtin = append(builtin, kv{n, v})
+		}
+	}
+	names := l.FieldNames()
+	if h := lineHeader(l); h != nil {
+		order := map[string]int{}
+		for i, c := range h.cols {
+			order[c] = i
+		}
+		sort.SliceStable(names, func(i, j int) bool {
+			oi, iok := order[names[i]]
+			oj, jok := order[names[j]]
+			if iok != jok {
+				return iok
+			}
+			if iok {
+				return oi < oj
+			}
+			return names[i] < names[j]
+		})
+	} else {
+		sort.Strings(names)
+	}
+	for _, n := range names {
+		if n == "_time" || n == "_src" || n == "_line" {
+			continue
+		}
+		v, _ := l.Field(n)
+		extracted = append(extracted, kv{n, v})
+	}
+	nw := 0
+	for _, f := range append(append([]kv(nil), builtin...), extracted...) {
+		nw = max(nw, min(maxFieldName, strWidth([]rune(f.k))))
+	}
+	var out []string
+	add := func(f kv) {
+		name := fitWidth(f.k, nw)
+		pad := strings.Repeat(" ", nw-strWidth([]rune(name)))
+		parts := wrapWidth(f.v, max(10, width-nw-4))
+		if len(parts) == 0 {
+			parts = []string{""}
+		}
+		out = append(out, "  "+name+pad+"  "+parts[0])
+		for _, p := range parts[1:] {
+			out = append(out, "  "+strings.Repeat(" ", nw)+"  "+p)
+		}
+	}
+	for _, f := range builtin {
+		add(f)
+	}
+	if len(builtin) > 0 && len(extracted) > 0 {
+		out = append(out, "")
+	}
+	for _, f := range extracted {
+		add(f)
+	}
+	if len(extracted) == 0 && !row {
+		out = append(out, "\x00D  (no other fields: JSON and key=value are extracted automatically; add more with rex)")
+	}
+	return out
 }
 
 // wrapWidth splits s into pieces of at most w terminal columns.
