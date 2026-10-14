@@ -429,3 +429,7 @@ logs and their generator, `release.sh` builds the release archives.
   in `.plumb.conf` (or `rex`) for their fields.
 - With very many files, each keystroke rereads all of them. After the first
   run, the OS file cache makes this fast.
+
+## License
+
+Copyright 2026 Teddy Choi. Licensed under the [Apache License, Version 2.0](LICENSE).

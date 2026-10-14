@@ -1,6 +1,6 @@
 #!/bin/sh
 # release.sh vX.Y.Z — builds plumb for Linux, macOS and Windows on x86-64 and
-# ARM64 and packs each into dist/ with README.md, plus SHA256SUMS.
+# ARM64 and packs each into dist/ with README.md and LICENSE, plus SHA256SUMS.
 set -eu
 tag=${1:?usage: release.sh vX.Y.Z}
 ver=${tag#v}
@@ -14,7 +14,7 @@ for target in linux/amd64 linux/arm64 darwin/amd64 darwin/arm64 windows/amd64 wi
 	mkdir -p "dist/$name"
 	CGO_ENABLED=0 GOOS=$os GOARCH=$arch go build -trimpath \
 		-ldflags "-s -w -X main.version=$ver" -o "dist/$name/$exe" ./cmd/plumb
-	cp README.md "dist/$name/"
+	cp README.md LICENSE "dist/$name/"
 	if [ "$os" = windows ]; then
 		(cd dist && zip -qr "$name.zip" "$name")
 	else
