@@ -197,6 +197,7 @@ type liveEditor struct {
 	sel, top     int      // selected result, first result shown
 	detail       []string // detail view of the selected result
 	detailScroll int
+	timeline     *timeline // of the current run (event searches)
 }
 
 type editMode int
@@ -435,7 +436,7 @@ func (e *liveEditor) resetResults(status string) int {
 		dir = e.sh.store.dir
 	}
 	e.rows = &rowLog{dir: dir}
-	e.preview, e.errs, e.done = nil, nil, false
+	e.preview, e.errs, e.done, e.timeline = nil, nil, false, nil
 	e.mode, e.sel, e.top, e.detail = modeEdit, 0, 0, nil
 	e.dirty = true
 	return e.gen
@@ -665,7 +666,14 @@ func (e *liveEditor) render() {
 			body = append(body, "\x00E"+er)
 		}
 	}
+	tl := ""
+	if e.mode == modeEdit {
+		tl = e.timeline.render(w)
+	}
 	room := max(1, maxRows-3-len(body)) // keep note, status and hint rows
+	if tl != "" {
+		room = max(1, room-1)
+	}
 	body = append(body, e.bodyLines(room)...)
 	status, statusErr := e.status, e.statusErr
 	ana := e.ana
@@ -717,6 +725,9 @@ func (e *liveEditor) render() {
 		line(status, "\x1b[31m")
 	} else {
 		line(status, "\x1b[36m")
+	}
+	if tl != "" {
+		line(tl, timelineStyle)
 	}
 	for _, l := range body {
 		switch {
@@ -775,6 +786,8 @@ func (r *liveRun) SetStatus(s string) { r.update(func() { r.e.status, r.e.status
 func (r *liveRun) SetLive(lines []string) {
 	r.update(func() { r.e.preview = lines })
 }
+
+func (r *liveRun) SetTimeline(t *timeline) { r.update(func() { r.e.timeline = t }) }
 
 func (r *liveRun) PreviewRows() int {
 	_, h := r.e.size()

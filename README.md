@@ -94,6 +94,16 @@ this out.
   key=value, access logs, error logs, syslog and your own formats; see below).
   Every event also has `_raw`, `_src` (file name), `_line`, `_time`, `source`
   and `sourcetype`.
+- **Timeline:** above the events of a search (not above `stats`, `timechart`
+  and other tables), one line shows the events per time slot, with time running
+  left to right:
+  `09:01 ▆▃▃▅▆  ▂ ▂ ▂▂▅ 11:26 · 5m/col · max 3 · 23 events`. The span per column
+  is the finest that fits the terminal width. It counts every matching event,
+  also those that `head` or the type-ahead preview leave out. A few stray
+  timestamps far from the rest (from 200 events on, at most 0.5% at each end)
+  are left out of the range and counted as "outside". It is shown in type-ahead
+  mode and above Enter output in a terminal, not when the output goes to a
+  file or pipe.
 - **Events come newest first**, as in Splunk: a search is sorted by `_time`
   before the first command that depends on order (`head`, `dedup`, `table`, …).
   `head N` right after the search keeps only the newest N in memory. Commands
@@ -289,6 +299,7 @@ appears at start-up and again whenever the line is cleared.
 | `timecmds.go` | bin, timechart (on the stats engine, bar charts) |
 | `source.go` | File discovery, archive decoding (tar/gz/bz2/zip, nested), worker threads, progress counters |
 | `follow.go` | Real-time: following files (appends, new files, truncation), `tail -f`, sliding window |
+| `timeline.go` | One-line event timeline above search results |
 | `run.go` | Execution engine: parallel/serial split, live previews, status line, file-list cache |
 | `ui.go`, `term_*.go` | ANSI live-region rendering, OS-specific terminal handling |
 

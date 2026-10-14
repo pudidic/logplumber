@@ -24,6 +24,7 @@ type display interface {
 	End(summary string)
 	Live() bool       // whether previews should be computed
 	PreviewRows() int // number of preview lines that fit
+	SetTimeline(t *timeline)
 }
 
 var errInterrupted = errors.New("interrupted (Ctrl+C)")
@@ -53,6 +54,7 @@ type runner struct {
 	batches     chan []Line
 	snap        *storeSnap // index snapshot taken when the run starts
 	follow      *followCfg // real-time: keep reading what is appended
+	timeline    *timeline  // event search: events per time slot
 	exclude     string
 	errMu       sync.Mutex
 	errN        int
@@ -154,7 +156,7 @@ func (r *runner) planSPL(ast *pipelineAST) error {
 		r.follow = r.specs[0].rt
 	}
 	_, typeAhead := r.ui.(*liveRun) // a preview while typing, not the full output
-	r.specs = orderSPL(r.specs, typeAhead, r.follow)
+	r.specs, r.timeline = orderSPL(r.specs, typeAhead, r.follow)
 	return nil
 }
 
@@ -237,6 +239,7 @@ func (sh *Shell) runPipeline(userCtx context.Context, ast *pipelineAST, disp dis
 	r.batches = make(chan []Line, 4*sh.threads)
 
 	r.ui.Begin()
+	r.ui.SetTimeline(r.timeline)
 	stopStatus := make(chan struct{})
 	statusDone := make(chan struct{})
 	go func() {
