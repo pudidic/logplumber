@@ -16,10 +16,11 @@ type token struct {
 }
 
 type word struct {
-	s      string
-	quoted bool
-	raw    bool // whole argument text of an expression command (where, stats, ...)
-	pos    int  // rune offset in the input line
+	s        string
+	quoted   bool
+	raw      bool // whole argument text of an expression command (where, stats, ...)
+	pos      int  // rune offset in the input line
+	nameOnly bool // a file name to look for in all subdirectories (SPL source=)
 }
 
 type rawCmd struct{ args []word }
@@ -28,6 +29,7 @@ type pipelineAST struct {
 	cmds     []rawCmd
 	redirect string
 	appendTo bool
+	spl      bool // an SPL query (see spl.go)
 }
 
 // Backslash only escapes shell-special characters, so Windows paths such as
@@ -53,15 +55,11 @@ func lexPos(line string) ([]token, int, error) {
 			inWord, start = true, i
 		}
 	}
-	segWords, wantRaw := 0, false
 	flush := func() {
 		if inWord {
-			w := cur.String()
-			toks = append(toks, token{s: w, quoted: quoted, pos: start})
+			toks = append(toks, token{s: cur.String(), quoted: quoted, pos: start})
 			cur.Reset()
 			inWord, quoted = false, false
-			segWords++
-			wantRaw = segWords == 1 && !toks[len(toks)-1].quoted && exprCommands[w]
 		}
 	}
 	rs := []rune(line)
@@ -70,26 +68,8 @@ func lexPos(line string) ([]token, int, error) {
 		switch {
 		case c == ' ' || c == '\t' || c == '\r' || c == '\n':
 			flush()
-			if wantRaw {
-				// Expression commands get the rest of their segment verbatim, so
-				// "where ms > 100" is not a redirection and quotes keep their meaning.
-				wantRaw = false
-				end, qpos, err := scanRaw(rs, i+1, !exprCompares[toks[len(toks)-1].s])
-				if err != nil {
-					return toks, qpos, err
-				}
-				j := i + 1
-				for j < end && (rs[j] == ' ' || rs[j] == '\t') {
-					j++
-				}
-				if raw := strings.TrimRight(string(rs[j:end]), " \t\r\n"); raw != "" {
-					toks = append(toks, token{s: raw, quoted: true, raw: true, pos: j})
-				}
-				i = end - 1
-			}
 		case c == '|' || c == ';':
 			flush()
-			segWords, wantRaw = 0, false
 			toks = append(toks, token{op: string(c), pos: i})
 		case c == '>':
 			flush()
@@ -140,43 +120,6 @@ func lexPos(line string) ([]token, int, error) {
 	}
 	flush()
 	return toks, -1, nil
-}
-
-// exprCommands take their whole argument text unparsed by the shell lexer.
-var exprCommands = map[string]bool{"where": true, "eval": true, "stats": true, "top": true,
-	"rare": true, "table": true, "rex": true, "fieldsummary": true, "timechart": true}
-
-// exprCompares are the expression commands where '>' is a comparison; after the
-// others an unquoted '>' starts a redirection.
-var exprCompares = map[string]bool{"where": true, "eval": true}
-
-// scanRaw finds the end of an expression command's argument text: the next '|' or
-// ';' (or '>' when gtEnds) outside quotes. On an unterminated quote it returns the
-// quote's offset.
-func scanRaw(rs []rune, from int, gtEnds bool) (end, qpos int, err error) {
-	var q rune
-	for i := from; i < len(rs); i++ {
-		c := rs[i]
-		switch {
-		case q != 0:
-			if c == '\\' && q == '"' && i+1 < len(rs) {
-				i++
-			} else if c == q {
-				q = 0
-			}
-		case c == '"' || c == '\'':
-			q, qpos = c, i
-		case c == '|' || c == ';' || c == '>' && gtEnds:
-			return i, -1, nil
-		}
-	}
-	if q != 0 {
-		if q == '"' {
-			return 0, qpos, errors.New("unterminated double quote")
-		}
-		return 0, qpos, errors.New("unterminated single quote")
-	}
-	return len(rs), -1, nil
 }
 
 // splitStatements splits a token list on ";".

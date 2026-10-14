@@ -3,14 +3,14 @@ package main
 import "testing"
 
 func TestAnalyze(t *testing.T) {
-	sh := &Shell{ui: &UI{}, threads: 1}
+	sh := &Shell{ui: &UI{}, threads: 1, lang: langShell}
 	cases := []struct {
 		line    string
 		runCmds int // commands in the runnable prefix
 		badFrom int
 	}{
-		{"", 2, -1}, // empty line: the latest events
-		{"  ", 2, -1},
+		{"", 1, -1}, // empty line: the latest events (an SPL search)
+		{"  ", 1, -1},
 		{"gr", 0, 0},
 		{"grep", 0, 0},
 		{"grep foo", 1, -1},

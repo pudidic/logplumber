@@ -1,9 +1,19 @@
 # psh — parallel file shell
 
-psh runs POSIX-style pipelines over every file in the current directory and its
-subdirectories, including files inside archives. It uses multiple threads and
-shows progress and results in real time. In an interactive terminal the command
-line is **re-run on every keystroke**.
+psh searches every file in the current directory and its subdirectories,
+including files inside archives. It uses multiple threads and shows progress and
+results in real time. In an interactive terminal the query is **re-run on every
+keystroke**.
+
+It has two query languages, each with its own unchanged syntax:
+
+- **SPL mode** (default, prompt `spl>`): Splunk's Search Processing Language.
+  `error status>=500 | stats count by req.path | sort -count`
+- **Shell mode** (prompt `psh>`): POSIX pipelines.
+  `grep -i error | cut -d' ' -f1 | sort | uniq -c | sort -rn > top.txt`
+
+**Tab** switches between them (or the built-ins `spl` and `sh`, or `psh -sh` at
+start-up).
 
 Its only dependencies are the Go standard library and `golang.org/x/term` (for
 terminal raw mode).
@@ -21,47 +31,94 @@ go test ./...
 ## Run
 
 ```bash
-psh                       # interactive shell (results update as you type)
+psh                       # interactive, SPL mode (results update as you type)
+psh -sh                   # start in shell mode
 psh -nolive               # plain line input
-psh -c "grep -i error | wc -l"
+psh -c 'error | stats count by _src'
+psh -sh -c "grep -i error | wc -l"
 psh -j 8                  # number of worker threads (default: number of CPUs)
 ```
 
 Type `help` inside the shell for the list of commands and options.
 
-## Field commands
+## SPL mode
 
-Besides the POSIX text tools, psh has pipeline commands that work on fields.
-JSON lines (also a JSON object at the end of a line) and `key=value` text are
-parsed automatically. Nested JSON keys are joined with dots (`req.path`). Every
-line also has `_raw`, `_src` (file name) and `_line`.
+A query starts with a search; commands follow after `|`. Commands, quoting and
+operators follow Splunk: `"..."` is a string, `'...'` is a field name inside
+`where`/`eval`, and `>` is always a comparison (there is no redirection; use
+`outputcsv`).
+
+### Search
+
+| Syntax | Matches |
+|---|---|
+| `error` | events containing the word (case-insensitive, whole words: not `errors`) |
+| `"db timeout"` | the phrase |
+| `fail*` | wildcards |
+| `status=500` `status!=200` `ms>1000` `user=k*` | field comparisons; `=` values are case-insensitive and may use `*`; `!=` needs the field |
+| `user=*` | events that have the field |
+| `level IN (warn, error)` | any of the values |
+| `NOT a`, `a OR b`, `a AND b`, `(a b)` | uppercase operators; terms side by side mean AND; as in Splunk, OR binds tighter than AND |
+| `earliest=-24h latest=now` | time range `[earliest, latest)` |
+| `source=*.jsonl` `source=app/app.log` | files to read: a name matches in all subdirectories and archives |
+| `index=main` | accepted and ignored (psh has no indexes) |
+
+`*` alone matches everything: `* | stats count`. A query such as `stats count`
+searches for the words "stats" and "count", as in Splunk; type-ahead mode points
+this out.
+
+### Commands
 
 | Command | Example |
 |---|---|
-| `rex [field=F] "regex"` | `rex "\" (?<status>\d{3}) (?<bytes>\d+)"` — named groups become fields |
-| `where <condition>` | `where status >= 500 and req.path like "/api/%"` |
+| `search <terms>` | `\| search status=200` |
+| `where <expr>` | `where status >= 500 and like(req.path, "/api/%")` |
 | `eval name = <expr>, ...` | `eval sec = round(ms / 1000, 1), slow = if(ms > 1000, "y", "n")` |
+| `rex [field=F] "regex"` | `rex "from (?<ip>\S+) port"` — named groups become fields |
+| `regex [field=\|field!=]"re"` | `regex user!="^bot"` |
 | `stats agg, ... [by f, ...]` | `stats count, avg(ms), p95(ms) as p95 by host` |
 | `top` / `rare [N] field... [by f...]` | `top 10 msg by level` |
-| `table field...` | `table _src status user` |
+| `timechart [span=S] [limit=N] agg, ... [by f]` | `timechart span=5m count by level` |
+| `bin [f] span=S [as name]` | `bin span=5m \| stats count by _time` |
+| `table f, f*` | `table _time user req.*` |
+| `fields [+\|-] f, f*` | `fields - req.*` |
+| `rename f AS g, ...` | `rename count AS n` |
+| `dedup [N] f... [consecutive=true] [keepempty=true]` | `dedup user` |
+| `sort [N] [-\|+]f, ...` | `sort -count, user` — with N only the first N rows are kept in memory |
+| `head N`, `tail N`, `reverse` | `head 20` |
 | `fieldsummary` | fields with coverage, distinct count, min/max and top values |
-| `sort [N] -field +field` | `stats count by user \| sort -count` — with N only the first N lines are kept in memory |
+| `outputcsv file` | `outputcsv errors` writes `errors.csv` and passes the results on |
 
+- Fields: JSON lines (also a JSON object at the end of a line) and `key=value`
+  text are parsed automatically; nested JSON keys are joined with dots
+  (`req.path`). Every event also has `_raw`, `_src` (file name), `_line` and `_time`.
+- **Events come newest first**, as in Splunk: a search is sorted by `_time`
+  before the first command that depends on order (`head`, `dedup`, `table`, …).
+  `head N` right after the search keeps only the newest N in memory. Commands
+  that make their own order (`stats`, `sort`, `timechart`, …) skip the sort.
 - Aggregations: `count`, `dc`, `sum`, `avg`, `min`, `max`, `median`, `p50`…`p99`,
-  `values`, `first`, `last`. Rows are ordered by the first aggregation, largest first.
-- Operators: `= == != < <= > >= + - * / %`, `and or not`, `in (...)`, `like`
-  (`%` and `_` wildcards). Functions: `if case coalesce isnull isnotnull isnum len
-  lower upper trim substr round floor ceil abs tonumber tostring match like replace min max`.
+  `values`, `first`, `last`. `stats` rows are ordered by the first aggregation,
+  largest first.
+- Expression operators: `= == != < <= > >= + - * / %`, `and or not`, `in (...)`,
+  `like` (`%` and `_` wildcards). Functions: `if case coalesce isnull isnotnull
+  isnum len lower upper trim substr round floor ceil abs tonumber tostring match
+  like replace min max now time relative_time strftime strptime`.
 - A missing field is null. Comparisons with null are false, so `where status != 200`
-  skips lines without a status.
-- Results of `stats`, `top`, `table` and `fieldsummary` are aligned tables whose rows
-  keep their fields, so later commands can filter (`where count > 10`) or sort them.
-- `stats` and `top` pre-aggregate in every worker thread and merge the partial
-  results, and they update a live preview while reading.
-- Expression commands receive their argument text verbatim, so `>` inside
-  `where`/`eval` is a comparison. Redirection still works after `stats`, `top`,
-  `table` and the text commands. Expression commands take no file operands; use
-  `cat file | where ...`.
+  skips events without a status.
+- Results of `stats`, `top`, `timechart`, `table` and `fieldsummary` are tables
+  whose rows keep their fields, so later commands can filter, sort, `eval`,
+  `rename` or `fields` them; the table is redrawn with the new columns.
+- `stats`, `top` and `timechart` pre-aggregate in every worker thread and merge
+  the partial results, and they update a live preview while reading.
+
+## Shell mode
+
+POSIX text tools: `grep`, `sort`, `uniq`, `wc`, `head`, `tail`, `cat`, `cut`,
+`tr`, `sed`, `find`, `ls`, `echo`, with `|`, `;`, `> file` and `>> file`. Without
+file operands the first command reads every file. A glob without a path separator
+(`*.log`) matches file names in all subdirectories and inside archives. SPL
+commands are not available here (and shell commands not in SPL mode); the error
+message says to press Tab.
 
 ## Time
 
@@ -75,11 +132,11 @@ text has none, a JSON or key=value field named `time`, `ts`, `timestamp` or
 are local time. Tables show `_time` as a date, but the value stays numeric, so
 `where`, `sort -_time` and arithmetic work on it.
 
-| Command | Example |
+| SPL | Example |
 |---|---|
-| `search earliest=T [latest=T]` | `search earliest=-24h` — events in `[earliest, latest)`; lines without a time are dropped |
-| `bin [field] span=S [as name]` | `bin span=5m \| stats count by _time`, `bin ms span=100` (gives `100-200`) |
-| `timechart [span=S] agg, ... [by field] [limit=N]` | `timechart span=1m count by level`, `timechart p95(ms)` |
+| `earliest=T [latest=T]` in a search | `earliest=-24h error` — events in `[earliest, latest)`; events without a time are dropped |
+| `bin [field] span=S [as name]` | `* \| bin span=5m \| stats count by _time`, `bin ms span=100` (gives `100-200`) |
+| `timechart [span=S] agg, ... [by field] [limit=N]` | `* \| timechart span=1m count by level`, `timechart p95(ms)` |
 
 - Time values: `now`, `-15m`, `-24h`, `-7d`, snaps such as `@h`, `-1d@d`, `@w1`
   (Monday), `@mon`, offsets after a snap (`@d+9h`), absolute times
@@ -98,26 +155,28 @@ are local time. Tables show `_time` as a date, but the value stays numeric, so
 ## Type-ahead mode
 
 With an empty command line psh shows the **latest events**: the 1000 newest lines
-that have a timestamp, newest first (`where isnotnull(_time) | sort 1000 -_time`).
-It appears at start-up and again whenever the line is cleared.
+that have a timestamp, newest first (the SPL query `_time=*`), in both modes. It
+appears at start-up and again whenever the line is cleared.
 
 | Key | Action |
 |---|---|
 | Any character | Recompute the results and show them below the prompt |
 | **Esc** | **Exit psh** (always shown in the hint bar at the bottom) |
+| Tab | Switch between SPL and shell mode |
 | Enter | Run the line with full output, which stays in the scrollback |
 | ↑ / ↓ | Command history |
 | ← / →, Home / End, Del | Move the cursor, delete |
 | Ctrl+U / Ctrl+K / Ctrl+W | Clear the line, delete to end of line, delete the previous word |
 | Ctrl+C | Stop the running preview; otherwise clear the line |
 
-- The pipeline is checked command by command from the left. The first command
+- The query is checked command by command from the left. The first command
   that is incomplete or invalid, and everything after it, is **underlined in
   red**. Only the complete commands before it are run.
-  Example: in `grep -i apple | so`, `so` is underlined and the results of
-  `grep -i apple` are shown.
-- Redirections (`>`), multiple commands (`;`) and built-ins (`cd`, …) are not
-  previewed. They run only when you press Enter.
+  Example: in `apple | so`, `so` is underlined and the results of the search
+  `apple` are shown.
+- A search preview keeps the newest 1000 events; Enter shows all of them.
+- Redirections (`>`), multiple commands (`;`), `outputcsv` and built-ins (`cd`,
+  …) are not previewed. They run only when you press Enter.
 - The file list is cached for 10 seconds, so typing does not rescan the
   directory tree on every key. Pressing Enter clears the cache.
 
@@ -125,16 +184,18 @@ It appears at start-up and again whenever the line is cleared.
 
 | File | Role |
 |---|---|
-| `main.go` | Entry point, line-input REPL, built-ins, Ctrl+C handling, help text |
+| `main.go` | Entry point, line-input REPL, modes, built-ins, Ctrl+C handling, help text |
 | `live.go` | Type-ahead mode: key decoding, line editing, incomplete-command analysis, rendering |
-| `parse.go` | Tokenizer that records positions; parsing of `\|` `>` `>>` `;`; getopt |
-| `commands.go` | Per-command option parsing into a Spec |
+| `parse.go` | Shell mode: tokenizer that records positions; parsing of `\|` `>` `>>` `;`; getopt |
+| `commands.go` | Shell mode: per-command option parsing into a Spec |
+| `spl.go` | SPL mode: query splitting, command dispatch, implicit time order, fields/rename/dedup/regex/sort/outputcsv |
+| `search.go` | SPL search language (terms, field comparisons, boolean operators, time range, source) |
 | `stages.go` | grep, sort (parallel), uniq, wc, head, tail, cat, cut, tr, sed |
 | `record.go` | Fields of a line: automatic JSON/key=value extraction, aligned table output |
 | `expr.go` | Expression language of `where` and `eval` (lexer, parser, evaluator) |
 | `fieldcmds.go` | rex, where, eval, stats (mergeable), top, rare, table, fieldsummary, field sort |
 | `timeutil.go` | Timestamp detection, spans and bucketing, relative times, strftime/strptime |
-| `timecmds.go` | search (time range), bin, timechart (on the stats engine, bar charts) |
+| `timecmds.go` | bin, timechart (on the stats engine, bar charts) |
 | `source.go` | File discovery, archive decoding (tar/gz/bz2/zip, nested), worker threads, progress counters |
 | `run.go` | Execution engine: parallel/serial split, live previews, status line, file-list cache |
 | `ui.go`, `term_*.go` | ANSI live-region rendering, OS-specific terminal handling |
@@ -143,8 +204,9 @@ It appears at start-up and again whenever the line is cleared.
 
 1. psh collects the list of input files first. Their total size is the
    denominator of the progress percentage.
-2. The stateless, line-by-line commands at the front of the pipeline (grep, cut,
-   tr, sed, cat) run in **N worker threads**, each handling whole files.
+2. The stateless, line-by-line commands at the front of the pipeline (search,
+   where, eval, rex, grep, cut, tr, sed, cat, …) run in **N worker threads**,
+   each handling whole files.
 3. The order-dependent commands that follow (sort, uniq, wc, head, …) run in a
    single serial goroutine.
 4. Stages that need all of their input (sort, wc, tail) are snapshotted
@@ -161,7 +223,9 @@ It appears at start-up and again whenever the line is cleared.
   in patterns, only in sed replacement strings.
 - `tr` works line by line, so it does not translate the newline character.
 - xz and zstd archives are not supported (they are not in the standard library).
-- Files are read in parallel, so the order of output between files can change
-  from run to run. The order of lines within a file is preserved.
+- In shell mode files are read in parallel, so the order of output between files
+  can change from run to run. The order of lines within a file is preserved.
+- SPL mode has no sourcetypes yet: fields come from JSON and key=value only, so
+  for Apache or syslog lines use `rex` to extract them.
 - With very many files, each keystroke rereads all of them. After the first
   run, the OS file cache makes this fast.

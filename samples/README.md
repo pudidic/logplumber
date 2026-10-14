@@ -16,43 +16,49 @@ All addresses use documentation ranges; nothing here is real data.
 | `archives/support-bundle.tar.gz` | tar.gz bundle with a nested `.gz` log inside |
 | `archives/workers.zip` | zip with logs from two nodes |
 
-## Example queries
+## Example queries (SPL mode)
 
 ```
 # Apache status codes across the current log, the rotated .gz and the bundle
-cat access.log* | rex '"(?<method>\w+) (?<path>\S+) [^"]*" (?<status>\d{3}) (?<bytes>\S+)' | stats count, sum(bytes) as bytes by status
+source=access.log* | rex "\"(?<method>\w+) (?<path>\S+) [^\"]*\" (?<status>\d{3}) (?<bytes>\S+)" | stats count, sum(bytes) as bytes by status
 
 # JSON: slowest errors by service and message
-where level = "error" | stats count, avg(ms), p95(ms) by service, msg
+level=error | stats count, avg(ms), p95(ms) by service, msg
 
 # Most common paths per level, including the logs inside the tar.gz
-cat *.jsonl* | top 3 req.path by level
+source=*.jsonl* | top 3 req.path by level
 
 # logfmt: failed jobs (also from both nodes inside workers.zip)
-cat worker.log* | where result != "ok" | stats count, max(duration_ms) by job, result
+source=worker.log* result!=ok | stats count, max(duration_ms) by job, result
 
 # syslog: where failed SSH logins come from
-grep 'Failed password' | rex 'from (?<ip>\S+) port' | top ip
+"Failed password" | rex "from (?<ip>\S+) port" | top ip
 
 # nginx response times
-cat nginx/access.log | rex 'rt=(?<rt>[\d.]+)' | stats count, avg(rt), p99(rt)
+source=nginx/access.log | rex "rt=(?<rt>[\d.]+)" | stats count, avg(rt), p99(rt)
 
 # Apache error log modules and severities
-cat apache/error.log | rex '\[(?<module>\w+):(?<sev>\w+)\]' | stats count by module, sev
+source=apache/error.log | rex "\[(?<module>\w+):(?<sev>\w+)\]" | stats count by module, sev
 
-# What fields does the JSON log have?
-cat app/app.jsonl | fieldsummary
-
-# Requests per minute by level, with a stacked bar chart
-cat app/app.jsonl | timechart span=1m count by level
+# Requests per 5 minutes by level, with a stacked bar chart
+source=app/app.jsonl | timechart span=5m count by level
 
 # 5xx errors over time, top 3 paths
-cat access.log* | rex '"\w+ (?<path>\S+) [^"]*" (?<status>\d{3})' | where status >= 500 | timechart span=10m count by path limit=3
+source=apache/access.log | rex "\"\w+ (?<path>\S+) [^\"]*\" (?<status>\d{3})" | where status >= 500 | timechart span=10m count by path limit=3
 
-# Latest 5 events across all logs
-sort 5 -_time | table _time _src _raw
+# Latest 5 errors from anywhere
+error | head 5 | table _time _src _raw
 
-# Everything, including archive members
+# What fields does the JSON log have?
+source=app/app.jsonl | fieldsummary
+```
+
+## Example queries (shell mode, Tab or `sh`)
+
+```
+grep 'Failed password' | grep -o 'from [0-9.]*' | sort | uniq -c | sort -rn
+cat nginx/access.log | cut -d' ' -f1 | sort | uniq -c | sort -rn | head
+grep -c timeout *.log
 find
 ```
 

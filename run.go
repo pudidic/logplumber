@@ -73,6 +73,9 @@ func (r *runner) reportErr(err error) {
 // plan turns the parsed pipeline into a source and a list of stage specs.
 func (sh *Shell) plan(ast *pipelineAST, disp display) (*runner, error) {
 	r := &runner{sh: sh, ui: disp, prog: &progress{}}
+	if ast.spl {
+		return r, r.planSPL(ast)
+	}
 	first := ast.cmds[0]
 	rest := ast.cmds
 	switch first.args[0].s {
@@ -121,6 +124,27 @@ func (sh *Shell) plan(ast *pipelineAST, disp display) (*runner, error) {
 		}
 	}
 	return r, nil
+}
+
+// planSPL builds the stages of an SPL query.
+func (r *runner) planSPL(ast *pipelineAST) error {
+	for i, c := range ast.cmds {
+		s, ops, err := buildSPLSpec(c, i == 0)
+		if err != nil {
+			return err
+		}
+		if i == 0 {
+			r.ops = ops
+		}
+		if s.out != "" {
+			if abs, err := filepath.Abs(s.out); err == nil {
+				r.exclude = abs // don't read the file being written
+			}
+		}
+		r.specs = append(r.specs, s)
+	}
+	r.specs = orderSPL(r.specs, r.ui != nil && r.ui.Live())
+	return nil
 }
 
 func (r *runner) setup(multi bool) {

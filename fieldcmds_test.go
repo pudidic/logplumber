@@ -5,8 +5,28 @@ import (
 	"testing"
 )
 
-// runText runs a pipeline over the given input lines and returns the output text.
+// runText runs SPL commands over the given input lines (in input order: no
+// implicit time sort) and returns the output text.
 func runText(t *testing.T, pipeline string, input ...string) []string {
+	t.Helper()
+	ast, err := splParse("* | " + pipeline)
+	if err != nil {
+		t.Fatalf("%s: %v", pipeline, err)
+	}
+	var specs []*Spec
+	for i, c := range ast.cmds {
+		s, _, err := buildSPLSpec(c, i == 0)
+		if err != nil {
+			t.Fatalf("%s: %v", pipeline, err)
+		}
+		specs = append(specs, s)
+	}
+	specs = retableSPL(specs)
+	return runSpecs(specs, input...)
+}
+
+// runShell runs a shell-mode pipeline over the given input lines.
+func runShell(t *testing.T, pipeline string, input ...string) []string {
 	t.Helper()
 	toks, err := lex(pipeline)
 	if err != nil {
@@ -27,6 +47,10 @@ func runText(t *testing.T, pipeline string, input ...string) []string {
 		}
 		specs = append(specs, s)
 	}
+	return runSpecs(specs, input...)
+}
+
+func runSpecs(specs []*Spec, input ...string) []string {
 	st, emits := instantiate(specs)
 	var out []string
 	var hdr *tableHeader
@@ -138,13 +162,17 @@ func TestAnalyzeExpressions(t *testing.T) {
 		runCmds int
 		badFrom int
 	}{
-		{"where status >", 0, 13},
-		{"grep x | where status > 5", 2, -1},
-		{"grep x | where status > ", 1, 22},
-		{"grep x | stats count by", 1, 21},
-		{"grep x | stats foo(ms)", 1, 15},
-		{"grep x | where level = \"err", 1, 23},
-		{"stats count by host > out.txt", 0, -1}, // redirection: not previewed
+		{"status>", 0, 6},
+		{"x | where status > 5", 2, -1},
+		{"x | where status > ", 1, 17},
+		{"x | stats count by", 1, 16},
+		{"x | stats foo(ms)", 1, 10},
+		{"x | where level = \"err", 1, 18},
+		{"x | stats count by host > 5", 1, 24}, // no redirection in SPL
+		{"x | outputcsv out", 1, -1},           // not previewed
+		{"x | grep y", 1, 4},                   // a shell command
+		{"x |", 1, 2},
+		{"| stats count", 0, 0},
 	}
 	for _, c := range cases {
 		a := sh.analyze(c.line)

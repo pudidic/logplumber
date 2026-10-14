@@ -156,7 +156,7 @@ func collectJobs(ctx context.Context, operands []word, exclude string, prog *pro
 	var filters []string
 	for _, op := range operands {
 		switch {
-		case !op.quoted && hasGlob(op.s) && !strings.ContainsAny(op.s, `/\`):
+		case (op.nameOnly || !op.quoted && hasGlob(op.s)) && !strings.ContainsAny(op.s, `/\`):
 			filters = append(filters, op.s)
 			multi = true
 		case !op.quoted && hasGlob(op.s):

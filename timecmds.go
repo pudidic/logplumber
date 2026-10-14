@@ -8,56 +8,7 @@ import (
 	"time"
 )
 
-// Time commands: search earliest=/latest=, bin (bucket) and timechart.
-
-// ---------------- search ----------------
-
-type timeRange struct {
-	earliest, latest int64 // Unix milliseconds; earliest inclusive, latest exclusive
-	hasE, hasL       bool
-}
-
-func (r timeRange) contains(ms int64) bool {
-	return (!r.hasE || ms >= r.earliest) && (!r.hasL || ms < r.latest)
-}
-
-type searchStage struct{ r timeRange }
-
-func (s searchStage) Push(l Line, emit Emit) bool {
-	ms, ok := l.lineTime()
-	if ok && s.r.contains(ms) {
-		return emit(l)
-	}
-	return true
-}
-func (searchStage) Finish(Emit) {}
-
-// parseSearch parses "search earliest=<time> latest=<time>". Events without a
-// timestamp are dropped when a time range is given.
-func parseSearch(args []word) (*Spec, error) {
-	now := time.Now()
-	var r timeRange
-	for _, a := range args {
-		k, v, ok := strings.Cut(a.s, "=")
-		k = strings.ToLower(k)
-		if !ok || a.quoted || k != "earliest" && k != "latest" {
-			return nil, errAt(a.pos, "search: %q not supported yet (use earliest=-24h latest=now)", a.s)
-		}
-		t, err := parseTimeSpec(v, now)
-		if err != nil {
-			return nil, errAt(a.pos, "search: %v", err)
-		}
-		if k == "earliest" {
-			r.earliest, r.hasE = t.UnixMilli(), true
-		} else {
-			r.latest, r.hasL = t.UnixMilli(), true
-		}
-	}
-	if len(args) == 0 {
-		return &Spec{Name: "search", Parallel: true, New: func() Stage { return passStage{} }}, nil
-	}
-	return &Spec{Name: "search", Parallel: true, New: func() Stage { return searchStage{r: r} }}, nil
-}
+// Time commands: bin (bucket) and timechart. earliest=/latest= are part of search.
 
 // ---------------- bin ----------------
 
