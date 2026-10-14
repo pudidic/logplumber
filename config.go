@@ -12,7 +12,7 @@ import (
 	"sync/atomic"
 )
 
-// Configuration: .psh.conf in the current directory and ~/.config/psh/psh.conf
+// Configuration: .plumb.conf in the current directory and ~/.config/plumb/plumb.conf
 // (the current directory's file wins). INI style; '#' starts a comment.
 //
 //	[sourcetype:payments]          a new sourcetype, or extend a built-in one by its name
@@ -77,12 +77,12 @@ func (c *config) extend(st *sourcetype) *sourcetype {
 func configPaths() []string {
 	var ps []string
 	if d, err := os.UserConfigDir(); err == nil {
-		ps = append(ps, filepath.Join(d, "psh", "psh.conf"))
+		ps = append(ps, filepath.Join(d, "plumb", "plumb.conf"))
 	}
 	if home, err := os.UserHomeDir(); err == nil {
-		ps = append(ps, filepath.Join(home, ".config", "psh", "psh.conf"))
+		ps = append(ps, filepath.Join(home, ".config", "plumb", "plumb.conf"))
 	}
-	ps = append(ps, ".psh.conf")
+	ps = append(ps, ".plumb.conf")
 	seen := map[string]bool{}
 	var out []string
 	for _, p := range ps {

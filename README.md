@@ -1,6 +1,6 @@
-# psh — parallel file shell
+# Log Plumber (`plumb`) — parallel log search
 
-psh searches every file in the current directory and its subdirectories,
+plumb searches every file in the current directory and its subdirectories,
 including files inside archives. It uses multiple threads and shows progress and
 results in real time. In an interactive terminal the query is **re-run on every
 keystroke**.
@@ -9,10 +9,10 @@ It has two query languages, each with its own unchanged syntax:
 
 - **SPL mode** (default, prompt `spl>`): Splunk's Search Processing Language.
   `error status>=500 | stats count by req.path | sort -count`
-- **Shell mode** (prompt `psh>`): POSIX pipelines.
+- **Shell mode** (prompt `sh>`): POSIX pipelines.
   `grep -i error | cut -d' ' -f1 | sort | uniq -c | sort -rn > top.txt`
 
-**Tab** switches between them (or the built-ins `spl` and `sh`, or `psh -sh` at
+**Tab** switches between them (or the built-ins `spl` and `sh`, or `plumb -sh` at
 start-up).
 
 Its only dependencies are the Go standard library and `golang.org/x/term` (for
@@ -21,23 +21,23 @@ terminal raw mode).
 ## Build
 
 ```bash
-go build -o psh .                                   # current OS
-GOOS=linux   GOARCH=amd64 go build -o psh-linux .
-GOOS=darwin  GOARCH=arm64 go build -o psh-mac .
-GOOS=windows GOARCH=amd64 go build -o psh.exe .
+go build -o plumb .                                   # current OS
+GOOS=linux   GOARCH=amd64 go build -o plumb-linux .
+GOOS=darwin  GOARCH=arm64 go build -o plumb-mac .
+GOOS=windows GOARCH=amd64 go build -o plumb.exe .
 go test ./...
 ```
 
 ## Run
 
 ```bash
-psh                       # interactive, SPL mode (results update as you type)
-psh -sh                   # start in shell mode
-psh -nolive               # plain line input
-psh -c 'error | stats count by _src'
-psh -sh -c "grep -i error | wc -l"
-psh -j 8                  # number of worker threads (default: number of CPUs)
-psh -color=always -c 'error' | less -R   # file column and colors in a pipe
+plumb                       # interactive, SPL mode (results update as you type)
+plumb -sh                   # start in shell mode
+plumb -nolive               # plain line input
+plumb -c 'error | stats count by _src'
+plumb -sh -c "grep -i error | wc -l"
+plumb -j 8                  # number of worker threads (default: number of CPUs)
+plumb -color=always -c 'error' | less -R   # file column and colors in a pipe
 ```
 
 Type `help` inside the shell for the list of commands and options.
@@ -63,7 +63,7 @@ operators follow Splunk: `"..."` is a string, `'...'` is a field name inside
 | `earliest=-24h latest=now` | time range `[earliest, latest)` |
 | `earliest=rt`, `earliest=rt-5m latest=rt` | real-time: follow the files (see below) |
 | `source=*.jsonl` `source=app/app.log` | files to read: a name matches in all subdirectories and archives |
-| `index=main` | accepted and ignored (psh has no Splunk indexes) |
+| `index=main` | accepted and ignored (plumb has no Splunk indexes) |
 
 `*` alone matches everything: `* | stats count`. A query such as `stats count`
 searches for the words "stats" and "count", as in Splunk; type-ahead mode points
@@ -126,7 +126,7 @@ this out.
 
 ## Real-time
 
-psh can keep following the files and show what is written to them, like
+plumb can keep following the files and show what is written to them, like
 `tail -f` and Splunk's real-time searches.
 
 | Query | Shows |
@@ -140,14 +140,14 @@ psh can keep following the files and show what is written to them, like
   redrawn in place. The status line shows the files followed and the new lines.
 - **Ctrl+C stops following** and prints the final results. In type-ahead mode
   the preview follows while you look at it; typing starts a new query.
-- psh checks the files four times a second. Files that appear later are read
+- plumb checks the files four times a second. Files that appear later are read
   from the beginning (also files named on `tail -f` that do not exist yet), and
   a file that becomes shorter (truncated or rotated) is read again from the
-  start. Archives are not followed. psh never follows the file its own output
+  start. Archives are not followed. plumb never follows the file its own output
   is redirected to.
 - `earliest=rt` and `latest=rt` go at the top level of the first search.
 
-## Sourcetypes and `.psh.conf`
+## Sourcetypes and `.plumb.conf`
 
 Each line gets a **sourcetype** that decides which fields are extracted. The
 built-in ones are recognized from the line itself:
@@ -166,9 +166,9 @@ Every event also has `sourcetype` and `source` (the file, same as `_src`), so
 `* | stats count by sourcetype` work without `rex`. Lines that match none have no
 sourcetype and no automatic fields.
 
-`.psh.conf` in the current directory (re-read after `cd`) and
-`~/.config/psh/psh.conf` add to this; the `config` built-in shows what is loaded
-and `config reload` re-reads it. The file is INI style; `.psh.conf` itself is not
+`.plumb.conf` in the current directory (re-read after `cd`) and
+`~/.config/plumb/plumb.conf` add to this; the `config` built-in shows what is loaded
+and `config reload` re-reads it. The file is INI style; `.plumb.conf` itself is not
 searched.
 
 ```ini
@@ -254,27 +254,27 @@ are local time. Tables show `_time` as a date, but the value stays numeric, so
 
 ## Index
 
-In an interactive session psh builds an index in the background (the hint bar
+In an interactive session plumb builds an index in the background (the hint bar
 shows `index ready · N files`): archive and compressed members are unpacked
 once into a cache, and every file is split into chunks of about 256KB. For each
-chunk psh records its trigrams (3-byte sequences) in an inverted index, and its
+chunk plumb records its trigrams (3-byte sequences) in an inverted index, and its
 words (runs of ASCII letters, digits and `_`) in a Bloom filter.
 
 The index is **kept across sessions** in the user cache directory
-(`~/.cache/psh/index` on Linux, `~/Library/Caches/psh/index` on macOS,
-`%LocalAppData%\psh\index` on Windows; `PSH_INDEX_DIR` overrides it). Files
+(`~/.cache/plumb/index` on Linux, `~/Library/Caches/plumb/index` on macOS,
+`%LocalAppData%\plumb\index` on Windows; `PLUMB_INDEX_DIR` overrides it). Files
 are recorded by absolute path, so every directory you searched stays indexed,
 and the next start only indexes new or changed files: on 1GB, the first build
-takes about 18s, the next start is ready at once. When psh exits it asks
+takes about 18s, the next start is ready at once. When plumb exits it asks
 whether to delete the index; Enter keeps it.
 
 - `index` shows the index state, size and directory; `index clear` deletes it
   and indexes the current directory again.
 - Cache files of changed or deleted files are removed at the next start; when
   more than half of the index is stale, it is rebuilt from scratch.
-- If another psh is using the index, a temporary one is built and deleted on
+- If another plumb is using the index, a temporary one is built and deleted on
   exit, as before.
-- `psh -noindex` turns the index off; `psh -c` does not use one.
+- `plumb -noindex` turns the index off; `plumb -c` does not use one.
 
 A query whose first search requires literal text reads only the chunks that may
 contain it: the trigram index finds the chunks with all its trigrams, and the
@@ -314,19 +314,19 @@ name itself stays visible.
 `-color` decides where: `auto` (the default) uses columns and colors in a
 terminal and plain text (`app/worker.log:11:time=…`) in a pipe or file;
 `always` uses them in pipes and files too, e.g.
-`psh -color=always -c 'error' | less -R`; `never` turns colors off (also when
-`NO_COLOR` is set). A `> file` inside psh always writes plain text.
+`plumb -color=always -c 'error' | less -R`; `never` turns colors off (also when
+`NO_COLOR` is set). A `> file` inside plumb always writes plain text.
 
 ## Type-ahead mode
 
-With an empty command line psh shows the **latest events**: the 1000 newest lines
+With an empty command line plumb shows the **latest events**: the 1000 newest lines
 that have a timestamp, newest first (the SPL query `_time=*`), in both modes. It
 appears at start-up and again whenever the line is cleared.
 
 | Key | Action |
 |---|---|
 | Any character | Recompute the results and show them below the prompt |
-| **Esc** | **Exit psh** (always shown in the hint bar at the bottom) |
+| **Esc** | **Exit plumb** (always shown in the hint bar at the bottom) |
 | Tab | Switch between SPL and shell mode |
 | Enter | Run the line with full output, which stays in the scrollback |
 | ↑ / ↓ | Command history |
@@ -359,7 +359,7 @@ appears at start-up and again whenever the line is cleared.
 | `spl.go` | SPL mode: query splitting, command dispatch, implicit time order, fields/rename/dedup/regex/sort/outputcsv |
 | `search.go` | SPL search language (terms, field comparisons, boolean operators, time range, source) |
 | `sourcetype.go` | Sourcetypes: built-in detection and parsers (JSON, access, error logs, syslog, kv), custom extraction |
-| `config.go` | `.psh.conf`: sourcetypes, aliases, calculated fields, macros, saved searches |
+| `config.go` | `.plumb.conf`: sourcetypes, aliases, calculated fields, macros, saved searches |
 | `stages.go` | grep, sort (parallel), uniq, wc, head, tail, cat, cut, tr, sed |
 | `record.go` | Fields of a line (automatic, set, filtered), aligned table output |
 | `expr.go` | Expression language of `where` and `eval` (lexer, parser, evaluator) |
@@ -380,7 +380,7 @@ appears at start-up and again whenever the line is cleared.
 
 ### Execution model
 
-1. psh collects the list of input files first. Their total size is the
+1. plumb collects the list of input files first. Their total size is the
    denominator of the progress percentage.
 2. The stateless, line-by-line commands at the front of the pipeline (search,
    where, eval, rex, grep, cut, tr, sed, cat, …) run in **N worker threads**,
@@ -404,6 +404,6 @@ appears at start-up and again whenever the line is cleared.
 - In shell mode files are read in parallel, so the order of output between files
   can change from run to run. The order of lines within a file is preserved.
 - Formats other than the built-in sourcetypes need a `[sourcetype:…]` section
-  in `.psh.conf` (or `rex`) for their fields.
+  in `.plumb.conf` (or `rex`) for their fields.
 - With very many files, each keystroke rereads all of them. After the first
   run, the OS file cache makes this fast.

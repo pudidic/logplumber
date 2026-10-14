@@ -14,18 +14,18 @@ import (
 
 // Persistent index
 //
-// An interactive psh keeps its index in the user cache directory (or
-// $PSH_INDEX_DIR) across sessions, so only new or changed files are indexed
+// An interactive plumb keeps its index in the user cache directory (or
+// $PLUMB_INDEX_DIR) across sessions, so only new or changed files are indexed
 // again. Files are recorded by absolute path, so every directory searched stays
 // indexed. manifest.gob describes the index: the recorded files, their units
 // and chunks, and the committed lengths of the bucket and word-filter files. It
 // is replaced atomically at the end of every indexing pass, every 30s during a
-// long pass, and when psh exits; data written after the last manifest (by a
+// long pass, and when plumb exits; data written after the last manifest (by a
 // crash) is overwritten, since writes start at the committed lengths.
 //
 // When the files of a changed or deleted source make up more than half of the
 // index, it is rebuilt from scratch; their cache files are deleted at start.
-// If another psh holds the index, a temporary one is used, as with -c.
+// If another plumb holds the index, a temporary one is used, as with -c.
 
 const (
 	manifestName    = "manifest.gob"
@@ -39,14 +39,14 @@ var staleMinBytes int64 = 64 << 20
 
 // indexDir is where the persistent index lives.
 func indexDir() (string, error) {
-	if d := os.Getenv("PSH_INDEX_DIR"); d != "" {
+	if d := os.Getenv("PLUMB_INDEX_DIR"); d != "" {
 		return d, nil
 	}
 	c, err := os.UserCacheDir()
 	if err != nil {
 		return "", err
 	}
-	return filepath.Join(c, "psh", "index"), nil
+	return filepath.Join(c, "plumb", "index"), nil
 }
 
 // openIndex opens the persistent index, or a temporary one when it is in use
@@ -101,7 +101,7 @@ func (s *store) start() {
 	go s.run(ctx)
 }
 
-// deleteIndexQuestion is asked when psh exits; the default keeps the index.
+// deleteIndexQuestion is asked when plumb exits; the default keeps the index.
 func deleteIndexQuestion(s *store) string {
 	st := s.status.Load()
 	return fmt.Sprintf("Delete the index (%s files, %s in %s)? Keeping it makes the next start faster. [y/N] ",

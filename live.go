@@ -16,12 +16,12 @@ import (
 
 // Type-ahead mode: the command line is re-run on every keystroke and its results are
 // drawn in a region below the prompt. Enter runs the line for real (full output in
-// the scrollback), Esc exits psh.
+// the scrollback), Esc exits plumb.
 
 const liveDebounce = 40 * time.Millisecond
 
 const (
-	liveHint   = " Esc: exit psh │ Tab: SPL/shell │ Enter: run with full output │ ↑/↓: browse results │ Ctrl+P/N: history "
+	liveHint   = " Esc: exit plumb │ Tab: SPL/shell │ Enter: run with full output │ ↑/↓: browse results │ Ctrl+P/N: history "
 	listHint   = " ↑/↓ PgUp/PgDn: move │ Enter: details │ Esc: back to input │ type to edit "
 	detailHint = " ↑/↓: previous/next result │ PgUp/PgDn: scroll │ Esc/Enter: back to list "
 )
@@ -353,12 +353,12 @@ func (e *liveEditor) commit(line string) error {
 	e.sh.dropJobCache()
 	err := e.sh.runLine(line)
 	if err != nil && err != errExit {
-		fmt.Fprintln(os.Stderr, "psh:", err)
+		fmt.Fprintln(os.Stderr, "plumb:", err)
 	}
 	return err
 }
 
-// handle applies one key. It reports whether the line changed, psh should exit, or
+// handle applies one key. It reports whether the line changed, plumb should exit, or
 // the line should be committed.
 func (e *liveEditor) handle(k keyEvent) (edited, quit, enter bool) {
 	e.mu.Lock()

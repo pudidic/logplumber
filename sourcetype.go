@@ -22,7 +22,7 @@ import (
 //	syslog           BSD syslog: host process pid message (+ key=value)
 //	kv               key=value pairs (logfmt)
 //
-// .psh.conf can define more sourcetypes (chosen by file name or a line pattern)
+// .plumb.conf can define more sourcetypes (chosen by file name or a line pattern)
 // and add field aliases and calculated fields to any sourcetype (see config.go).
 // Lines that match none have no sourcetype and no automatic fields.
 

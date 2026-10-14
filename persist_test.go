@@ -61,11 +61,11 @@ func TestPersistentIndex(t *testing.T) {
 		t.Errorf("session 2 re-indexed %d bytes", s.total)
 	}
 
-	// a 2nd psh on the same index gets a temporary one
-	t.Setenv("PSH_INDEX_DIR", idx)
+	// a 2nd plumb on the same index gets a temporary one
+	t.Setenv("PLUMB_INDEX_DIR", idx)
 	other, note, err := openIndex()
 	if err != nil || other.persistent || !strings.Contains(note, "temporary") {
-		t.Errorf("second psh: persistent=%v note=%q err=%v", other != nil && other.persistent, note, err)
+		t.Errorf("second plumb: persistent=%v note=%q err=%v", other != nil && other.persistent, note, err)
 	}
 	if other != nil {
 		other.close()

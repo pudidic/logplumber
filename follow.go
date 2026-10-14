@@ -117,8 +117,8 @@ func (r *runner) followSource(ctx context.Context, jobs []job) {
 	}
 }
 
-// ownOutputs are the files psh's stdout and stderr write to: following them would
-// read psh's own output back in (psh -c 'earliest=rt' > out.log in a log folder).
+// ownOutputs are the files plumb's stdout and stderr write to: following them would
+// read plumb's own output back in (plumb -c 'earliest=rt' > out.log in a log folder).
 func ownOutputs() []os.FileInfo {
 	var out []os.FileInfo
 	for _, f := range []*os.File{os.Stdout, os.Stderr} {

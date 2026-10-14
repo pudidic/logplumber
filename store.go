@@ -15,8 +15,8 @@ import (
 )
 
 // The store is the temporary on-disk index of an interactive session. It lives in
-// a fresh directory under the OS temp directory and is deleted when psh exits; a
-// directory left behind by a crashed psh is deleted the next time psh starts (its
+// a fresh directory under the OS temp directory and is deleted when plumb exits; a
+// directory left behind by a crashed plumb is deleted the next time plumb starts (its
 // lock file is no longer held).
 //
 // A background goroutine walks the current directory and records every file. Text
@@ -24,14 +24,14 @@ import (
 // read it without unpacking again. Indexing pauses while a query runs.
 
 const (
-	storePrefix   = "psh-index-"
+	storePrefix   = "plumb-index-"
 	recheckEvery  = 30 * time.Second
 	publishEvery  = time.Second
 	copyBufSize   = 256 << 10
 	cacheFileName = "u%d.txt"
 )
 
-var errLocked = errors.New("in use by another psh")
+var errLocked = errors.New("in use by another plumb")
 
 // unit is one plain text source: a file on disk or a member of an archive.
 type unit struct {
@@ -122,7 +122,7 @@ func openStore() (*store, error) {
 	return s, nil
 }
 
-// cleanStaleStores deletes store directories whose psh is no longer running.
+// cleanStaleStores deletes store directories whose plumb is no longer running.
 func cleanStaleStores() {
 	tmp := os.TempDir()
 	ents, _ := os.ReadDir(tmp)
@@ -223,7 +223,7 @@ func (s *store) pass(ctx context.Context, root string) error {
 			}
 			return nil
 		}
-		if !d.Type().IsRegular() || d.Name() == ".psh.conf" {
+		if !d.Type().IsRegular() || d.Name() == ".plumb.conf" {
 			return nil
 		}
 		fi, err := d.Info()
