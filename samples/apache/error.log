@@ -1,0 +1,150 @@
+[Wed Oct 14 09:01:48.000000 2026] [core:error] [pid 4344] [client 198.51.100.23:54589] AH00126: Invalid URI in request GET /%% HTTP/1.1
+[Wed Oct 14 09:01:55.000000 2026] [ssl:warn] [pid 7466] [client 203.0.113.7:52906] AH01909: server certificate does NOT include an ID which matches the server name
+[Wed Oct 14 09:01:56.000000 2026] [ssl:warn] [pid 1956] [client 192.0.2.41:51931] AH01909: server certificate does NOT include an ID which matches the server name
+[Wed Oct 14 09:03:51.000000 2026] [php:notice] [pid 6363] [client 10.1.4.12:50280] PHP Notice:  Undefined index: page in /var/www/html/index.php on line 12
+[Wed Oct 14 09:04:05.000000 2026] [core:error] [pid 9605] [client 192.0.2.41:54953] AH00126: Invalid URI in request GET /%% HTTP/1.1
+[Wed Oct 14 09:04:46.000000 2026] [ssl:warn] [pid 8076] [client 198.51.100.23:51169] AH01909: server certificate does NOT include an ID which matches the server name
+[Wed Oct 14 09:04:50.000000 2026] [authz_core:error] [pid 7482] [client 203.0.113.88:46277] AH01630: client denied by server configuration: /var/www/html/admin
+[Wed Oct 14 09:05:58.000000 2026] [core:error] [pid 7702] [client 10.1.4.12:40625] AH00126: Invalid URI in request GET /%% HTTP/1.1
+[Wed Oct 14 09:06:47.000000 2026] [core:error] [pid 6901] [client 192.0.2.199:56745] AH00126: Invalid URI in request GET /%% HTTP/1.1
+[Wed Oct 14 09:07:06.000000 2026] [proxy:error] [pid 7977] [client 10.1.4.12:55488] AH00898: Error reading from remote server returned by /api/orders
+[Wed Oct 14 09:07:06.000000 2026] [proxy_http:error] [pid 6604] [client 10.1.4.12:51311] AH01102: error reading status line from remote server 127.0.0.1:8080
+[Wed Oct 14 09:08:07.000000 2026] [php:notice] [pid 3153] [client 192.0.2.199:55546] PHP Notice:  Undefined index: page in /var/www/html/index.php on line 12
+[Wed Oct 14 09:08:41.000000 2026] [core:error] [pid 7721] [client 192.0.2.41:57644] AH00126: Invalid URI in request GET /%% HTTP/1.1
+[Wed Oct 14 09:09:59.000000 2026] [ssl:warn] [pid 6132] [client 203.0.113.7:54977] AH01909: server certificate does NOT include an ID which matches the server name
+[Wed Oct 14 09:11:32.000000 2026] [authz_core:error] [pid 2547] [client 203.0.113.88:42490] AH01630: client denied by server configuration: /var/www/html/admin
+[Wed Oct 14 09:12:00.000000 2026] [proxy_http:error] [pid 4723] [client 192.0.2.199:46407] AH01102: error reading status line from remote server 127.0.0.1:8080
+[Wed Oct 14 09:13:14.000000 2026] [core:error] [pid 2665] [client 192.0.2.41:41838] AH00126: Invalid URI in request GET /%% HTTP/1.1
+[Wed Oct 14 09:15:09.000000 2026] [php:notice] [pid 5115] [client 192.0.2.41:42617] PHP Notice:  Undefined index: page in /var/www/html/index.php on line 12
+[Wed Oct 14 09:17:08.000000 2026] [core:error] [pid 6557] [client 198.51.100.23:41884] AH00126: Invalid URI in request GET /%% HTTP/1.1
+[Wed Oct 14 09:18:00.000000 2026] [proxy_http:error] [pid 9551] [client 192.0.2.199:49393] AH01102: error reading status line from remote server 127.0.0.1:8080
+[Wed Oct 14 09:19:34.000000 2026] [php:notice] [pid 1211] [client 198.51.100.5:45408] PHP Notice:  Undefined index: page in /var/www/html/index.php on line 12
+[Wed Oct 14 09:20:29.000000 2026] [proxy_http:error] [pid 8755] [client 192.0.2.199:54435] AH01102: error reading status line from remote server 127.0.0.1:8080
+[Wed Oct 14 09:21:23.000000 2026] [php:notice] [pid 7564] [client 203.0.113.7:56236] PHP Notice:  Undefined index: page in /var/www/html/index.php on line 12
+[Wed Oct 14 09:21:43.000000 2026] [authz_core:error] [pid 5853] [client 203.0.113.7:45414] AH01630: client denied by server configuration: /var/www/html/admin
+[Wed Oct 14 09:22:41.000000 2026] [core:error] [pid 4412] [client 198.51.100.23:43035] AH00126: Invalid URI in request GET /%% HTTP/1.1
+[Wed Oct 14 09:23:09.000000 2026] [authz_core:error] [pid 8449] [client 192.0.2.199:57938] AH01630: client denied by server configuration: /var/www/html/admin
+[Wed Oct 14 09:23:35.000000 2026] [proxy_http:error] [pid 6425] [client 10.1.4.12:58015] AH01102: error reading status line from remote server 127.0.0.1:8080
+[Wed Oct 14 09:23:54.000000 2026] [ssl:warn] [pid 8660] [client 192.0.2.199:55288] AH01909: server certificate does NOT include an ID which matches the server name
+[Wed Oct 14 09:25:06.000000 2026] [core:error] [pid 8957] [client 203.0.113.7:57996] AH00126: Invalid URI in request GET /%% HTTP/1.1
+[Wed Oct 14 09:26:16.000000 2026] [php:notice] [pid 4976] [client 192.0.2.41:45750] PHP Notice:  Undefined index: page in /var/www/html/index.php on line 12
+[Wed Oct 14 09:27:16.000000 2026] [proxy_http:error] [pid 7745] [client 192.0.2.199:44785] AH01102: error reading status line from remote server 127.0.0.1:8080
+[Wed Oct 14 09:27:29.000000 2026] [php:notice] [pid 8474] [client 198.51.100.5:53306] PHP Notice:  Undefined index: page in /var/www/html/index.php on line 12
+[Wed Oct 14 09:28:52.000000 2026] [php:notice] [pid 8910] [client 198.51.100.23:52811] PHP Notice:  Undefined index: page in /var/www/html/index.php on line 12
+[Wed Oct 14 09:29:15.000000 2026] [core:error] [pid 7604] [client 203.0.113.88:52049] AH00126: Invalid URI in request GET /%% HTTP/1.1
+[Wed Oct 14 09:30:45.000000 2026] [authz_core:error] [pid 7323] [client 203.0.113.7:40329] AH01630: client denied by server configuration: /var/www/html/admin
+[Wed Oct 14 09:32:21.000000 2026] [proxy_http:error] [pid 5725] [client 198.51.100.5:51215] AH01102: error reading status line from remote server 127.0.0.1:8080
+[Wed Oct 14 09:32:58.000000 2026] [php:notice] [pid 8897] [client 198.51.100.5:51411] PHP Notice:  Undefined index: page in /var/www/html/index.php on line 12
+[Wed Oct 14 09:34:40.000000 2026] [core:error] [pid 6521] [client 203.0.113.7:57674] AH00126: Invalid URI in request GET /%% HTTP/1.1
+[Wed Oct 14 09:35:27.000000 2026] [proxy_http:error] [pid 2757] [client 198.51.100.5:47071] AH01102: error reading status line from remote server 127.0.0.1:8080
+[Wed Oct 14 09:37:02.000000 2026] [core:error] [pid 9961] [client 198.51.100.23:40913] AH00126: Invalid URI in request GET /%% HTTP/1.1
+[Wed Oct 14 09:38:37.000000 2026] [core:error] [pid 5613] [client 198.51.100.5:58546] AH00126: Invalid URI in request GET /%% HTTP/1.1
+[Wed Oct 14 09:40:06.000000 2026] [php:notice] [pid 5187] [client 198.51.100.5:55341] PHP Notice:  Undefined index: page in /var/www/html/index.php on line 12
+[Wed Oct 14 09:40:58.000000 2026] [proxy_http:error] [pid 7569] [client 192.0.2.41:59216] AH01102: error reading status line from remote server 127.0.0.1:8080
+[Wed Oct 14 09:42:00.000000 2026] [ssl:warn] [pid 4827] [client 203.0.113.7:56040] AH01909: server certificate does NOT include an ID which matches the server name
+[Wed Oct 14 09:42:33.000000 2026] [php:notice] [pid 3042] [client 192.0.2.199:58006] PHP Notice:  Undefined index: page in /var/www/html/index.php on line 12
+[Wed Oct 14 09:43:51.000000 2026] [authz_core:error] [pid 8475] [client 198.51.100.23:47935] AH01630: client denied by server configuration: /var/www/html/admin
+[Wed Oct 14 09:44:01.000000 2026] [php:notice] [pid 1186] [client 192.0.2.199:57429] PHP Notice:  Undefined index: page in /var/www/html/index.php on line 12
+[Wed Oct 14 09:44:32.000000 2026] [php:notice] [pid 7555] [client 203.0.113.7:55589] PHP Notice:  Undefined index: page in /var/www/html/index.php on line 12
+[Wed Oct 14 09:45:43.000000 2026] [proxy_http:error] [pid 8504] [client 203.0.113.7:52009] AH01102: error reading status line from remote server 127.0.0.1:8080
+[Wed Oct 14 09:47:27.000000 2026] [authz_core:error] [pid 5625] [client 203.0.113.7:42573] AH01630: client denied by server configuration: /var/www/html/admin
+[Wed Oct 14 09:48:32.000000 2026] [ssl:warn] [pid 5299] [client 192.0.2.41:40250] AH01909: server certificate does NOT include an ID which matches the server name
+[Wed Oct 14 09:49:51.000000 2026] [authz_core:error] [pid 9776] [client 203.0.113.7:54882] AH01630: client denied by server configuration: /var/www/html/admin
+[Wed Oct 14 09:50:57.000000 2026] [php:notice] [pid 8077] [client 203.0.113.88:59926] PHP Notice:  Undefined index: page in /var/www/html/index.php on line 12
+[Wed Oct 14 09:52:32.000000 2026] [proxy_http:error] [pid 3221] [client 203.0.113.7:43278] AH01102: error reading status line from remote server 127.0.0.1:8080
+[Wed Oct 14 09:53:39.000000 2026] [proxy:error] [pid 6104] [client 198.51.100.5:54392] AH00898: Error reading from remote server returned by /api/orders
+[Wed Oct 14 09:54:54.000000 2026] [proxy_http:error] [pid 4719] [client 10.1.4.12:43840] AH01102: error reading status line from remote server 127.0.0.1:8080
+[Wed Oct 14 09:55:34.000000 2026] [core:error] [pid 6903] [client 192.0.2.199:55495] AH00126: Invalid URI in request GET /%% HTTP/1.1
+[Wed Oct 14 09:56:32.000000 2026] [php:notice] [pid 9950] [client 198.51.100.5:46917] PHP Notice:  Undefined index: page in /var/www/html/index.php on line 12
+[Wed Oct 14 09:57:29.000000 2026] [ssl:warn] [pid 3348] [client 198.51.100.23:50877] AH01909: server certificate does NOT include an ID which matches the server name
+[Wed Oct 14 09:57:48.000000 2026] [authz_core:error] [pid 4400] [client 192.0.2.41:54568] AH01630: client denied by server configuration: /var/www/html/admin
+[Wed Oct 14 09:59:29.000000 2026] [proxy:error] [pid 3858] [client 198.51.100.23:57684] AH00898: Error reading from remote server returned by /api/orders
+[Wed Oct 14 10:01:19.000000 2026] [php:notice] [pid 6632] [client 10.1.4.12:56256] PHP Notice:  Undefined index: page in /var/www/html/index.php on line 12
+[Wed Oct 14 10:01:56.000000 2026] [ssl:warn] [pid 9914] [client 192.0.2.199:48561] AH01909: server certificate does NOT include an ID which matches the server name
+[Wed Oct 14 10:02:42.000000 2026] [ssl:warn] [pid 5162] [client 10.1.4.12:56618] AH01909: server certificate does NOT include an ID which matches the server name
+[Wed Oct 14 10:03:03.000000 2026] [authz_core:error] [pid 8713] [client 192.0.2.41:48976] AH01630: client denied by server configuration: /var/www/html/admin
+[Wed Oct 14 10:04:31.000000 2026] [php:notice] [pid 5480] [client 192.0.2.41:46781] PHP Notice:  Undefined index: page in /var/www/html/index.php on line 12
+[Wed Oct 14 10:04:56.000000 2026] [php:notice] [pid 2454] [client 203.0.113.88:45077] PHP Notice:  Undefined index: page in /var/www/html/index.php on line 12
+[Wed Oct 14 10:06:52.000000 2026] [php:notice] [pid 4323] [client 203.0.113.7:59445] PHP Notice:  Undefined index: page in /var/www/html/index.php on line 12
+[Wed Oct 14 10:07:37.000000 2026] [authz_core:error] [pid 4106] [client 198.51.100.5:40370] AH01630: client denied by server configuration: /var/www/html/admin
+[Wed Oct 14 10:08:20.000000 2026] [authz_core:error] [pid 7094] [client 203.0.113.88:54742] AH01630: client denied by server configuration: /var/www/html/admin
+[Wed Oct 14 10:08:35.000000 2026] [proxy:error] [pid 8546] [client 203.0.113.88:50750] AH00898: Error reading from remote server returned by /api/orders
+[Wed Oct 14 10:09:30.000000 2026] [proxy_http:error] [pid 8167] [client 198.51.100.23:40606] AH01102: error reading status line from remote server 127.0.0.1:8080
+[Wed Oct 14 10:10:20.000000 2026] [ssl:warn] [pid 4146] [client 192.0.2.41:51569] AH01909: server certificate does NOT include an ID which matches the server name
+[Wed Oct 14 10:10:35.000000 2026] [core:error] [pid 3873] [client 203.0.113.88:59242] AH00126: Invalid URI in request GET /%% HTTP/1.1
+[Wed Oct 14 10:12:20.000000 2026] [proxy_http:error] [pid 6377] [client 203.0.113.88:49234] AH01102: error reading status line from remote server 127.0.0.1:8080
+[Wed Oct 14 10:13:17.000000 2026] [ssl:warn] [pid 4012] [client 192.0.2.41:46460] AH01909: server certificate does NOT include an ID which matches the server name
+[Wed Oct 14 10:15:13.000000 2026] [php:notice] [pid 5447] [client 192.0.2.41:40691] PHP Notice:  Undefined index: page in /var/www/html/index.php on line 12
+[Wed Oct 14 10:15:25.000000 2026] [ssl:warn] [pid 4866] [client 203.0.113.88:47045] AH01909: server certificate does NOT include an ID which matches the server name
+[Wed Oct 14 10:15:54.000000 2026] [proxy:error] [pid 3579] [client 203.0.113.88:42566] AH00898: Error reading from remote server returned by /api/orders
+[Wed Oct 14 10:17:20.000000 2026] [proxy:error] [pid 7085] [client 198.51.100.23:57467] AH00898: Error reading from remote server returned by /api/orders
+[Wed Oct 14 10:19:13.000000 2026] [php:notice] [pid 1984] [client 198.51.100.23:46435] PHP Notice:  Undefined index: page in /var/www/html/index.php on line 12
+[Wed Oct 14 10:20:11.000000 2026] [proxy:error] [pid 8319] [client 203.0.113.7:58474] AH00898: Error reading from remote server returned by /api/orders
+[Wed Oct 14 10:20:45.000000 2026] [ssl:warn] [pid 1434] [client 198.51.100.23:52283] AH01909: server certificate does NOT include an ID which matches the server name
+[Wed Oct 14 10:22:07.000000 2026] [php:notice] [pid 1727] [client 198.51.100.5:43581] PHP Notice:  Undefined index: page in /var/www/html/index.php on line 12
+[Wed Oct 14 10:23:46.000000 2026] [php:notice] [pid 3923] [client 203.0.113.7:46201] PHP Notice:  Undefined index: page in /var/www/html/index.php on line 12
+[Wed Oct 14 10:24:37.000000 2026] [proxy:error] [pid 3822] [client 10.1.4.12:50337] AH00898: Error reading from remote server returned by /api/orders
+[Wed Oct 14 10:25:23.000000 2026] [proxy:error] [pid 1935] [client 203.0.113.7:48658] AH00898: Error reading from remote server returned by /api/orders
+[Wed Oct 14 10:26:45.000000 2026] [core:error] [pid 4189] [client 198.51.100.23:56154] AH00126: Invalid URI in request GET /%% HTTP/1.1
+[Wed Oct 14 10:27:32.000000 2026] [proxy:error] [pid 5325] [client 192.0.2.41:47206] AH00898: Error reading from remote server returned by /api/orders
+[Wed Oct 14 10:28:19.000000 2026] [proxy:error] [pid 1630] [client 10.1.4.12:52925] AH00898: Error reading from remote server returned by /api/orders
+[Wed Oct 14 10:29:46.000000 2026] [authz_core:error] [pid 2291] [client 198.51.100.5:57415] AH01630: client denied by server configuration: /var/www/html/admin
+[Wed Oct 14 10:30:13.000000 2026] [authz_core:error] [pid 2284] [client 198.51.100.5:44404] AH01630: client denied by server configuration: /var/www/html/admin
+[Wed Oct 14 10:30:35.000000 2026] [php:notice] [pid 3615] [client 198.51.100.23:58277] PHP Notice:  Undefined index: page in /var/www/html/index.php on line 12
+[Wed Oct 14 10:31:12.000000 2026] [core:error] [pid 1480] [client 192.0.2.41:54298] AH00126: Invalid URI in request GET /%% HTTP/1.1
+[Wed Oct 14 10:32:20.000000 2026] [authz_core:error] [pid 2258] [client 203.0.113.88:57110] AH01630: client denied by server configuration: /var/www/html/admin
+[Wed Oct 14 10:33:37.000000 2026] [ssl:warn] [pid 6253] [client 10.1.4.12:43657] AH01909: server certificate does NOT include an ID which matches the server name
+[Wed Oct 14 10:35:08.000000 2026] [core:error] [pid 5922] [client 203.0.113.88:45548] AH00126: Invalid URI in request GET /%% HTTP/1.1
+[Wed Oct 14 10:35:18.000000 2026] [core:error] [pid 4474] [client 198.51.100.5:57071] AH00126: Invalid URI in request GET /%% HTTP/1.1
+[Wed Oct 14 10:37:17.000000 2026] [php:notice] [pid 1519] [client 203.0.113.88:51454] PHP Notice:  Undefined index: page in /var/www/html/index.php on line 12
+[Wed Oct 14 10:38:27.000000 2026] [proxy_http:error] [pid 9905] [client 198.51.100.23:44795] AH01102: error reading status line from remote server 127.0.0.1:8080
+[Wed Oct 14 10:40:23.000000 2026] [php:notice] [pid 4538] [client 198.51.100.23:47756] PHP Notice:  Undefined index: page in /var/www/html/index.php on line 12
+[Wed Oct 14 10:42:08.000000 2026] [ssl:warn] [pid 4276] [client 198.51.100.23:56210] AH01909: server certificate does NOT include an ID which matches the server name
+[Wed Oct 14 10:42:10.000000 2026] [proxy_http:error] [pid 4169] [client 192.0.2.199:44280] AH01102: error reading status line from remote server 127.0.0.1:8080
+[Wed Oct 14 10:42:48.000000 2026] [ssl:warn] [pid 4163] [client 198.51.100.5:42392] AH01909: server certificate does NOT include an ID which matches the server name
+[Wed Oct 14 10:44:36.000000 2026] [php:notice] [pid 9966] [client 203.0.113.88:50578] PHP Notice:  Undefined index: page in /var/www/html/index.php on line 12
+[Wed Oct 14 10:45:43.000000 2026] [proxy:error] [pid 8419] [client 10.1.4.12:55537] AH00898: Error reading from remote server returned by /api/orders
+[Wed Oct 14 10:46:10.000000 2026] [authz_core:error] [pid 9060] [client 203.0.113.7:50694] AH01630: client denied by server configuration: /var/www/html/admin
+[Wed Oct 14 10:47:10.000000 2026] [proxy:error] [pid 5648] [client 203.0.113.88:51399] AH00898: Error reading from remote server returned by /api/orders
+[Wed Oct 14 10:48:48.000000 2026] [proxy_http:error] [pid 2872] [client 192.0.2.41:53294] AH01102: error reading status line from remote server 127.0.0.1:8080
+[Wed Oct 14 10:50:29.000000 2026] [php:notice] [pid 6092] [client 10.1.4.12:55678] PHP Notice:  Undefined index: page in /var/www/html/index.php on line 12
+[Wed Oct 14 10:51:23.000000 2026] [proxy:error] [pid 3021] [client 198.51.100.5:41771] AH00898: Error reading from remote server returned by /api/orders
+[Wed Oct 14 10:52:33.000000 2026] [proxy_http:error] [pid 3236] [client 10.1.4.12:56572] AH01102: error reading status line from remote server 127.0.0.1:8080
+[Wed Oct 14 10:53:46.000000 2026] [proxy_http:error] [pid 1736] [client 203.0.113.88:47844] AH01102: error reading status line from remote server 127.0.0.1:8080
+[Wed Oct 14 10:55:27.000000 2026] [core:error] [pid 7710] [client 198.51.100.5:56801] AH00126: Invalid URI in request GET /%% HTTP/1.1
+[Wed Oct 14 10:56:03.000000 2026] [core:error] [pid 5493] [client 203.0.113.88:44529] AH00126: Invalid URI in request GET /%% HTTP/1.1
+[Wed Oct 14 10:57:31.000000 2026] [php:notice] [pid 6253] [client 192.0.2.199:43437] PHP Notice:  Undefined index: page in /var/www/html/index.php on line 12
+[Wed Oct 14 10:58:58.000000 2026] [authz_core:error] [pid 2836] [client 203.0.113.88:44079] AH01630: client denied by server configuration: /var/www/html/admin
+[Wed Oct 14 11:00:21.000000 2026] [php:notice] [pid 3768] [client 198.51.100.5:49108] PHP Notice:  Undefined index: page in /var/www/html/index.php on line 12
+[Wed Oct 14 11:01:54.000000 2026] [proxy_http:error] [pid 1090] [client 10.1.4.12:46011] AH01102: error reading status line from remote server 127.0.0.1:8080
+[Wed Oct 14 11:02:26.000000 2026] [ssl:warn] [pid 1410] [client 192.0.2.199:44842] AH01909: server certificate does NOT include an ID which matches the server name
+[Wed Oct 14 11:03:09.000000 2026] [proxy_http:error] [pid 3822] [client 10.1.4.12:57624] AH01102: error reading status line from remote server 127.0.0.1:8080
+[Wed Oct 14 11:03:11.000000 2026] [ssl:warn] [pid 7386] [client 203.0.113.88:48767] AH01909: server certificate does NOT include an ID which matches the server name
+[Wed Oct 14 11:05:08.000000 2026] [proxy:error] [pid 5364] [client 192.0.2.41:49928] AH00898: Error reading from remote server returned by /api/orders
+[Wed Oct 14 11:05:42.000000 2026] [ssl:warn] [pid 9372] [client 192.0.2.41:44517] AH01909: server certificate does NOT include an ID which matches the server name
+[Wed Oct 14 11:06:22.000000 2026] [ssl:warn] [pid 7818] [client 198.51.100.5:41329] AH01909: server certificate does NOT include an ID which matches the server name
+[Wed Oct 14 11:08:18.000000 2026] [proxy_http:error] [pid 9957] [client 192.0.2.41:45699] AH01102: error reading status line from remote server 127.0.0.1:8080
+[Wed Oct 14 11:09:45.000000 2026] [ssl:warn] [pid 2839] [client 198.51.100.5:52678] AH01909: server certificate does NOT include an ID which matches the server name
+[Wed Oct 14 11:10:42.000000 2026] [php:notice] [pid 9445] [client 192.0.2.41:53688] PHP Notice:  Undefined index: page in /var/www/html/index.php on line 12
+[Wed Oct 14 11:11:59.000000 2026] [proxy_http:error] [pid 7311] [client 203.0.113.7:43473] AH01102: error reading status line from remote server 127.0.0.1:8080
+[Wed Oct 14 11:13:44.000000 2026] [core:error] [pid 1643] [client 203.0.113.7:51121] AH00126: Invalid URI in request GET /%% HTTP/1.1
+[Wed Oct 14 11:15:18.000000 2026] [proxy_http:error] [pid 2439] [client 198.51.100.5:43455] AH01102: error reading status line from remote server 127.0.0.1:8080
+[Wed Oct 14 11:17:14.000000 2026] [ssl:warn] [pid 3011] [client 192.0.2.199:54714] AH01909: server certificate does NOT include an ID which matches the server name
+[Wed Oct 14 11:18:25.000000 2026] [proxy:error] [pid 5866] [client 192.0.2.199:47009] AH00898: Error reading from remote server returned by /api/orders
+[Wed Oct 14 11:19:43.000000 2026] [proxy_http:error] [pid 3953] [client 198.51.100.5:48613] AH01102: error reading status line from remote server 127.0.0.1:8080
+[Wed Oct 14 11:19:58.000000 2026] [proxy_http:error] [pid 3457] [client 198.51.100.5:52602] AH01102: error reading status line from remote server 127.0.0.1:8080
+[Wed Oct 14 11:21:54.000000 2026] [proxy_http:error] [pid 9200] [client 10.1.4.12:41855] AH01102: error reading status line from remote server 127.0.0.1:8080
+[Wed Oct 14 11:23:05.000000 2026] [authz_core:error] [pid 2054] [client 198.51.100.5:57479] AH01630: client denied by server configuration: /var/www/html/admin
+[Wed Oct 14 11:23:45.000000 2026] [proxy_http:error] [pid 9509] [client 192.0.2.199:50347] AH01102: error reading status line from remote server 127.0.0.1:8080
+[Wed Oct 14 11:24:49.000000 2026] [proxy_http:error] [pid 1257] [client 198.51.100.5:59502] AH01102: error reading status line from remote server 127.0.0.1:8080
+[Wed Oct 14 11:25:47.000000 2026] [php:notice] [pid 4433] [client 198.51.100.5:44858] PHP Notice:  Undefined index: page in /var/www/html/index.php on line 12
+[Wed Oct 14 11:26:58.000000 2026] [core:error] [pid 4709] [client 198.51.100.5:53909] AH00126: Invalid URI in request GET /%% HTTP/1.1
+[Wed Oct 14 11:27:34.000000 2026] [ssl:warn] [pid 1192] [client 198.51.100.23:55669] AH01909: server certificate does NOT include an ID which matches the server name
+[Wed Oct 14 11:28:57.000000 2026] [php:notice] [pid 9922] [client 203.0.113.88:45500] PHP Notice:  Undefined index: page in /var/www/html/index.php on line 12
+[Wed Oct 14 11:30:07.000000 2026] [authz_core:error] [pid 4653] [client 198.51.100.5:50217] AH01630: client denied by server configuration: /var/www/html/admin
+[Wed Oct 14 11:31:28.000000 2026] [proxy_http:error] [pid 8185] [client 203.0.113.7:56714] AH01102: error reading status line from remote server 127.0.0.1:8080
+[Wed Oct 14 11:31:40.000000 2026] [ssl:warn] [pid 6505] [client 203.0.113.7:59099] AH01909: server certificate does NOT include an ID which matches the server name
+[Wed Oct 14 11:33:13.000000 2026] [proxy:error] [pid 6193] [client 198.51.100.23:53736] AH00898: Error reading from remote server returned by /api/orders
+[Wed Oct 14 11:34:42.000000 2026] [php:notice] [pid 8375] [client 203.0.113.88:50126] PHP Notice:  Undefined index: page in /var/www/html/index.php on line 12
+[Wed Oct 14 11:36:34.000000 2026] [proxy_http:error] [pid 5150] [client 203.0.113.88:54070] AH01102: error reading status line from remote server 127.0.0.1:8080
+[Wed Oct 14 11:38:32.000000 2026] [php:notice] [pid 7214] [client 10.1.4.12:51748] PHP Notice:  Undefined index: page in /var/www/html/index.php on line 12

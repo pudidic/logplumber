@@ -1,0 +1,500 @@
+{"ts":"2026-10-14T09:00:00.555+09:00","level":"warn","msg":"slow query","service":"billing","req":{"method":"GET","path":"/api/orders","id":"req-91175"},"status":200,"ms":2084,"user":"choi"}
+{"ts":"2026-10-14T09:00:02.991+09:00","level":"info","msg":"cache hit","service":"api","req":{"method":"GET","path":"/api/users","id":"req-53580"},"status":200,"ms":10,"user":"jung"}
+{"ts":"2026-10-14T09:00:05.966+09:00","level":"info","msg":"request done","service":"api","req":{"method":"GET","path":"/api/orders/1042","id":"req-77574"},"status":200,"ms":97,"user":"lee"}
+{"ts":"2026-10-14T09:00:07.734+09:00","level":"debug","msg":"query plan chosen","service":"search","req":{"method":"POST","path":"/api/orders/1042","id":"req-88725"},"status":200,"ms":14,"user":"jung"}
+{"ts":"2026-10-14T09:00:08.914+09:00","level":"error","msg":"payment declined","service":"billing","req":{"method":"GET","path":"/api/orders/1042","id":"req-05931"},"status":503,"ms":2492,"user":"choi"}
+{"ts":"2026-10-14T09:00:09.963+09:00","level":"info","msg":"request done","service":"search","req":{"method":"GET","path":"/api/orders","id":"req-01361"},"status":200,"ms":95,"user":"choi"}
+{"ts":"2026-10-14T09:00:12.171+09:00","level":"warn","msg":"retrying upstream","service":"search","req":{"method":"GET","path":"/api/orders","id":"req-17767"},"status":200,"ms":2798,"user":"jung"}
+{"ts":"2026-10-14T09:00:15.17+09:00","level":"warn","msg":"retrying upstream","service":"search","req":{"method":"POST","path":"/api/orders","id":"req-92361"},"status":200,"ms":3042,"user":"lee"}
+{"ts":"2026-10-14T09:00:16.978+09:00","level":"debug","msg":"query plan chosen","service":"api","req":{"method":"POST","path":"/api/users","id":"req-59700"},"status":200,"ms":110,"user":"lee"}
+{"ts":"2026-10-14T09:00:19.806+09:00","level":"info","msg":"request done","service":"api","req":{"method":"GET","path":"/api/orders","id":"req-85152"},"status":200,"ms":58,"user":"choi"}
+{"ts":"2026-10-14T09:00:21.613+09:00","level":"debug","msg":"query plan chosen","service":"api","req":{"method":"GET","path":"/api/orders/1042","id":"req-69169"},"status":200,"ms":80,"user":"kim"}
+{"ts":"2026-10-14T09:00:23.351+09:00","level":"error","msg":"db timeout","service":"search","req":{"method":"GET","path":"/api/orders","id":"req-04449"},"status":502,"ms":2725,"user":"park"}
+{"ts":"2026-10-14T09:00:25.33+09:00","level":"info","msg":"request done","service":"api","req":{"method":"GET","path":"/api/users","id":"req-42951"},"status":200,"ms":12,"user":"kim"}
+{"ts":"2026-10-14T09:00:27.112+09:00","level":"warn","msg":"slow query","service":"billing","req":{"method":"GET","path":"/api/orders","id":"req-89709"},"status":200,"ms":1529,"user":"park"}
+{"ts":"2026-10-14T09:00:29.295+09:00","level":"warn","msg":"retrying upstream","service":"billing","req":{"method":"POST","path":"/api/orders","id":"req-15424"},"status":200,"ms":2533,"user":"kim"}
+{"ts":"2026-10-14T09:00:31.959+09:00","level":"error","msg":"payment declined","service":"api","req":{"method":"GET","path":"/api/orders","id":"req-92278"},"status":500,"ms":1797,"user":"jung"}
+{"ts":"2026-10-14T09:00:33.91+09:00","level":"error","msg":"payment declined","service":"search","req":{"method":"GET","path":"/api/orders","id":"req-80878"},"status":500,"ms":5815,"user":"lee"}
+{"ts":"2026-10-14T09:00:34.605+09:00","level":"info","msg":"cache hit","service":"api","req":{"method":"POST","path":"/api/orders/1042","id":"req-93020"},"status":200,"ms":113,"user":"choi"}
+{"ts":"2026-10-14T09:00:36.089+09:00","level":"info","msg":"request done","service":"api","req":{"method":"POST","path":"/api/orders/1042","id":"req-26502"},"status":200,"ms":112,"user":"choi"}
+{"ts":"2026-10-14T09:00:38.621+09:00","level":"warn","msg":"slow query","service":"search","req":{"method":"GET","path":"/api/orders","id":"req-73545"},"status":200,"ms":922,"user":"kim"}
+{"ts":"2026-10-14T09:00:38.91+09:00","level":"error","msg":"db timeout","service":"api","req":{"method":"GET","path":"/api/orders/1042","id":"req-77087"},"status":502,"ms":1582,"user":"choi"}
+{"ts":"2026-10-14T09:00:39.831+09:00","level":"error","msg":"payment declined","service":"api","req":{"method":"GET","path":"/api/orders","id":"req-85461"},"status":503,"ms":5543,"user":"park"}
+{"ts":"2026-10-14T09:00:42.766+09:00","level":"info","msg":"cache hit","service":"billing","req":{"method":"GET","path":"/api/users","id":"req-53354"},"status":200,"ms":36,"user":"park"}
+{"ts":"2026-10-14T09:00:44.425+09:00","level":"info","msg":"request done","service":"api","req":{"method":"GET","path":"/api/users","id":"req-10435"},"status":200,"ms":92,"user":"kim"}
+{"ts":"2026-10-14T09:00:46.755+09:00","level":"warn","msg":"retrying upstream","service":"billing","req":{"method":"GET","path":"/api/orders","id":"req-46390"},"status":200,"ms":1089,"user":"kim"}
+{"ts":"2026-10-14T09:00:47.876+09:00","level":"error","msg":"db timeout","service":"billing","req":{"method":"GET","path":"/api/orders/1042","id":"req-37537"},"status":500,"ms":3773,"user":"lee"}
+{"ts":"2026-10-14T09:00:48.295+09:00","level":"info","msg":"cache hit","service":"api","req":{"method":"GET","path":"/api/orders","id":"req-22310"},"status":200,"ms":65,"user":"lee"}
+{"ts":"2026-10-14T09:00:48.675+09:00","level":"info","msg":"request done","service":"billing","req":{"method":"POST","path":"/api/orders/1042","id":"req-05773"},"status":200,"ms":117,"user":"park"}
+{"ts":"2026-10-14T09:00:49.658+09:00","level":"error","msg":"db timeout","service":"search","req":{"method":"GET","path":"/api/users","id":"req-45853"},"status":500,"ms":1673,"user":"lee"}
+{"ts":"2026-10-14T09:00:49.873+09:00","level":"info","msg":"cache hit","service":"billing","req":{"method":"POST","path":"/api/users","id":"req-81967"},"status":200,"ms":17,"user":"choi"}
+{"ts":"2026-10-14T09:00:52.358+09:00","level":"error","msg":"payment declined","service":"search","req":{"method":"GET","path":"/api/orders","id":"req-18454"},"status":503,"ms":5712,"user":"kim"}
+{"ts":"2026-10-14T09:00:53.437+09:00","level":"info","msg":"request done","service":"search","req":{"method":"GET","path":"/api/users","id":"req-54758"},"status":200,"ms":54,"user":"kim"}
+{"ts":"2026-10-14T09:00:55.806+09:00","level":"info","msg":"request done","service":"api","req":{"method":"GET","path":"/api/users","id":"req-87512"},"status":200,"ms":106,"user":"park"}
+{"ts":"2026-10-14T09:00:58.666+09:00","level":"warn","msg":"slow query","service":"billing","req":{"method":"POST","path":"/api/orders","id":"req-24727"},"status":200,"ms":2287,"user":"kim"}
+{"ts":"2026-10-14T09:00:59.854+09:00","level":"error","msg":"db timeout","service":"billing","req":{"method":"GET","path":"/api/users","id":"req-54441"},"status":502,"ms":5194,"user":"choi"}
+{"ts":"2026-10-14T09:01:02.576+09:00","level":"info","msg":"request done","service":"api","req":{"method":"POST","path":"/api/orders","id":"req-21776"},"status":200,"ms":72,"user":"choi"}
+{"ts":"2026-10-14T09:01:05.384+09:00","level":"info","msg":"request done","service":"api","req":{"method":"GET","path":"/api/orders/1042","id":"req-09283"},"status":200,"ms":48,"user":"kim"}
+{"ts":"2026-10-14T09:01:07.001+09:00","level":"info","msg":"request done","service":"search","req":{"method":"POST","path":"/api/orders/1042","id":"req-38316"},"status":200,"ms":26,"user":"kim"}
+{"ts":"2026-10-14T09:01:08.37+09:00","level":"info","msg":"cache hit","service":"api","req":{"method":"GET","path":"/api/orders","id":"req-43128"},"status":200,"ms":43,"user":"kim"}
+{"ts":"2026-10-14T09:01:10.638+09:00","level":"info","msg":"cache hit","service":"billing","req":{"method":"GET","path":"/api/users","id":"req-15766"},"status":200,"ms":66,"user":"lee"}
+{"ts":"2026-10-14T09:01:12.859+09:00","level":"debug","msg":"query plan chosen","service":"api","req":{"method":"POST","path":"/api/orders/1042","id":"req-17419"},"status":200,"ms":78,"user":"jung"}
+{"ts":"2026-10-14T09:01:15.765+09:00","level":"info","msg":"request done","service":"api","req":{"method":"POST","path":"/api/orders","id":"req-45780"},"status":200,"ms":9,"user":"lee"}
+{"ts":"2026-10-14T09:01:16.306+09:00","level":"info","msg":"request done","service":"api","req":{"method":"POST","path":"/api/orders/1042","id":"req-94254"},"status":200,"ms":42,"user":"choi"}
+{"ts":"2026-10-14T09:01:17.683+09:00","level":"warn","msg":"slow query","service":"search","req":{"method":"GET","path":"/api/orders","id":"req-01992"},"status":200,"ms":1831,"user":"lee"}
+{"ts":"2026-10-14T09:01:18.02+09:00","level":"warn","msg":"slow query","service":"search","req":{"method":"GET","path":"/api/users","id":"req-86373"},"status":200,"ms":1186,"user":"park"}
+{"ts":"2026-10-14T09:01:18.218+09:00","level":"warn","msg":"slow query","service":"billing","req":{"method":"POST","path":"/api/orders/1042","id":"req-59406"},"status":200,"ms":2436,"user":"choi"}
+{"ts":"2026-10-14T09:01:20.846+09:00","level":"error","msg":"payment declined","service":"api","req":{"method":"GET","path":"/api/users","id":"req-28739"},"status":503,"ms":2323,"user":"lee"}
+{"ts":"2026-10-14T09:01:22.84+09:00","level":"info","msg":"request done","service":"api","req":{"method":"GET","path":"/api/orders/1042","id":"req-44973"},"status":200,"ms":34,"user":"jung"}
+{"ts":"2026-10-14T09:01:25.342+09:00","level":"info","msg":"request done","service":"search","req":{"method":"GET","path":"/api/orders","id":"req-98409"},"status":200,"ms":108,"user":"lee"}
+{"ts":"2026-10-14T09:01:27.992+09:00","level":"warn","msg":"slow query","service":"api","req":{"method":"POST","path":"/api/orders/1042","id":"req-70256"},"status":200,"ms":2497,"user":"lee"}
+{"ts":"2026-10-14T09:01:30.943+09:00","level":"error","msg":"payment declined","service":"billing","req":{"method":"POST","path":"/api/orders/1042","id":"req-24077"},"status":500,"ms":5626,"user":"jung"}
+{"ts":"2026-10-14T09:01:32.837+09:00","level":"error","msg":"db timeout","service":"billing","req":{"method":"GET","path":"/api/users","id":"req-01201"},"status":500,"ms":3830,"user":"lee"}
+{"ts":"2026-10-14T09:01:35.018+09:00","level":"debug","msg":"query plan chosen","service":"api","req":{"method":"GET","path":"/api/users","id":"req-61484"},"status":200,"ms":103,"user":"park"}
+{"ts":"2026-10-14T09:01:37.458+09:00","level":"info","msg":"request done","service":"search","req":{"method":"GET","path":"/api/users","id":"req-95450"},"status":200,"ms":5,"user":"kim"}
+{"ts":"2026-10-14T09:01:39.532+09:00","level":"debug","msg":"query plan chosen","service":"api","req":{"method":"GET","path":"/api/orders/1042","id":"req-31276"},"status":200,"ms":70,"user":"choi"}
+{"ts":"2026-10-14T09:01:41.838+09:00","level":"info","msg":"request done","service":"api","req":{"method":"GET","path":"/api/orders/1042","id":"req-08236"},"status":200,"ms":32,"user":"jung"}
+{"ts":"2026-10-14T09:01:42.477+09:00","level":"error","msg":"db timeout","service":"api","req":{"method":"GET","path":"/api/orders/1042","id":"req-81939"},"status":503,"ms":1774,"user":"jung"}
+{"ts":"2026-10-14T09:01:45.391+09:00","level":"debug","msg":"query plan chosen","service":"search","req":{"method":"POST","path":"/api/orders/1042","id":"req-52478"},"status":200,"ms":17,"user":"lee"}
+{"ts":"2026-10-14T09:01:48.027+09:00","level":"error","msg":"payment declined","service":"api","req":{"method":"GET","path":"/api/orders","id":"req-28721"},"status":503,"ms":3759,"user":"jung"}
+{"ts":"2026-10-14T09:01:50.267+09:00","level":"error","msg":"db timeout","service":"search","req":{"method":"GET","path":"/api/orders/1042","id":"req-82186"},"status":502,"ms":1131,"user":"park"}
+{"ts":"2026-10-14T09:01:50.564+09:00","level":"warn","msg":"retrying upstream","service":"billing","req":{"method":"GET","path":"/api/users","id":"req-03858"},"status":200,"ms":3083,"user":"jung"}
+{"ts":"2026-10-14T09:01:51.361+09:00","level":"info","msg":"request done","service":"api","req":{"method":"POST","path":"/api/orders/1042","id":"req-90279"},"status":200,"ms":93,"user":"kim"}
+{"ts":"2026-10-14T09:01:53.495+09:00","level":"info","msg":"cache hit","service":"api","req":{"method":"POST","path":"/api/users","id":"req-23447"},"status":200,"ms":36,"user":"lee"}
+{"ts":"2026-10-14T09:01:54.842+09:00","level":"debug","msg":"query plan chosen","service":"api","req":{"method":"GET","path":"/api/users","id":"req-92753"},"status":200,"ms":109,"user":"kim"}
+{"ts":"2026-10-14T09:01:55.067+09:00","level":"warn","msg":"slow query","service":"api","req":{"method":"GET","path":"/api/users","id":"req-24931"},"status":200,"ms":2514,"user":"choi"}
+{"ts":"2026-10-14T09:01:56.955+09:00","level":"error","msg":"payment declined","service":"api","req":{"method":"POST","path":"/api/users","id":"req-57372"},"status":500,"ms":3172,"user":"jung"}
+{"ts":"2026-10-14T09:01:59.087+09:00","level":"info","msg":"cache hit","service":"search","req":{"method":"GET","path":"/api/users","id":"req-39618"},"status":200,"ms":67,"user":"kim"}
+{"ts":"2026-10-14T09:02:00.002+09:00","level":"error","msg":"payment declined","service":"billing","req":{"method":"POST","path":"/api/orders/1042","id":"req-24922"},"status":503,"ms":5867,"user":"park"}
+{"ts":"2026-10-14T09:02:01.491+09:00","level":"error","msg":"payment declined","service":"api","req":{"method":"GET","path":"/api/users","id":"req-93039"},"status":500,"ms":2372,"user":"kim"}
+{"ts":"2026-10-14T09:02:02.106+09:00","level":"error","msg":"db timeout","service":"search","req":{"method":"GET","path":"/api/orders","id":"req-01416"},"status":500,"ms":1381,"user":"jung"}
+{"ts":"2026-10-14T09:02:02.22+09:00","level":"error","msg":"payment declined","service":"api","req":{"method":"POST","path":"/api/orders/1042","id":"req-85311"},"status":503,"ms":2078,"user":"park"}
+{"ts":"2026-10-14T09:02:02.744+09:00","level":"warn","msg":"slow query","service":"api","req":{"method":"POST","path":"/api/orders","id":"req-01701"},"status":200,"ms":1277,"user":"park"}
+{"ts":"2026-10-14T09:02:05.385+09:00","level":"info","msg":"request done","service":"billing","req":{"method":"GET","path":"/api/orders/1042","id":"req-81656"},"status":200,"ms":73,"user":"lee"}
+{"ts":"2026-10-14T09:02:07.579+09:00","level":"info","msg":"cache hit","service":"api","req":{"method":"GET","path":"/api/orders/1042","id":"req-44024"},"status":200,"ms":34,"user":"park"}
+{"ts":"2026-10-14T09:02:08.91+09:00","level":"info","msg":"cache hit","service":"search","req":{"method":"POST","path":"/api/orders","id":"req-20436"},"status":200,"ms":7,"user":"park"}
+{"ts":"2026-10-14T09:02:09.731+09:00","level":"warn","msg":"retrying upstream","service":"search","req":{"method":"GET","path":"/api/orders/1042","id":"req-19052"},"status":200,"ms":1453,"user":"kim"}
+{"ts":"2026-10-14T09:02:11.938+09:00","level":"info","msg":"cache hit","service":"api","req":{"method":"GET","path":"/api/orders","id":"req-92061"},"status":200,"ms":102,"user":"choi"}
+{"ts":"2026-10-14T09:02:12.376+09:00","level":"info","msg":"request done","service":"api","req":{"method":"GET","path":"/api/users","id":"req-36284"},"status":200,"ms":57,"user":"park"}
+{"ts":"2026-10-14T09:02:14.423+09:00","level":"info","msg":"request done","service":"api","req":{"method":"POST","path":"/api/users","id":"req-80208"},"status":200,"ms":94,"user":"park"}
+{"ts":"2026-10-14T09:02:15.077+09:00","level":"debug","msg":"query plan chosen","service":"search","req":{"method":"POST","path":"/api/orders","id":"req-17457"},"status":200,"ms":116,"user":"kim"}
+{"ts":"2026-10-14T09:02:16.249+09:00","level":"error","msg":"payment declined","service":"api","req":{"method":"GET","path":"/api/orders","id":"req-04168"},"status":503,"ms":2968,"user":"jung"}
+{"ts":"2026-10-14T09:02:16.624+09:00","level":"warn","msg":"slow query","service":"billing","req":{"method":"GET","path":"/api/orders","id":"req-18570"},"status":200,"ms":2010,"user":"choi"}
+{"ts":"2026-10-14T09:02:17.545+09:00","level":"warn","msg":"slow query","service":"search","req":{"method":"POST","path":"/api/users","id":"req-13311"},"status":200,"ms":2692,"user":"lee"}
+{"ts":"2026-10-14T09:02:18.325+09:00","level":"error","msg":"db timeout","service":"api","req":{"method":"POST","path":"/api/orders/1042","id":"req-13154"},"status":500,"ms":2550,"user":"lee"}
+{"ts":"2026-10-14T09:02:21.277+09:00","level":"error","msg":"payment declined","service":"search","req":{"method":"POST","path":"/api/users","id":"req-44242"},"status":502,"ms":3206,"user":"kim"}
+{"ts":"2026-10-14T09:02:22.033+09:00","level":"error","msg":"db timeout","service":"billing","req":{"method":"GET","path":"/api/orders/1042","id":"req-19874"},"status":500,"ms":3513,"user":"park"}
+{"ts":"2026-10-14T09:02:22.972+09:00","level":"warn","msg":"retrying upstream","service":"api","req":{"method":"GET","path":"/api/users","id":"req-97507"},"status":200,"ms":2544,"user":"park"}
+{"ts":"2026-10-14T09:02:25.042+09:00","level":"error","msg":"db timeout","service":"api","req":{"method":"POST","path":"/api/orders","id":"req-49489"},"status":503,"ms":4901,"user":"park"}
+{"ts":"2026-10-14T09:02:26.494+09:00","level":"error","msg":"payment declined","service":"api","req":{"method":"GET","path":"/api/users","id":"req-68385"},"status":500,"ms":3849,"user":"lee"}
+{"ts":"2026-10-14T09:02:27.149+09:00","level":"error","msg":"db timeout","service":"billing","req":{"method":"GET","path":"/api/users","id":"req-32972"},"status":502,"ms":5384,"user":"choi"}
+{"ts":"2026-10-14T09:02:29.23+09:00","level":"info","msg":"cache hit","service":"search","req":{"method":"POST","path":"/api/orders","id":"req-59897"},"status":200,"ms":20,"user":"choi"}
+{"ts":"2026-10-14T09:02:31.258+09:00","level":"info","msg":"request done","service":"billing","req":{"method":"GET","path":"/api/orders/1042","id":"req-75344"},"status":200,"ms":103,"user":"lee"}
+{"ts":"2026-10-14T09:02:33.976+09:00","level":"debug","msg":"query plan chosen","service":"billing","req":{"method":"GET","path":"/api/orders/1042","id":"req-25762"},"status":200,"ms":66,"user":"jung"}
+{"ts":"2026-10-14T09:02:34.344+09:00","level":"error","msg":"db timeout","service":"search","req":{"method":"GET","path":"/api/users","id":"req-74117"},"status":503,"ms":1656,"user":"kim"}
+{"ts":"2026-10-14T09:02:34.569+09:00","level":"error","msg":"payment declined","service":"billing","req":{"method":"POST","path":"/api/users","id":"req-94070"},"status":502,"ms":1338,"user":"jung"}
+{"ts":"2026-10-14T09:02:36.126+09:00","level":"warn","msg":"retrying upstream","service":"billing","req":{"method":"GET","path":"/api/users","id":"req-85801"},"status":200,"ms":1248,"user":"jung"}
+{"ts":"2026-10-14T09:02:37.276+09:00","level":"info","msg":"cache hit","service":"search","req":{"method":"GET","path":"/api/orders","id":"req-80873"},"status":200,"ms":53,"user":"lee"}
+{"ts":"2026-10-14T09:02:39.697+09:00","level":"warn","msg":"retrying upstream","service":"billing","req":{"method":"GET","path":"/api/orders","id":"req-65404"},"status":200,"ms":955,"user":"jung"}
+{"ts":"2026-10-14T09:02:41.546+09:00","level":"info","msg":"request done","service":"billing","req":{"method":"GET","path":"/api/orders","id":"req-50659"},"status":200,"ms":48,"user":"choi"}
+{"ts":"2026-10-14T09:02:41.75+09:00","level":"info","msg":"cache hit","service":"search","req":{"method":"GET","path":"/api/orders/1042","id":"req-50462"},"status":200,"ms":20,"user":"kim"}
+{"ts":"2026-10-14T09:02:44.644+09:00","level":"info","msg":"request done","service":"api","req":{"method":"GET","path":"/api/users","id":"req-16687"},"status":200,"ms":26,"user":"park"}
+{"ts":"2026-10-14T09:02:46.918+09:00","level":"info","msg":"request done","service":"api","req":{"method":"GET","path":"/api/orders/1042","id":"req-48405"},"status":200,"ms":40,"user":"choi"}
+{"ts":"2026-10-14T09:02:48.51+09:00","level":"error","msg":"db timeout","service":"api","req":{"method":"GET","path":"/api/orders/1042","id":"req-59322"},"status":500,"ms":1382,"user":"choi"}
+{"ts":"2026-10-14T09:02:49.511+09:00","level":"info","msg":"cache hit","service":"api","req":{"method":"GET","path":"/api/orders","id":"req-06040"},"status":200,"ms":85,"user":"park"}
+{"ts":"2026-10-14T09:02:51.668+09:00","level":"warn","msg":"retrying upstream","service":"api","req":{"method":"GET","path":"/api/orders/1042","id":"req-03047"},"status":200,"ms":3108,"user":"kim"}
+{"ts":"2026-10-14T09:02:52.759+09:00","level":"error","msg":"payment declined","service":"api","req":{"method":"GET","path":"/api/orders/1042","id":"req-51373"},"status":503,"ms":5668,"user":"lee"}
+{"ts":"2026-10-14T09:02:52.981+09:00","level":"warn","msg":"retrying upstream","service":"api","req":{"method":"POST","path":"/api/orders","id":"req-06456"},"status":200,"ms":3169,"user":"kim"}
+{"ts":"2026-10-14T09:02:55.958+09:00","level":"debug","msg":"query plan chosen","service":"search","req":{"method":"GET","path":"/api/orders/1042","id":"req-25825"},"status":200,"ms":115,"user":"park"}
+{"ts":"2026-10-14T09:02:58.494+09:00","level":"info","msg":"request done","service":"api","req":{"method":"GET","path":"/api/users","id":"req-45883"},"status":200,"ms":96,"user":"lee"}
+{"ts":"2026-10-14T09:02:59.327+09:00","level":"warn","msg":"slow query","service":"api","req":{"method":"POST","path":"/api/orders","id":"req-26960"},"status":200,"ms":928,"user":"choi"}
+{"ts":"2026-10-14T09:03:00.462+09:00","level":"error","msg":"payment declined","service":"billing","req":{"method":"GET","path":"/api/users","id":"req-09249"},"status":502,"ms":4383,"user":"choi"}
+{"ts":"2026-10-14T09:03:02.257+09:00","level":"info","msg":"cache hit","service":"api","req":{"method":"POST","path":"/api/users","id":"req-68163"},"status":200,"ms":114,"user":"lee"}
+{"ts":"2026-10-14T09:03:02.837+09:00","level":"warn","msg":"slow query","service":"billing","req":{"method":"POST","path":"/api/orders","id":"req-07864"},"status":200,"ms":2709,"user":"kim"}
+{"ts":"2026-10-14T09:03:05.767+09:00","level":"error","msg":"db timeout","service":"billing","req":{"method":"GET","path":"/api/users","id":"req-77126"},"status":500,"ms":2478,"user":"choi"}
+{"ts":"2026-10-14T09:03:05.861+09:00","level":"info","msg":"cache hit","service":"search","req":{"method":"GET","path":"/api/orders","id":"req-25794"},"status":200,"ms":21,"user":"jung"}
+{"ts":"2026-10-14T09:03:06.83+09:00","level":"error","msg":"payment declined","service":"billing","req":{"method":"GET","path":"/api/orders/1042","id":"req-78877"},"status":502,"ms":1675,"user":"jung"}
+{"ts":"2026-10-14T09:03:09.38+09:00","level":"info","msg":"request done","service":"billing","req":{"method":"GET","path":"/api/users","id":"req-09093"},"status":200,"ms":90,"user":"lee"}
+{"ts":"2026-10-14T09:03:09.401+09:00","level":"warn","msg":"retrying upstream","service":"billing","req":{"method":"POST","path":"/api/orders/1042","id":"req-37344"},"status":200,"ms":3211,"user":"lee"}
+{"ts":"2026-10-14T09:03:11.591+09:00","level":"error","msg":"payment declined","service":"billing","req":{"method":"GET","path":"/api/orders","id":"req-41564"},"status":502,"ms":3309,"user":"choi"}
+{"ts":"2026-10-14T09:03:13.281+09:00","level":"error","msg":"payment declined","service":"api","req":{"method":"POST","path":"/api/orders/1042","id":"req-70463"},"status":502,"ms":2161,"user":"park"}
+{"ts":"2026-10-14T09:03:13.879+09:00","level":"error","msg":"db timeout","service":"api","req":{"method":"GET","path":"/api/users","id":"req-29458"},"status":502,"ms":2222,"user":"kim"}
+{"ts":"2026-10-14T09:03:16.103+09:00","level":"warn","msg":"retrying upstream","service":"billing","req":{"method":"GET","path":"/api/users","id":"req-66947"},"status":200,"ms":1313,"user":"park"}
+{"ts":"2026-10-14T09:03:17.791+09:00","level":"info","msg":"request done","service":"api","req":{"method":"GET","path":"/api/orders/1042","id":"req-66630"},"status":200,"ms":23,"user":"kim"}
+{"ts":"2026-10-14T09:03:18.952+09:00","level":"info","msg":"cache hit","service":"billing","req":{"method":"GET","path":"/api/orders/1042","id":"req-22228"},"status":200,"ms":100,"user":"jung"}
+{"ts":"2026-10-14T09:03:21.301+09:00","level":"info","msg":"request done","service":"billing","req":{"method":"GET","path":"/api/users","id":"req-02277"},"status":200,"ms":106,"user":"park"}
+{"ts":"2026-10-14T09:03:23.566+09:00","level":"error","msg":"payment declined","service":"api","req":{"method":"GET","path":"/api/orders/1042","id":"req-49388"},"status":503,"ms":1259,"user":"jung"}
+{"ts":"2026-10-14T09:03:25.724+09:00","level":"info","msg":"request done","service":"api","req":{"method":"POST","path":"/api/orders/1042","id":"req-30874"},"status":200,"ms":13,"user":"kim"}
+{"ts":"2026-10-14T09:03:26.114+09:00","level":"info","msg":"request done","service":"search","req":{"method":"GET","path":"/api/orders/1042","id":"req-66096"},"status":200,"ms":61,"user":"kim"}
+{"ts":"2026-10-14T09:03:27.721+09:00","level":"info","msg":"request done","service":"search","req":{"method":"GET","path":"/api/orders/1042","id":"req-36648"},"status":200,"ms":44,"user":"park"}
+{"ts":"2026-10-14T09:03:29.847+09:00","level":"warn","msg":"slow query","service":"search","req":{"method":"GET","path":"/api/users","id":"req-95137"},"status":200,"ms":3201,"user":"choi"}
+{"ts":"2026-10-14T09:03:32.682+09:00","level":"warn","msg":"retrying upstream","service":"billing","req":{"method":"GET","path":"/api/orders/1042","id":"req-88844"},"status":200,"ms":1582,"user":"choi"}
+{"ts":"2026-10-14T09:03:33.261+09:00","level":"info","msg":"request done","service":"api","req":{"method":"POST","path":"/api/users","id":"req-31079"},"status":200,"ms":97,"user":"choi"}
+{"ts":"2026-10-14T09:03:34.185+09:00","level":"error","msg":"db timeout","service":"billing","req":{"method":"GET","path":"/api/users","id":"req-71080"},"status":502,"ms":4613,"user":"kim"}
+{"ts":"2026-10-14T09:03:35.012+09:00","level":"warn","msg":"slow query","service":"api","req":{"method":"POST","path":"/api/orders","id":"req-92889"},"status":200,"ms":2130,"user":"kim"}
+{"ts":"2026-10-14T09:03:36.647+09:00","level":"info","msg":"cache hit","service":"api","req":{"method":"GET","path":"/api/users","id":"req-02141"},"status":200,"ms":12,"user":"kim"}
+{"ts":"2026-10-14T09:03:37.275+09:00","level":"debug","msg":"query plan chosen","service":"api","req":{"method":"POST","path":"/api/orders","id":"req-72986"},"status":200,"ms":49,"user":"park"}
+{"ts":"2026-10-14T09:03:39.391+09:00","level":"error","msg":"payment declined","service":"search","req":{"method":"POST","path":"/api/orders","id":"req-81164"},"status":502,"ms":4043,"user":"lee"}
+{"ts":"2026-10-14T09:03:39.4+09:00","level":"info","msg":"request done","service":"api","req":{"method":"GET","path":"/api/users","id":"req-60843"},"status":200,"ms":57,"user":"lee"}
+{"ts":"2026-10-14T09:03:40.057+09:00","level":"info","msg":"request done","service":"api","req":{"method":"POST","path":"/api/users","id":"req-70704"},"status":200,"ms":54,"user":"park"}
+{"ts":"2026-10-14T09:03:41.963+09:00","level":"info","msg":"request done","service":"billing","req":{"method":"GET","path":"/api/orders/1042","id":"req-61501"},"status":200,"ms":77,"user":"choi"}
+{"ts":"2026-10-14T09:03:44.929+09:00","level":"error","msg":"payment declined","service":"api","req":{"method":"GET","path":"/api/users","id":"req-89787"},"status":502,"ms":5065,"user":"jung"}
+{"ts":"2026-10-14T09:03:47.227+09:00","level":"info","msg":"cache hit","service":"api","req":{"method":"POST","path":"/api/users","id":"req-43934"},"status":200,"ms":89,"user":"choi"}
+{"ts":"2026-10-14T09:03:49.502+09:00","level":"info","msg":"request done","service":"search","req":{"method":"GET","path":"/api/orders/1042","id":"req-48991"},"status":200,"ms":30,"user":"kim"}
+{"ts":"2026-10-14T09:03:50.773+09:00","level":"warn","msg":"retrying upstream","service":"billing","req":{"method":"GET","path":"/api/users","id":"req-27402"},"status":200,"ms":1591,"user":"kim"}
+{"ts":"2026-10-14T09:03:51.001+09:00","level":"info","msg":"request done","service":"search","req":{"method":"GET","path":"/api/users","id":"req-55414"},"status":200,"ms":100,"user":"lee"}
+{"ts":"2026-10-14T09:03:53.715+09:00","level":"debug","msg":"query plan chosen","service":"search","req":{"method":"GET","path":"/api/orders","id":"req-79441"},"status":200,"ms":49,"user":"park"}
+{"ts":"2026-10-14T09:03:55.505+09:00","level":"error","msg":"payment declined","service":"api","req":{"method":"GET","path":"/api/orders","id":"req-49516"},"status":500,"ms":4787,"user":"park"}
+{"ts":"2026-10-14T09:03:56.407+09:00","level":"warn","msg":"slow query","service":"search","req":{"method":"GET","path":"/api/orders/1042","id":"req-19957"},"status":200,"ms":1573,"user":"jung"}
+{"ts":"2026-10-14T09:03:59.156+09:00","level":"info","msg":"cache hit","service":"api","req":{"method":"POST","path":"/api/orders/1042","id":"req-90029"},"status":200,"ms":49,"user":"lee"}
+{"ts":"2026-10-14T09:04:02.028+09:00","level":"warn","msg":"retrying upstream","service":"billing","req":{"method":"GET","path":"/api/users","id":"req-09981"},"status":200,"ms":1158,"user":"choi"}
+{"ts":"2026-10-14T09:04:03.474+09:00","level":"error","msg":"payment declined","service":"api","req":{"method":"POST","path":"/api/users","id":"req-18053"},"status":502,"ms":2531,"user":"jung"}
+{"ts":"2026-10-14T09:04:04.598+09:00","level":"warn","msg":"slow query","service":"billing","req":{"method":"POST","path":"/api/users","id":"req-57071"},"status":200,"ms":1130,"user":"park"}
+{"ts":"2026-10-14T09:04:04.792+09:00","level":"warn","msg":"slow query","service":"api","req":{"method":"POST","path":"/api/users","id":"req-23848"},"status":200,"ms":912,"user":"choi"}
+{"ts":"2026-10-14T09:04:05.305+09:00","level":"info","msg":"cache hit","service":"api","req":{"method":"GET","path":"/api/orders/1042","id":"req-38053"},"status":200,"ms":63,"user":"park"}
+{"ts":"2026-10-14T09:04:05.47+09:00","level":"debug","msg":"query plan chosen","service":"api","req":{"method":"GET","path":"/api/orders/1042","id":"req-41269"},"status":200,"ms":7,"user":"choi"}
+{"ts":"2026-10-14T09:04:07.063+09:00","level":"error","msg":"db timeout","service":"billing","req":{"method":"GET","path":"/api/orders","id":"req-31891"},"status":503,"ms":3203,"user":"park"}
+{"ts":"2026-10-14T09:04:09.427+09:00","level":"error","msg":"payment declined","service":"api","req":{"method":"GET","path":"/api/orders/1042","id":"req-51506"},"status":503,"ms":5200,"user":"choi"}
+{"ts":"2026-10-14T09:04:10.6+09:00","level":"error","msg":"db timeout","service":"api","req":{"method":"GET","path":"/api/orders/1042","id":"req-65425"},"status":500,"ms":2817,"user":"kim"}
+{"ts":"2026-10-14T09:04:11.38+09:00","level":"debug","msg":"query plan chosen","service":"api","req":{"method":"GET","path":"/api/orders/1042","id":"req-95900"},"status":200,"ms":60,"user":"jung"}
+{"ts":"2026-10-14T09:04:13.756+09:00","level":"info","msg":"request done","service":"search","req":{"method":"POST","path":"/api/users","id":"req-70633"},"status":200,"ms":48,"user":"choi"}
+{"ts":"2026-10-14T09:04:14.713+09:00","level":"info","msg":"cache hit","service":"billing","req":{"method":"POST","path":"/api/orders","id":"req-72236"},"status":200,"ms":66,"user":"choi"}
+{"ts":"2026-10-14T09:04:15.089+09:00","level":"warn","msg":"slow query","service":"api","req":{"method":"POST","path":"/api/orders/1042","id":"req-79191"},"status":200,"ms":2120,"user":"jung"}
+{"ts":"2026-10-14T09:04:16.654+09:00","level":"info","msg":"cache hit","service":"api","req":{"method":"GET","path":"/api/orders/1042","id":"req-23266"},"status":200,"ms":6,"user":"lee"}
+{"ts":"2026-10-14T09:04:17.202+09:00","level":"error","msg":"db timeout","service":"api","req":{"method":"GET","path":"/api/orders/1042","id":"req-07192"},"status":503,"ms":1832,"user":"lee"}
+{"ts":"2026-10-14T09:04:18.353+09:00","level":"error","msg":"payment declined","service":"billing","req":{"method":"GET","path":"/api/users","id":"req-81879"},"status":500,"ms":4557,"user":"park"}
+{"ts":"2026-10-14T09:04:18.734+09:00","level":"info","msg":"cache hit","service":"api","req":{"method":"GET","path":"/api/orders","id":"req-18255"},"status":200,"ms":105,"user":"kim"}
+{"ts":"2026-10-14T09:04:19.013+09:00","level":"info","msg":"cache hit","service":"search","req":{"method":"GET","path":"/api/users","id":"req-14692"},"status":200,"ms":40,"user":"park"}
+{"ts":"2026-10-14T09:04:21.175+09:00","level":"error","msg":"payment declined","service":"api","req":{"method":"GET","path":"/api/orders/1042","id":"req-01110"},"status":500,"ms":3113,"user":"jung"}
+{"ts":"2026-10-14T09:04:21.192+09:00","level":"debug","msg":"query plan chosen","service":"search","req":{"method":"POST","path":"/api/orders/1042","id":"req-29258"},"status":200,"ms":76,"user":"lee"}
+{"ts":"2026-10-14T09:04:21.818+09:00","level":"info","msg":"request done","service":"billing","req":{"method":"GET","path":"/api/orders","id":"req-93388"},"status":200,"ms":100,"user":"park"}
+{"ts":"2026-10-14T09:04:22.857+09:00","level":"info","msg":"cache hit","service":"api","req":{"method":"GET","path":"/api/orders","id":"req-68482"},"status":200,"ms":57,"user":"lee"}
+{"ts":"2026-10-14T09:04:23.225+09:00","level":"debug","msg":"query plan chosen","service":"api","req":{"method":"POST","path":"/api/orders/1042","id":"req-89524"},"status":200,"ms":88,"user":"park"}
+{"ts":"2026-10-14T09:04:24.994+09:00","level":"info","msg":"cache hit","service":"api","req":{"method":"GET","path":"/api/orders","id":"req-71610"},"status":200,"ms":62,"user":"choi"}
+{"ts":"2026-10-14T09:04:27.078+09:00","level":"warn","msg":"retrying upstream","service":"api","req":{"method":"GET","path":"/api/users","id":"req-46297"},"status":200,"ms":2782,"user":"park"}
+{"ts":"2026-10-14T09:04:27.116+09:00","level":"info","msg":"cache hit","service":"billing","req":{"method":"POST","path":"/api/orders/1042","id":"req-02015"},"status":200,"ms":87,"user":"lee"}
+{"ts":"2026-10-14T09:04:28.936+09:00","level":"debug","msg":"query plan chosen","service":"search","req":{"method":"POST","path":"/api/orders","id":"req-36272"},"status":200,"ms":70,"user":"lee"}
+{"ts":"2026-10-14T09:04:31.413+09:00","level":"warn","msg":"retrying upstream","service":"api","req":{"method":"POST","path":"/api/orders","id":"req-51439"},"status":200,"ms":822,"user":"kim"}
+{"ts":"2026-10-14T09:04:31.561+09:00","level":"info","msg":"cache hit","service":"api","req":{"method":"GET","path":"/api/orders/1042","id":"req-22190"},"status":200,"ms":101,"user":"jung"}
+{"ts":"2026-10-14T09:04:33.392+09:00","level":"info","msg":"cache hit","service":"billing","req":{"method":"POST","path":"/api/orders/1042","id":"req-70683"},"status":200,"ms":116,"user":"lee"}
+{"ts":"2026-10-14T09:04:34.968+09:00","level":"error","msg":"payment declined","service":"api","req":{"method":"GET","path":"/api/orders/1042","id":"req-95135"},"status":500,"ms":2908,"user":"jung"}
+{"ts":"2026-10-14T09:04:36.955+09:00","level":"debug","msg":"query plan chosen","service":"billing","req":{"method":"GET","path":"/api/users","id":"req-40609"},"status":200,"ms":96,"user":"lee"}
+{"ts":"2026-10-14T09:04:37.507+09:00","level":"warn","msg":"retrying upstream","service":"billing","req":{"method":"POST","path":"/api/orders/1042","id":"req-17338"},"status":200,"ms":2209,"user":"kim"}
+{"ts":"2026-10-14T09:04:40.286+09:00","level":"error","msg":"db timeout","service":"billing","req":{"method":"GET","path":"/api/orders/1042","id":"req-15362"},"status":500,"ms":1024,"user":"park"}
+{"ts":"2026-10-14T09:04:41.951+09:00","level":"debug","msg":"query plan chosen","service":"billing","req":{"method":"GET","path":"/api/orders/1042","id":"req-93312"},"status":200,"ms":52,"user":"jung"}
+{"ts":"2026-10-14T09:04:43.515+09:00","level":"warn","msg":"retrying upstream","service":"api","req":{"method":"GET","path":"/api/users","id":"req-40072"},"status":200,"ms":2942,"user":"park"}
+{"ts":"2026-10-14T09:04:44.928+09:00","level":"info","msg":"request done","service":"api","req":{"method":"GET","path":"/api/orders/1042","id":"req-25184"},"status":200,"ms":36,"user":"kim"}
+{"ts":"2026-10-14T09:04:45.162+09:00","level":"warn","msg":"retrying upstream","service":"search","req":{"method":"GET","path":"/api/users","id":"req-98721"},"status":200,"ms":1588,"user":"kim"}
+{"ts":"2026-10-14T09:04:47.724+09:00","level":"error","msg":"payment declined","service":"api","req":{"method":"POST","path":"/api/orders/1042","id":"req-56698"},"status":503,"ms":4844,"user":"lee"}
+{"ts":"2026-10-14T09:04:49.318+09:00","level":"error","msg":"payment declined","service":"api","req":{"method":"POST","path":"/api/orders/1042","id":"req-17902"},"status":503,"ms":4647,"user":"lee"}
+{"ts":"2026-10-14T09:04:50.087+09:00","level":"error","msg":"db timeout","service":"search","req":{"method":"POST","path":"/api/orders","id":"req-38012"},"status":502,"ms":4345,"user":"park"}
+{"ts":"2026-10-14T09:04:50.253+09:00","level":"error","msg":"db timeout","service":"search","req":{"method":"GET","path":"/api/orders","id":"req-42114"},"status":500,"ms":4851,"user":"jung"}
+{"ts":"2026-10-14T09:04:51.457+09:00","level":"error","msg":"db timeout","service":"api","req":{"method":"GET","path":"/api/users","id":"req-33927"},"status":502,"ms":3813,"user":"choi"}
+{"ts":"2026-10-14T09:04:51.893+09:00","level":"error","msg":"db timeout","service":"api","req":{"method":"GET","path":"/api/users","id":"req-28360"},"status":502,"ms":4222,"user":"lee"}
+{"ts":"2026-10-14T09:04:52.073+09:00","level":"warn","msg":"retrying upstream","service":"api","req":{"method":"POST","path":"/api/orders/1042","id":"req-37643"},"status":200,"ms":2282,"user":"park"}
+{"ts":"2026-10-14T09:04:55.013+09:00","level":"warn","msg":"retrying upstream","service":"api","req":{"method":"GET","path":"/api/orders","id":"req-72246"},"status":200,"ms":2466,"user":"jung"}
+{"ts":"2026-10-14T09:04:55.194+09:00","level":"info","msg":"request done","service":"search","req":{"method":"GET","path":"/api/orders/1042","id":"req-04579"},"status":200,"ms":115,"user":"park"}
+{"ts":"2026-10-14T09:04:55.99+09:00","level":"info","msg":"request done","service":"api","req":{"method":"GET","path":"/api/users","id":"req-82765"},"status":200,"ms":33,"user":"choi"}
+{"ts":"2026-10-14T09:04:56.21+09:00","level":"info","msg":"cache hit","service":"search","req":{"method":"GET","path":"/api/orders","id":"req-69902"},"status":200,"ms":41,"user":"kim"}
+{"ts":"2026-10-14T09:04:56.876+09:00","level":"error","msg":"db timeout","service":"api","req":{"method":"GET","path":"/api/orders/1042","id":"req-12599"},"status":500,"ms":5515,"user":"kim"}
+{"ts":"2026-10-14T09:04:59.729+09:00","level":"info","msg":"cache hit","service":"api","req":{"method":"POST","path":"/api/orders","id":"req-22515"},"status":200,"ms":58,"user":"kim"}
+{"ts":"2026-10-14T09:05:01.048+09:00","level":"error","msg":"db timeout","service":"api","req":{"method":"GET","path":"/api/orders","id":"req-60067"},"status":502,"ms":5891,"user":"choi"}
+{"ts":"2026-10-14T09:05:01.225+09:00","level":"error","msg":"db timeout","service":"billing","req":{"method":"GET","path":"/api/users","id":"req-60899"},"status":503,"ms":2700,"user":"kim"}
+{"ts":"2026-10-14T09:05:02.388+09:00","level":"error","msg":"payment declined","service":"api","req":{"method":"GET","path":"/api/users","id":"req-66119"},"status":502,"ms":4045,"user":"choi"}
+{"ts":"2026-10-14T09:05:04.238+09:00","level":"error","msg":"db timeout","service":"api","req":{"method":"POST","path":"/api/orders","id":"req-55081"},"status":503,"ms":4334,"user":"choi"}
+{"ts":"2026-10-14T09:05:04.902+09:00","level":"info","msg":"request done","service":"api","req":{"method":"POST","path":"/api/orders/1042","id":"req-99653"},"status":200,"ms":57,"user":"choi"}
+{"ts":"2026-10-14T09:05:07.419+09:00","level":"info","msg":"request done","service":"api","req":{"method":"GET","path":"/api/orders","id":"req-49775"},"status":200,"ms":124,"user":"jung"}
+{"ts":"2026-10-14T09:05:08.809+09:00","level":"info","msg":"request done","service":"search","req":{"method":"POST","path":"/api/users","id":"req-53351"},"status":200,"ms":82,"user":"choi"}
+{"ts":"2026-10-14T09:05:09.177+09:00","level":"info","msg":"request done","service":"api","req":{"method":"POST","path":"/api/orders/1042","id":"req-38820"},"status":200,"ms":121,"user":"park"}
+{"ts":"2026-10-14T09:05:10.359+09:00","level":"warn","msg":"slow query","service":"api","req":{"method":"GET","path":"/api/orders/1042","id":"req-74847"},"status":200,"ms":1647,"user":"park"}
+{"ts":"2026-10-14T09:05:11.505+09:00","level":"info","msg":"request done","service":"billing","req":{"method":"GET","path":"/api/orders","id":"req-99341"},"status":200,"ms":55,"user":"lee"}
+{"ts":"2026-10-14T09:05:13.237+09:00","level":"debug","msg":"query plan chosen","service":"billing","req":{"method":"GET","path":"/api/orders/1042","id":"req-80157"},"status":200,"ms":28,"user":"lee"}
+{"ts":"2026-10-14T09:05:16.05+09:00","level":"debug","msg":"query plan chosen","service":"api","req":{"method":"GET","path":"/api/users","id":"req-58131"},"status":200,"ms":111,"user":"jung"}
+{"ts":"2026-10-14T09:05:18.636+09:00","level":"error","msg":"db timeout","service":"billing","req":{"method":"GET","path":"/api/orders/1042","id":"req-32605"},"status":503,"ms":1623,"user":"park"}
+{"ts":"2026-10-14T09:05:21.189+09:00","level":"debug","msg":"query plan chosen","service":"api","req":{"method":"GET","path":"/api/orders/1042","id":"req-25873"},"status":200,"ms":64,"user":"jung"}
+{"ts":"2026-10-14T09:05:23.963+09:00","level":"info","msg":"request done","service":"billing","req":{"method":"GET","path":"/api/orders","id":"req-26295"},"status":200,"ms":14,"user":"jung"}
+{"ts":"2026-10-14T09:05:24.785+09:00","level":"debug","msg":"query plan chosen","service":"api","req":{"method":"GET","path":"/api/orders/1042","id":"req-76333"},"status":200,"ms":9,"user":"jung"}
+{"ts":"2026-10-14T09:05:26.863+09:00","level":"warn","msg":"retrying upstream","service":"search","req":{"method":"GET","path":"/api/users","id":"req-12589"},"status":200,"ms":3109,"user":"choi"}
+{"ts":"2026-10-14T09:05:27.003+09:00","level":"warn","msg":"retrying upstream","service":"search","req":{"method":"GET","path":"/api/orders","id":"req-94169"},"status":200,"ms":1442,"user":"choi"}
+{"ts":"2026-10-14T09:05:29.894+09:00","level":"info","msg":"request done","service":"billing","req":{"method":"GET","path":"/api/orders/1042","id":"req-28575"},"status":200,"ms":65,"user":"jung"}
+{"ts":"2026-10-14T09:05:30.51+09:00","level":"error","msg":"db timeout","service":"api","req":{"method":"POST","path":"/api/orders/1042","id":"req-24175"},"status":503,"ms":2467,"user":"jung"}
+{"ts":"2026-10-14T09:05:31.319+09:00","level":"error","msg":"payment declined","service":"search","req":{"method":"GET","path":"/api/orders/1042","id":"req-13291"},"status":503,"ms":4652,"user":"lee"}
+{"ts":"2026-10-14T09:05:32.161+09:00","level":"error","msg":"db timeout","service":"api","req":{"method":"GET","path":"/api/orders","id":"req-17718"},"status":503,"ms":4432,"user":"choi"}
+{"ts":"2026-10-14T09:05:32.751+09:00","level":"warn","msg":"slow query","service":"api","req":{"method":"GET","path":"/api/orders/1042","id":"req-76574"},"status":200,"ms":1803,"user":"lee"}
+{"ts":"2026-10-14T09:05:35.677+09:00","level":"info","msg":"request done","service":"search","req":{"method":"GET","path":"/api/orders/1042","id":"req-43717"},"status":200,"ms":123,"user":"kim"}
+{"ts":"2026-10-14T09:05:38.014+09:00","level":"info","msg":"request done","service":"api","req":{"method":"GET","path":"/api/orders","id":"req-06223"},"status":200,"ms":122,"user":"kim"}
+{"ts":"2026-10-14T09:05:40.735+09:00","level":"debug","msg":"query plan chosen","service":"search","req":{"method":"GET","path":"/api/orders/1042","id":"req-05578"},"status":200,"ms":104,"user":"park"}
+{"ts":"2026-10-14T09:05:42.928+09:00","level":"debug","msg":"query plan chosen","service":"billing","req":{"method":"POST","path":"/api/orders","id":"req-96299"},"status":200,"ms":53,"user":"jung"}
+{"ts":"2026-10-14T09:05:44.683+09:00","level":"error","msg":"db timeout","service":"search","req":{"method":"GET","path":"/api/orders/1042","id":"req-33058"},"status":503,"ms":3851,"user":"lee"}
+{"ts":"2026-10-14T09:05:45.568+09:00","level":"warn","msg":"slow query","service":"search","req":{"method":"GET","path":"/api/orders/1042","id":"req-56888"},"status":200,"ms":1320,"user":"lee"}
+{"ts":"2026-10-14T09:05:47.191+09:00","level":"info","msg":"request done","service":"api","req":{"method":"GET","path":"/api/orders","id":"req-30361"},"status":200,"ms":103,"user":"kim"}
+{"ts":"2026-10-14T09:05:49.166+09:00","level":"info","msg":"request done","service":"search","req":{"method":"GET","path":"/api/orders/1042","id":"req-02796"},"status":200,"ms":89,"user":"park"}
+{"ts":"2026-10-14T09:05:51.876+09:00","level":"warn","msg":"retrying upstream","service":"api","req":{"method":"GET","path":"/api/orders","id":"req-18827"},"status":200,"ms":1126,"user":"park"}
+{"ts":"2026-10-14T09:05:52.807+09:00","level":"info","msg":"request done","service":"api","req":{"method":"POST","path":"/api/users","id":"req-94768"},"status":200,"ms":90,"user":"jung"}
+{"ts":"2026-10-14T09:05:54.237+09:00","level":"warn","msg":"slow query","service":"billing","req":{"method":"POST","path":"/api/users","id":"req-73985"},"status":200,"ms":1926,"user":"park"}
+{"ts":"2026-10-14T09:05:54.892+09:00","level":"info","msg":"request done","service":"api","req":{"method":"POST","path":"/api/orders/1042","id":"req-91866"},"status":200,"ms":27,"user":"park"}
+{"ts":"2026-10-14T09:05:56.015+09:00","level":"warn","msg":"retrying upstream","service":"api","req":{"method":"GET","path":"/api/orders","id":"req-36589"},"status":200,"ms":1239,"user":"kim"}
+{"ts":"2026-10-14T09:05:56.364+09:00","level":"error","msg":"db timeout","service":"search","req":{"method":"GET","path":"/api/orders","id":"req-75700"},"status":500,"ms":3739,"user":"jung"}
+{"ts":"2026-10-14T09:05:56.838+09:00","level":"info","msg":"request done","service":"billing","req":{"method":"GET","path":"/api/orders","id":"req-81421"},"status":200,"ms":12,"user":"kim"}
+{"ts":"2026-10-14T09:05:57.008+09:00","level":"debug","msg":"query plan chosen","service":"api","req":{"method":"POST","path":"/api/users","id":"req-20954"},"status":200,"ms":115,"user":"lee"}
+{"ts":"2026-10-14T09:05:58.773+09:00","level":"info","msg":"request done","service":"search","req":{"method":"GET","path":"/api/users","id":"req-87944"},"status":200,"ms":65,"user":"kim"}
+{"ts":"2026-10-14T09:06:00.454+09:00","level":"info","msg":"request done","service":"api","req":{"method":"GET","path":"/api/orders","id":"req-66273"},"status":200,"ms":54,"user":"park"}
+{"ts":"2026-10-14T09:06:00.861+09:00","level":"debug","msg":"query plan chosen","service":"billing","req":{"method":"POST","path":"/api/users","id":"req-06215"},"status":200,"ms":52,"user":"kim"}
+{"ts":"2026-10-14T09:06:02.254+09:00","level":"debug","msg":"query plan chosen","service":"api","req":{"method":"POST","path":"/api/users","id":"req-00815"},"status":200,"ms":25,"user":"lee"}
+{"ts":"2026-10-14T09:06:05.037+09:00","level":"error","msg":"payment declined","service":"api","req":{"method":"GET","path":"/api/users","id":"req-42925"},"status":502,"ms":4517,"user":"jung"}
+{"ts":"2026-10-14T09:06:07.782+09:00","level":"debug","msg":"query plan chosen","service":"api","req":{"method":"POST","path":"/api/orders/1042","id":"req-18319"},"status":200,"ms":8,"user":"kim"}
+{"ts":"2026-10-14T09:06:10.387+09:00","level":"error","msg":"payment declined","service":"search","req":{"method":"POST","path":"/api/orders","id":"req-44648"},"status":503,"ms":4396,"user":"park"}
+{"ts":"2026-10-14T09:06:12.893+09:00","level":"info","msg":"request done","service":"search","req":{"method":"GET","path":"/api/users","id":"req-35147"},"status":200,"ms":69,"user":"kim"}
+{"ts":"2026-10-14T09:06:13.215+09:00","level":"error","msg":"db timeout","service":"api","req":{"method":"GET","path":"/api/users","id":"req-39680"},"status":500,"ms":5814,"user":"choi"}
+{"ts":"2026-10-14T09:06:15.534+09:00","level":"warn","msg":"slow query","service":"api","req":{"method":"GET","path":"/api/orders","id":"req-94381"},"status":200,"ms":1325,"user":"choi"}
+{"ts":"2026-10-14T09:06:18.173+09:00","level":"warn","msg":"slow query","service":"billing","req":{"method":"POST","path":"/api/orders","id":"req-81157"},"status":200,"ms":2992,"user":"kim"}
+{"ts":"2026-10-14T09:06:21.038+09:00","level":"error","msg":"db timeout","service":"api","req":{"method":"GET","path":"/api/orders","id":"req-09303"},"status":503,"ms":5525,"user":"park"}
+{"ts":"2026-10-14T09:06:23.484+09:00","level":"warn","msg":"retrying upstream","service":"api","req":{"method":"GET","path":"/api/orders","id":"req-80520"},"status":200,"ms":3277,"user":"choi"}
+{"ts":"2026-10-14T09:06:25.869+09:00","level":"error","msg":"db timeout","service":"billing","req":{"method":"GET","path":"/api/users","id":"req-85985"},"status":503,"ms":4086,"user":"park"}
+{"ts":"2026-10-14T09:06:27.008+09:00","level":"info","msg":"request done","service":"billing","req":{"method":"GET","path":"/api/users","id":"req-55320"},"status":200,"ms":70,"user":"park"}
+{"ts":"2026-10-14T09:06:27.104+09:00","level":"warn","msg":"retrying upstream","service":"billing","req":{"method":"GET","path":"/api/orders","id":"req-53475"},"status":200,"ms":1555,"user":"park"}
+{"ts":"2026-10-14T09:06:27.286+09:00","level":"debug","msg":"query plan chosen","service":"search","req":{"method":"POST","path":"/api/orders","id":"req-47072"},"status":200,"ms":48,"user":"lee"}
+{"ts":"2026-10-14T09:06:30.001+09:00","level":"debug","msg":"query plan chosen","service":"search","req":{"method":"GET","path":"/api/orders/1042","id":"req-51390"},"status":200,"ms":117,"user":"park"}
+{"ts":"2026-10-14T09:06:32.393+09:00","level":"warn","msg":"slow query","service":"api","req":{"method":"POST","path":"/api/users","id":"req-35312"},"status":200,"ms":2993,"user":"jung"}
+{"ts":"2026-10-14T09:06:32.462+09:00","level":"warn","msg":"retrying upstream","service":"api","req":{"method":"GET","path":"/api/orders","id":"req-47080"},"status":200,"ms":2679,"user":"jung"}
+{"ts":"2026-10-14T09:06:32.726+09:00","level":"info","msg":"request done","service":"search","req":{"method":"GET","path":"/api/orders","id":"req-97991"},"status":200,"ms":68,"user":"jung"}
+{"ts":"2026-10-14T09:06:35.26+09:00","level":"warn","msg":"slow query","service":"api","req":{"method":"GET","path":"/api/users","id":"req-22673"},"status":200,"ms":2076,"user":"lee"}
+{"ts":"2026-10-14T09:06:37.93+09:00","level":"info","msg":"request done","service":"billing","req":{"method":"GET","path":"/api/users","id":"req-45316"},"status":200,"ms":85,"user":"park"}
+{"ts":"2026-10-14T09:06:38.722+09:00","level":"error","msg":"payment declined","service":"billing","req":{"method":"GET","path":"/api/users","id":"req-58313"},"status":503,"ms":4783,"user":"choi"}
+{"ts":"2026-10-14T09:06:41.394+09:00","level":"error","msg":"db timeout","service":"api","req":{"method":"GET","path":"/api/orders","id":"req-61434"},"status":500,"ms":2375,"user":"choi"}
+{"ts":"2026-10-14T09:06:42.226+09:00","level":"info","msg":"cache hit","service":"api","req":{"method":"POST","path":"/api/orders/1042","id":"req-16410"},"status":200,"ms":30,"user":"lee"}
+{"ts":"2026-10-14T09:06:44.908+09:00","level":"error","msg":"db timeout","service":"billing","req":{"method":"GET","path":"/api/orders/1042","id":"req-61936"},"status":502,"ms":1717,"user":"lee"}
+{"ts":"2026-10-14T09:06:46.009+09:00","level":"error","msg":"db timeout","service":"api","req":{"method":"GET","path":"/api/orders/1042","id":"req-97252"},"status":503,"ms":5005,"user":"kim"}
+{"ts":"2026-10-14T09:06:47.662+09:00","level":"error","msg":"payment declined","service":"search","req":{"method":"GET","path":"/api/orders/1042","id":"req-98073"},"status":502,"ms":5154,"user":"choi"}
+{"ts":"2026-10-14T09:06:49.074+09:00","level":"error","msg":"db timeout","service":"api","req":{"method":"GET","path":"/api/users","id":"req-44782"},"status":502,"ms":3120,"user":"park"}
+{"ts":"2026-10-14T09:06:49.517+09:00","level":"info","msg":"cache hit","service":"api","req":{"method":"GET","path":"/api/users","id":"req-11440"},"status":200,"ms":10,"user":"jung"}
+{"ts":"2026-10-14T09:06:49.926+09:00","level":"error","msg":"db timeout","service":"search","req":{"method":"POST","path":"/api/users","id":"req-53670"},"status":500,"ms":3382,"user":"park"}
+{"ts":"2026-10-14T09:06:52.362+09:00","level":"info","msg":"request done","service":"api","req":{"method":"GET","path":"/api/orders/1042","id":"req-29498"},"status":200,"ms":18,"user":"park"}
+{"ts":"2026-10-14T09:06:53.049+09:00","level":"info","msg":"cache hit","service":"api","req":{"method":"GET","path":"/api/orders","id":"req-61037"},"status":200,"ms":8,"user":"choi"}
+{"ts":"2026-10-14T09:06:53.845+09:00","level":"debug","msg":"query plan chosen","service":"api","req":{"method":"GET","path":"/api/orders/1042","id":"req-38242"},"status":200,"ms":110,"user":"lee"}
+{"ts":"2026-10-14T09:06:54.288+09:00","level":"debug","msg":"query plan chosen","service":"search","req":{"method":"GET","path":"/api/orders","id":"req-92843"},"status":200,"ms":23,"user":"lee"}
+{"ts":"2026-10-14T09:06:56.504+09:00","level":"error","msg":"payment declined","service":"api","req":{"method":"GET","path":"/api/orders","id":"req-98115"},"status":500,"ms":1996,"user":"park"}
+{"ts":"2026-10-14T09:06:57.677+09:00","level":"info","msg":"cache hit","service":"search","req":{"method":"GET","path":"/api/orders/1042","id":"req-88937"},"status":200,"ms":93,"user":"kim"}
+{"ts":"2026-10-14T09:07:00.233+09:00","level":"info","msg":"cache hit","service":"search","req":{"method":"GET","path":"/api/users","id":"req-77690"},"status":200,"ms":15,"user":"park"}
+{"ts":"2026-10-14T09:07:00.454+09:00","level":"info","msg":"request done","service":"api","req":{"method":"GET","path":"/api/orders/1042","id":"req-04362"},"status":200,"ms":56,"user":"park"}
+{"ts":"2026-10-14T09:07:02.666+09:00","level":"error","msg":"payment declined","service":"api","req":{"method":"GET","path":"/api/orders/1042","id":"req-27151"},"status":502,"ms":2321,"user":"choi"}
+{"ts":"2026-10-14T09:07:02.787+09:00","level":"debug","msg":"query plan chosen","service":"api","req":{"method":"POST","path":"/api/orders/1042","id":"req-50499"},"status":200,"ms":21,"user":"park"}
+{"ts":"2026-10-14T09:07:04.584+09:00","level":"info","msg":"cache hit","service":"search","req":{"method":"GET","path":"/api/users","id":"req-03573"},"status":200,"ms":80,"user":"jung"}
+{"ts":"2026-10-14T09:07:05.842+09:00","level":"warn","msg":"slow query","service":"api","req":{"method":"POST","path":"/api/users","id":"req-12952"},"status":200,"ms":830,"user":"lee"}
+{"ts":"2026-10-14T09:07:08.101+09:00","level":"warn","msg":"slow query","service":"search","req":{"method":"GET","path":"/api/orders/1042","id":"req-81511"},"status":200,"ms":3198,"user":"lee"}
+{"ts":"2026-10-14T09:07:08.939+09:00","level":"info","msg":"cache hit","service":"billing","req":{"method":"GET","path":"/api/users","id":"req-24087"},"status":200,"ms":72,"user":"lee"}
+{"ts":"2026-10-14T09:07:10.803+09:00","level":"error","msg":"payment declined","service":"billing","req":{"method":"GET","path":"/api/users","id":"req-66065"},"status":502,"ms":1565,"user":"park"}
+{"ts":"2026-10-14T09:07:11.125+09:00","level":"info","msg":"cache hit","service":"api","req":{"method":"POST","path":"/api/users","id":"req-22532"},"status":200,"ms":37,"user":"kim"}
+{"ts":"2026-10-14T09:07:12.396+09:00","level":"warn","msg":"retrying upstream","service":"billing","req":{"method":"GET","path":"/api/users","id":"req-70783"},"status":200,"ms":3271,"user":"park"}
+{"ts":"2026-10-14T09:07:15.112+09:00","level":"error","msg":"payment declined","service":"search","req":{"method":"POST","path":"/api/orders/1042","id":"req-26597"},"status":502,"ms":2763,"user":"lee"}
+{"ts":"2026-10-14T09:07:17.715+09:00","level":"error","msg":"payment declined","service":"search","req":{"method":"GET","path":"/api/orders/1042","id":"req-20515"},"status":503,"ms":5778,"user":"park"}
+{"ts":"2026-10-14T09:07:18.824+09:00","level":"info","msg":"cache hit","service":"api","req":{"method":"GET","path":"/api/orders/1042","id":"req-79718"},"status":200,"ms":5,"user":"jung"}
+{"ts":"2026-10-14T09:07:20.67+09:00","level":"error","msg":"db timeout","service":"api","req":{"method":"GET","path":"/api/users","id":"req-53685"},"status":502,"ms":1577,"user":"kim"}
+{"ts":"2026-10-14T09:07:22.674+09:00","level":"info","msg":"request done","service":"search","req":{"method":"GET","path":"/api/users","id":"req-10483"},"status":200,"ms":106,"user":"kim"}
+{"ts":"2026-10-14T09:07:23.868+09:00","level":"warn","msg":"slow query","service":"search","req":{"method":"GET","path":"/api/users","id":"req-55116"},"status":200,"ms":2481,"user":"choi"}
+{"ts":"2026-10-14T09:07:25.018+09:00","level":"info","msg":"cache hit","service":"api","req":{"method":"POST","path":"/api/orders/1042","id":"req-95029"},"status":200,"ms":57,"user":"jung"}
+{"ts":"2026-10-14T09:07:27.845+09:00","level":"warn","msg":"slow query","service":"billing","req":{"method":"POST","path":"/api/users","id":"req-96669"},"status":200,"ms":2831,"user":"park"}
+{"ts":"2026-10-14T09:07:28.95+09:00","level":"debug","msg":"query plan chosen","service":"billing","req":{"method":"GET","path":"/api/users","id":"req-84045"},"status":200,"ms":20,"user":"jung"}
+{"ts":"2026-10-14T09:07:29.717+09:00","level":"info","msg":"cache hit","service":"api","req":{"method":"GET","path":"/api/orders/1042","id":"req-97508"},"status":200,"ms":26,"user":"park"}
+{"ts":"2026-10-14T09:07:31.21+09:00","level":"info","msg":"request done","service":"billing","req":{"method":"GET","path":"/api/orders/1042","id":"req-80310"},"status":200,"ms":33,"user":"choi"}
+{"ts":"2026-10-14T09:07:33.748+09:00","level":"info","msg":"request done","service":"search","req":{"method":"GET","path":"/api/orders","id":"req-60290"},"status":200,"ms":85,"user":"choi"}
+{"ts":"2026-10-14T09:07:35.664+09:00","level":"error","msg":"payment declined","service":"api","req":{"method":"POST","path":"/api/orders","id":"req-74305"},"status":503,"ms":1385,"user":"lee"}
+{"ts":"2026-10-14T09:07:36.417+09:00","level":"debug","msg":"query plan chosen","service":"api","req":{"method":"GET","path":"/api/orders","id":"req-20968"},"status":200,"ms":118,"user":"park"}
+{"ts":"2026-10-14T09:07:38.069+09:00","level":"error","msg":"db timeout","service":"billing","req":{"method":"GET","path":"/api/orders","id":"req-01950"},"status":502,"ms":4648,"user":"choi"}
+{"ts":"2026-10-14T09:07:39.609+09:00","level":"warn","msg":"slow query","service":"api","req":{"method":"POST","path":"/api/users","id":"req-03293"},"status":200,"ms":1487,"user":"kim"}
+{"ts":"2026-10-14T09:07:41.802+09:00","level":"info","msg":"cache hit","service":"api","req":{"method":"POST","path":"/api/users","id":"req-10825"},"status":200,"ms":63,"user":"lee"}
+{"ts":"2026-10-14T09:07:43.129+09:00","level":"warn","msg":"retrying upstream","service":"billing","req":{"method":"GET","path":"/api/orders/1042","id":"req-09613"},"status":200,"ms":1804,"user":"kim"}
+{"ts":"2026-10-14T09:07:43.921+09:00","level":"debug","msg":"query plan chosen","service":"api","req":{"method":"GET","path":"/api/orders","id":"req-21994"},"status":200,"ms":29,"user":"park"}
+{"ts":"2026-10-14T09:07:44.606+09:00","level":"info","msg":"request done","service":"search","req":{"method":"GET","path":"/api/orders","id":"req-88059"},"status":200,"ms":99,"user":"kim"}
+{"ts":"2026-10-14T09:07:47.332+09:00","level":"warn","msg":"retrying upstream","service":"api","req":{"method":"GET","path":"/api/orders/1042","id":"req-80979"},"status":200,"ms":2753,"user":"park"}
+{"ts":"2026-10-14T09:07:50.106+09:00","level":"debug","msg":"query plan chosen","service":"billing","req":{"method":"POST","path":"/api/orders/1042","id":"req-00483"},"status":200,"ms":82,"user":"lee"}
+{"ts":"2026-10-14T09:07:50.509+09:00","level":"error","msg":"db timeout","service":"search","req":{"method":"POST","path":"/api/users","id":"req-93910"},"status":502,"ms":4517,"user":"park"}
+{"ts":"2026-10-14T09:07:53.384+09:00","level":"info","msg":"request done","service":"search","req":{"method":"POST","path":"/api/users","id":"req-05612"},"status":200,"ms":95,"user":"jung"}
+{"ts":"2026-10-14T09:07:53.502+09:00","level":"debug","msg":"query plan chosen","service":"billing","req":{"method":"POST","path":"/api/orders","id":"req-71208"},"status":200,"ms":67,"user":"jung"}
+{"ts":"2026-10-14T09:07:53.734+09:00","level":"info","msg":"request done","service":"search","req":{"method":"GET","path":"/api/orders/1042","id":"req-47201"},"status":200,"ms":108,"user":"kim"}
+{"ts":"2026-10-14T09:07:56.531+09:00","level":"error","msg":"payment declined","service":"search","req":{"method":"POST","path":"/api/orders/1042","id":"req-12295"},"status":500,"ms":3008,"user":"park"}
+{"ts":"2026-10-14T09:07:56.698+09:00","level":"info","msg":"request done","service":"api","req":{"method":"POST","path":"/api/users","id":"req-84449"},"status":200,"ms":70,"user":"jung"}
+{"ts":"2026-10-14T09:07:57.083+09:00","level":"error","msg":"db timeout","service":"api","req":{"method":"GET","path":"/api/users","id":"req-74151"},"status":503,"ms":2341,"user":"kim"}
+{"ts":"2026-10-14T09:07:58.022+09:00","level":"error","msg":"db timeout","service":"billing","req":{"method":"GET","path":"/api/users","id":"req-78841"},"status":503,"ms":4674,"user":"choi"}
+{"ts":"2026-10-14T09:07:59.525+09:00","level":"error","msg":"db timeout","service":"api","req":{"method":"GET","path":"/api/users","id":"req-44001"},"status":500,"ms":1912,"user":"choi"}
+{"ts":"2026-10-14T09:07:59.812+09:00","level":"warn","msg":"retrying upstream","service":"api","req":{"method":"GET","path":"/api/orders/1042","id":"req-68905"},"status":200,"ms":2869,"user":"jung"}
+{"ts":"2026-10-14T09:08:02.209+09:00","level":"debug","msg":"query plan chosen","service":"api","req":{"method":"GET","path":"/api/orders/1042","id":"req-80160"},"status":200,"ms":28,"user":"park"}
+{"ts":"2026-10-14T09:08:04.084+09:00","level":"info","msg":"request done","service":"api","req":{"method":"GET","path":"/api/orders/1042","id":"req-27326"},"status":200,"ms":6,"user":"kim"}
+{"ts":"2026-10-14T09:08:06.436+09:00","level":"debug","msg":"query plan chosen","service":"billing","req":{"method":"GET","path":"/api/orders/1042","id":"req-00540"},"status":200,"ms":91,"user":"lee"}
+{"ts":"2026-10-14T09:08:08.392+09:00","level":"info","msg":"request done","service":"api","req":{"method":"POST","path":"/api/orders","id":"req-92503"},"status":200,"ms":101,"user":"park"}
+{"ts":"2026-10-14T09:08:09.077+09:00","level":"warn","msg":"retrying upstream","service":"api","req":{"method":"POST","path":"/api/orders","id":"req-31739"},"status":200,"ms":1317,"user":"kim"}
+{"ts":"2026-10-14T09:08:11.104+09:00","level":"warn","msg":"slow query","service":"search","req":{"method":"POST","path":"/api/orders/1042","id":"req-60761"},"status":200,"ms":1188,"user":"kim"}
+{"ts":"2026-10-14T09:08:11.827+09:00","level":"warn","msg":"slow query","service":"api","req":{"method":"GET","path":"/api/users","id":"req-85574"},"status":200,"ms":3185,"user":"kim"}
+{"ts":"2026-10-14T09:08:11.918+09:00","level":"error","msg":"payment declined","service":"api","req":{"method":"GET","path":"/api/orders/1042","id":"req-02416"},"status":500,"ms":4985,"user":"kim"}
+{"ts":"2026-10-14T09:08:14.227+09:00","level":"warn","msg":"retrying upstream","service":"api","req":{"method":"GET","path":"/api/orders","id":"req-44376"},"status":200,"ms":2117,"user":"kim"}
+{"ts":"2026-10-14T09:08:15.778+09:00","level":"info","msg":"request done","service":"billing","req":{"method":"POST","path":"/api/orders/1042","id":"req-14075"},"status":200,"ms":22,"user":"lee"}
+{"ts":"2026-10-14T09:08:16.219+09:00","level":"debug","msg":"query plan chosen","service":"search","req":{"method":"POST","path":"/api/users","id":"req-61840"},"status":200,"ms":38,"user":"jung"}
+{"ts":"2026-10-14T09:08:17.265+09:00","level":"info","msg":"cache hit","service":"api","req":{"method":"POST","path":"/api/orders","id":"req-80241"},"status":200,"ms":120,"user":"lee"}
+{"ts":"2026-10-14T09:08:19.865+09:00","level":"error","msg":"db timeout","service":"billing","req":{"method":"POST","path":"/api/orders/1042","id":"req-65553"},"status":502,"ms":4162,"user":"jung"}
+{"ts":"2026-10-14T09:08:22.279+09:00","level":"warn","msg":"retrying upstream","service":"billing","req":{"method":"POST","path":"/api/orders/1042","id":"req-01299"},"status":200,"ms":1090,"user":"jung"}
+{"ts":"2026-10-14T09:08:24.906+09:00","level":"warn","msg":"retrying upstream","service":"api","req":{"method":"GET","path":"/api/orders","id":"req-22431"},"status":200,"ms":2249,"user":"kim"}
+{"ts":"2026-10-14T09:08:25.135+09:00","level":"info","msg":"request done","service":"search","req":{"method":"POST","path":"/api/orders","id":"req-01938"},"status":200,"ms":51,"user":"choi"}
+{"ts":"2026-10-14T09:08:26.272+09:00","level":"warn","msg":"slow query","service":"api","req":{"method":"GET","path":"/api/users","id":"req-20471"},"status":200,"ms":1361,"user":"jung"}
+{"ts":"2026-10-14T09:08:27.941+09:00","level":"info","msg":"request done","service":"api","req":{"method":"POST","path":"/api/users","id":"req-72086"},"status":200,"ms":69,"user":"jung"}
+{"ts":"2026-10-14T09:08:28.97+09:00","level":"error","msg":"payment declined","service":"billing","req":{"method":"GET","path":"/api/orders/1042","id":"req-61837"},"status":500,"ms":2732,"user":"choi"}
+{"ts":"2026-10-14T09:08:31.361+09:00","level":"warn","msg":"retrying upstream","service":"search","req":{"method":"POST","path":"/api/orders","id":"req-09078"},"status":200,"ms":1694,"user":"jung"}
+{"ts":"2026-10-14T09:08:32.517+09:00","level":"info","msg":"cache hit","service":"search","req":{"method":"GET","path":"/api/users","id":"req-49271"},"status":200,"ms":98,"user":"choi"}
+{"ts":"2026-10-14T09:08:33.885+09:00","level":"error","msg":"payment declined","service":"billing","req":{"method":"POST","path":"/api/users","id":"req-44505"},"status":502,"ms":5368,"user":"lee"}
+{"ts":"2026-10-14T09:08:35.672+09:00","level":"info","msg":"request done","service":"billing","req":{"method":"GET","path":"/api/orders","id":"req-94830"},"status":200,"ms":44,"user":"kim"}
+{"ts":"2026-10-14T09:08:37.734+09:00","level":"warn","msg":"slow query","service":"billing","req":{"method":"GET","path":"/api/orders","id":"req-49233"},"status":200,"ms":3099,"user":"park"}
+{"ts":"2026-10-14T09:08:40.579+09:00","level":"debug","msg":"query plan chosen","service":"api","req":{"method":"GET","path":"/api/orders/1042","id":"req-03322"},"status":200,"ms":94,"user":"kim"}
+{"ts":"2026-10-14T09:08:42.889+09:00","level":"debug","msg":"query plan chosen","service":"search","req":{"method":"GET","path":"/api/users","id":"req-55758"},"status":200,"ms":46,"user":"kim"}
+{"ts":"2026-10-14T09:08:42.965+09:00","level":"error","msg":"db timeout","service":"search","req":{"method":"GET","path":"/api/orders","id":"req-56609"},"status":502,"ms":5018,"user":"kim"}
+{"ts":"2026-10-14T09:08:44.391+09:00","level":"error","msg":"payment declined","service":"billing","req":{"method":"GET","path":"/api/orders","id":"req-28556"},"status":502,"ms":2257,"user":"lee"}
+{"ts":"2026-10-14T09:08:45.245+09:00","level":"info","msg":"cache hit","service":"billing","req":{"method":"GET","path":"/api/orders","id":"req-54717"},"status":200,"ms":23,"user":"choi"}
+{"ts":"2026-10-14T09:08:47.984+09:00","level":"error","msg":"payment declined","service":"api","req":{"method":"GET","path":"/api/users","id":"req-49665"},"status":502,"ms":3549,"user":"park"}
+{"ts":"2026-10-14T09:08:48.629+09:00","level":"error","msg":"db timeout","service":"search","req":{"method":"GET","path":"/api/users","id":"req-51556"},"status":502,"ms":1353,"user":"jung"}
+{"ts":"2026-10-14T09:08:49.503+09:00","level":"warn","msg":"slow query","service":"api","req":{"method":"GET","path":"/api/orders/1042","id":"req-76634"},"status":200,"ms":1561,"user":"jung"}
+{"ts":"2026-10-14T09:08:52.46+09:00","level":"info","msg":"cache hit","service":"api","req":{"method":"POST","path":"/api/users","id":"req-07546"},"status":200,"ms":5,"user":"choi"}
+{"ts":"2026-10-14T09:08:54.326+09:00","level":"info","msg":"request done","service":"api","req":{"method":"GET","path":"/api/users","id":"req-41981"},"status":200,"ms":63,"user":"jung"}
+{"ts":"2026-10-14T09:08:55.887+09:00","level":"warn","msg":"retrying upstream","service":"billing","req":{"method":"GET","path":"/api/users","id":"req-04305"},"status":200,"ms":2216,"user":"choi"}
+{"ts":"2026-10-14T09:08:57.873+09:00","level":"warn","msg":"slow query","service":"api","req":{"method":"GET","path":"/api/orders","id":"req-05911"},"status":200,"ms":3021,"user":"choi"}
+{"ts":"2026-10-14T09:09:00.619+09:00","level":"warn","msg":"retrying upstream","service":"api","req":{"method":"GET","path":"/api/orders","id":"req-10858"},"status":200,"ms":2617,"user":"jung"}
+{"ts":"2026-10-14T09:09:01.465+09:00","level":"warn","msg":"slow query","service":"api","req":{"method":"GET","path":"/api/users","id":"req-67169"},"status":200,"ms":2441,"user":"kim"}
+{"ts":"2026-10-14T09:09:02.691+09:00","level":"error","msg":"db timeout","service":"search","req":{"method":"GET","path":"/api/users","id":"req-99799"},"status":503,"ms":1381,"user":"lee"}
+{"ts":"2026-10-14T09:09:05.602+09:00","level":"debug","msg":"query plan chosen","service":"api","req":{"method":"GET","path":"/api/orders","id":"req-28762"},"status":200,"ms":113,"user":"lee"}
+{"ts":"2026-10-14T09:09:05.621+09:00","level":"warn","msg":"retrying upstream","service":"api","req":{"method":"GET","path":"/api/users","id":"req-16825"},"status":200,"ms":2701,"user":"jung"}
+{"ts":"2026-10-14T09:09:07.331+09:00","level":"warn","msg":"slow query","service":"api","req":{"method":"POST","path":"/api/orders/1042","id":"req-14536"},"status":200,"ms":3071,"user":"choi"}
+{"ts":"2026-10-14T09:09:09.772+09:00","level":"error","msg":"payment declined","service":"api","req":{"method":"GET","path":"/api/users","id":"req-53466"},"status":502,"ms":1003,"user":"choi"}
+{"ts":"2026-10-14T09:09:12.576+09:00","level":"error","msg":"db timeout","service":"search","req":{"method":"POST","path":"/api/orders/1042","id":"req-20617"},"status":503,"ms":5034,"user":"lee"}
+{"ts":"2026-10-14T09:09:13.77+09:00","level":"info","msg":"request done","service":"billing","req":{"method":"GET","path":"/api/orders","id":"req-61938"},"status":200,"ms":122,"user":"park"}
+{"ts":"2026-10-14T09:09:15.186+09:00","level":"info","msg":"request done","service":"api","req":{"method":"GET","path":"/api/orders","id":"req-49567"},"status":200,"ms":78,"user":"jung"}
+{"ts":"2026-10-14T09:09:15.548+09:00","level":"info","msg":"request done","service":"search","req":{"method":"GET","path":"/api/orders/1042","id":"req-58504"},"status":200,"ms":65,"user":"lee"}
+{"ts":"2026-10-14T09:09:17.251+09:00","level":"info","msg":"cache hit","service":"api","req":{"method":"POST","path":"/api/orders/1042","id":"req-95088"},"status":200,"ms":62,"user":"park"}
+{"ts":"2026-10-14T09:09:18.948+09:00","level":"error","msg":"payment declined","service":"api","req":{"method":"GET","path":"/api/users","id":"req-53812"},"status":502,"ms":4611,"user":"lee"}
+{"ts":"2026-10-14T09:09:19.341+09:00","level":"warn","msg":"slow query","service":"api","req":{"method":"POST","path":"/api/orders","id":"req-04969"},"status":200,"ms":1556,"user":"kim"}
+{"ts":"2026-10-14T09:09:20.461+09:00","level":"warn","msg":"retrying upstream","service":"billing","req":{"method":"GET","path":"/api/orders","id":"req-48408"},"status":200,"ms":3191,"user":"lee"}
+{"ts":"2026-10-14T09:09:21.689+09:00","level":"warn","msg":"slow query","service":"api","req":{"method":"POST","path":"/api/orders/1042","id":"req-17841"},"status":200,"ms":2914,"user":"jung"}
+{"ts":"2026-10-14T09:09:23.65+09:00","level":"info","msg":"request done","service":"api","req":{"method":"POST","path":"/api/orders","id":"req-00823"},"status":200,"ms":47,"user":"park"}
+{"ts":"2026-10-14T09:09:26.372+09:00","level":"error","msg":"db timeout","service":"api","req":{"method":"GET","path":"/api/orders/1042","id":"req-94695"},"status":502,"ms":2357,"user":"jung"}
+{"ts":"2026-10-14T09:09:29.142+09:00","level":"error","msg":"payment declined","service":"api","req":{"method":"POST","path":"/api/orders","id":"req-77353"},"status":503,"ms":5461,"user":"kim"}
+{"ts":"2026-10-14T09:09:30.311+09:00","level":"info","msg":"cache hit","service":"api","req":{"method":"GET","path":"/api/users","id":"req-73970"},"status":200,"ms":17,"user":"lee"}
+{"ts":"2026-10-14T09:09:31.937+09:00","level":"error","msg":"db timeout","service":"search","req":{"method":"GET","path":"/api/users","id":"req-69835"},"status":500,"ms":2868,"user":"jung"}
+{"ts":"2026-10-14T09:09:33.615+09:00","level":"error","msg":"db timeout","service":"search","req":{"method":"GET","path":"/api/orders/1042","id":"req-85676"},"status":502,"ms":4761,"user":"lee"}
+{"ts":"2026-10-14T09:09:36.053+09:00","level":"warn","msg":"retrying upstream","service":"api","req":{"method":"GET","path":"/api/orders","id":"req-69811"},"status":200,"ms":2422,"user":"park"}
+{"ts":"2026-10-14T09:09:36.68+09:00","level":"warn","msg":"retrying upstream","service":"api","req":{"method":"GET","path":"/api/orders/1042","id":"req-82079"},"status":200,"ms":1290,"user":"choi"}
+{"ts":"2026-10-14T09:09:36.694+09:00","level":"info","msg":"request done","service":"search","req":{"method":"POST","path":"/api/users","id":"req-92126"},"status":200,"ms":20,"user":"jung"}
+{"ts":"2026-10-14T09:09:38.319+09:00","level":"debug","msg":"query plan chosen","service":"api","req":{"method":"GET","path":"/api/orders/1042","id":"req-83477"},"status":200,"ms":14,"user":"park"}
+{"ts":"2026-10-14T09:09:38.353+09:00","level":"debug","msg":"query plan chosen","service":"api","req":{"method":"GET","path":"/api/users","id":"req-18913"},"status":200,"ms":76,"user":"choi"}
+{"ts":"2026-10-14T09:09:40.18+09:00","level":"warn","msg":"retrying upstream","service":"search","req":{"method":"POST","path":"/api/orders","id":"req-54291"},"status":200,"ms":3101,"user":"park"}
+{"ts":"2026-10-14T09:09:41.994+09:00","level":"error","msg":"payment declined","service":"search","req":{"method":"GET","path":"/api/orders/1042","id":"req-82850"},"status":502,"ms":2758,"user":"lee"}
+{"ts":"2026-10-14T09:09:43.822+09:00","level":"warn","msg":"retrying upstream","service":"api","req":{"method":"GET","path":"/api/users","id":"req-89844"},"status":200,"ms":2957,"user":"kim"}
+{"ts":"2026-10-14T09:09:44.284+09:00","level":"info","msg":"request done","service":"billing","req":{"method":"POST","path":"/api/orders","id":"req-95827"},"status":200,"ms":120,"user":"kim"}
+{"ts":"2026-10-14T09:09:45.384+09:00","level":"error","msg":"payment declined","service":"api","req":{"method":"GET","path":"/api/users","id":"req-57563"},"status":502,"ms":1114,"user":"kim"}
+{"ts":"2026-10-14T09:09:46.373+09:00","level":"error","msg":"payment declined","service":"api","req":{"method":"GET","path":"/api/orders","id":"req-36730"},"status":502,"ms":5624,"user":"choi"}
+{"ts":"2026-10-14T09:09:48.238+09:00","level":"debug","msg":"query plan chosen","service":"api","req":{"method":"POST","path":"/api/users","id":"req-50236"},"status":200,"ms":71,"user":"kim"}
+{"ts":"2026-10-14T09:09:49.809+09:00","level":"warn","msg":"retrying upstream","service":"api","req":{"method":"GET","path":"/api/orders","id":"req-92454"},"status":200,"ms":2449,"user":"choi"}
+{"ts":"2026-10-14T09:09:51.003+09:00","level":"error","msg":"db timeout","service":"api","req":{"method":"POST","path":"/api/orders","id":"req-55246"},"status":500,"ms":4939,"user":"choi"}
+{"ts":"2026-10-14T09:09:53.5+09:00","level":"info","msg":"request done","service":"billing","req":{"method":"GET","path":"/api/orders/1042","id":"req-34279"},"status":200,"ms":21,"user":"choi"}
+{"ts":"2026-10-14T09:09:55.436+09:00","level":"error","msg":"db timeout","service":"billing","req":{"method":"GET","path":"/api/orders","id":"req-52874"},"status":503,"ms":2929,"user":"kim"}
+{"ts":"2026-10-14T09:09:56.692+09:00","level":"error","msg":"db timeout","service":"api","req":{"method":"GET","path":"/api/users","id":"req-23797"},"status":503,"ms":3304,"user":"choi"}
+{"ts":"2026-10-14T09:09:57.573+09:00","level":"warn","msg":"slow query","service":"api","req":{"method":"GET","path":"/api/users","id":"req-99888"},"status":200,"ms":2172,"user":"lee"}
+{"ts":"2026-10-14T09:09:59.011+09:00","level":"error","msg":"db timeout","service":"api","req":{"method":"POST","path":"/api/orders/1042","id":"req-42407"},"status":503,"ms":3608,"user":"lee"}
+{"ts":"2026-10-14T09:10:00.484+09:00","level":"warn","msg":"slow query","service":"api","req":{"method":"GET","path":"/api/orders","id":"req-35558"},"status":200,"ms":2922,"user":"choi"}
+{"ts":"2026-10-14T09:10:00.549+09:00","level":"info","msg":"request done","service":"search","req":{"method":"POST","path":"/api/users","id":"req-33909"},"status":200,"ms":44,"user":"park"}
+{"ts":"2026-10-14T09:10:00.981+09:00","level":"error","msg":"db timeout","service":"api","req":{"method":"POST","path":"/api/users","id":"req-86967"},"status":502,"ms":1429,"user":"kim"}
+{"ts":"2026-10-14T09:10:03.755+09:00","level":"info","msg":"cache hit","service":"api","req":{"method":"POST","path":"/api/orders","id":"req-54263"},"status":200,"ms":5,"user":"choi"}
+{"ts":"2026-10-14T09:10:06.298+09:00","level":"warn","msg":"retrying upstream","service":"api","req":{"method":"GET","path":"/api/orders/1042","id":"req-53187"},"status":200,"ms":1219,"user":"jung"}
+{"ts":"2026-10-14T09:10:06.491+09:00","level":"error","msg":"payment declined","service":"api","req":{"method":"GET","path":"/api/orders","id":"req-24034"},"status":500,"ms":2372,"user":"lee"}
+{"ts":"2026-10-14T09:10:08.924+09:00","level":"warn","msg":"slow query","service":"billing","req":{"method":"POST","path":"/api/users","id":"req-92757"},"status":200,"ms":1818,"user":"jung"}
+{"ts":"2026-10-14T09:10:09.784+09:00","level":"error","msg":"db timeout","service":"billing","req":{"method":"GET","path":"/api/orders/1042","id":"req-28221"},"status":502,"ms":1483,"user":"jung"}
+{"ts":"2026-10-14T09:10:11.392+09:00","level":"info","msg":"request done","service":"search","req":{"method":"GET","path":"/api/orders","id":"req-67054"},"status":200,"ms":78,"user":"lee"}
+{"ts":"2026-10-14T09:10:12.336+09:00","level":"info","msg":"request done","service":"billing","req":{"method":"GET","path":"/api/users","id":"req-80966"},"status":200,"ms":29,"user":"choi"}
+{"ts":"2026-10-14T09:10:13.198+09:00","level":"info","msg":"request done","service":"search","req":{"method":"GET","path":"/api/orders","id":"req-68564"},"status":200,"ms":50,"user":"park"}
+{"ts":"2026-10-14T09:10:13.314+09:00","level":"info","msg":"request done","service":"billing","req":{"method":"POST","path":"/api/users","id":"req-64313"},"status":200,"ms":103,"user":"jung"}
+{"ts":"2026-10-14T09:10:13.814+09:00","level":"info","msg":"request done","service":"api","req":{"method":"GET","path":"/api/orders","id":"req-39864"},"status":200,"ms":84,"user":"jung"}
+{"ts":"2026-10-14T09:10:15.646+09:00","level":"debug","msg":"query plan chosen","service":"api","req":{"method":"POST","path":"/api/orders/1042","id":"req-80205"},"status":200,"ms":85,"user":"choi"}
+{"ts":"2026-10-14T09:10:17.873+09:00","level":"warn","msg":"slow query","service":"api","req":{"method":"GET","path":"/api/users","id":"req-75707"},"status":200,"ms":2034,"user":"jung"}
+{"ts":"2026-10-14T09:10:18.576+09:00","level":"error","msg":"payment declined","service":"api","req":{"method":"POST","path":"/api/users","id":"req-93971"},"status":503,"ms":1995,"user":"lee"}
+{"ts":"2026-10-14T09:10:20.193+09:00","level":"info","msg":"cache hit","service":"billing","req":{"method":"GET","path":"/api/orders/1042","id":"req-03943"},"status":200,"ms":33,"user":"lee"}
+{"ts":"2026-10-14T09:10:22.206+09:00","level":"warn","msg":"retrying upstream","service":"billing","req":{"method":"GET","path":"/api/users","id":"req-38093"},"status":200,"ms":2352,"user":"jung"}
+{"ts":"2026-10-14T09:10:23.159+09:00","level":"warn","msg":"retrying upstream","service":"billing","req":{"method":"GET","path":"/api/orders","id":"req-90899"},"status":200,"ms":1584,"user":"choi"}
+{"ts":"2026-10-14T09:10:24.234+09:00","level":"warn","msg":"slow query","service":"api","req":{"method":"GET","path":"/api/orders/1042","id":"req-07526"},"status":200,"ms":3077,"user":"jung"}
+{"ts":"2026-10-14T09:10:25.123+09:00","level":"info","msg":"cache hit","service":"search","req":{"method":"GET","path":"/api/users","id":"req-39872"},"status":200,"ms":62,"user":"jung"}
+{"ts":"2026-10-14T09:10:27.235+09:00","level":"info","msg":"cache hit","service":"api","req":{"method":"GET","path":"/api/users","id":"req-06616"},"status":200,"ms":18,"user":"park"}
+{"ts":"2026-10-14T09:10:27.57+09:00","level":"error","msg":"payment declined","service":"api","req":{"method":"GET","path":"/api/orders/1042","id":"req-75330"},"status":502,"ms":1384,"user":"jung"}
+{"ts":"2026-10-14T09:10:30.083+09:00","level":"info","msg":"request done","service":"api","req":{"method":"GET","path":"/api/orders","id":"req-49206"},"status":200,"ms":120,"user":"jung"}
+{"ts":"2026-10-14T09:10:30.183+09:00","level":"debug","msg":"query plan chosen","service":"api","req":{"method":"POST","path":"/api/orders/1042","id":"req-43069"},"status":200,"ms":103,"user":"choi"}
+{"ts":"2026-10-14T09:10:32.886+09:00","level":"debug","msg":"query plan chosen","service":"api","req":{"method":"GET","path":"/api/orders","id":"req-26952"},"status":200,"ms":97,"user":"park"}
+{"ts":"2026-10-14T09:10:33.727+09:00","level":"info","msg":"cache hit","service":"api","req":{"method":"GET","path":"/api/orders/1042","id":"req-28642"},"status":200,"ms":24,"user":"lee"}
+{"ts":"2026-10-14T09:10:35.055+09:00","level":"warn","msg":"retrying upstream","service":"search","req":{"method":"POST","path":"/api/orders/1042","id":"req-28948"},"status":200,"ms":2595,"user":"jung"}
+{"ts":"2026-10-14T09:10:36.014+09:00","level":"info","msg":"request done","service":"search","req":{"method":"GET","path":"/api/orders","id":"req-61445"},"status":200,"ms":42,"user":"jung"}
+{"ts":"2026-10-14T09:10:38.599+09:00","level":"error","msg":"db timeout","service":"api","req":{"method":"GET","path":"/api/users","id":"req-65858"},"status":500,"ms":4460,"user":"kim"}
+{"ts":"2026-10-14T09:10:39.488+09:00","level":"warn","msg":"slow query","service":"api","req":{"method":"POST","path":"/api/orders/1042","id":"req-40677"},"status":200,"ms":2125,"user":"kim"}
+{"ts":"2026-10-14T09:10:41.21+09:00","level":"debug","msg":"query plan chosen","service":"api","req":{"method":"POST","path":"/api/users","id":"req-78825"},"status":200,"ms":114,"user":"park"}
+{"ts":"2026-10-14T09:10:43.458+09:00","level":"info","msg":"cache hit","service":"billing","req":{"method":"GET","path":"/api/users","id":"req-66269"},"status":200,"ms":112,"user":"park"}
+{"ts":"2026-10-14T09:10:44.363+09:00","level":"error","msg":"db timeout","service":"billing","req":{"method":"GET","path":"/api/users","id":"req-09481"},"status":500,"ms":1598,"user":"kim"}
+{"ts":"2026-10-14T09:10:44.996+09:00","level":"warn","msg":"retrying upstream","service":"billing","req":{"method":"POST","path":"/api/orders/1042","id":"req-70836"},"status":200,"ms":2586,"user":"park"}
+{"ts":"2026-10-14T09:10:46.948+09:00","level":"warn","msg":"slow query","service":"api","req":{"method":"POST","path":"/api/orders/1042","id":"req-96729"},"status":200,"ms":3027,"user":"choi"}
+{"ts":"2026-10-14T09:10:48.275+09:00","level":"error","msg":"db timeout","service":"billing","req":{"method":"POST","path":"/api/orders/1042","id":"req-39140"},"status":502,"ms":1452,"user":"choi"}
+{"ts":"2026-10-14T09:10:48.818+09:00","level":"error","msg":"payment declined","service":"api","req":{"method":"GET","path":"/api/orders","id":"req-67800"},"status":500,"ms":5417,"user":"lee"}
+{"ts":"2026-10-14T09:10:49.409+09:00","level":"error","msg":"db timeout","service":"api","req":{"method":"GET","path":"/api/orders/1042","id":"req-31433"},"status":500,"ms":4638,"user":"choi"}
+{"ts":"2026-10-14T09:10:50.297+09:00","level":"error","msg":"db timeout","service":"api","req":{"method":"GET","path":"/api/orders","id":"req-56951"},"status":503,"ms":5899,"user":"jung"}
+{"ts":"2026-10-14T09:10:51.572+09:00","level":"warn","msg":"slow query","service":"search","req":{"method":"GET","path":"/api/users","id":"req-23828"},"status":200,"ms":1188,"user":"choi"}
+{"ts":"2026-10-14T09:10:54.481+09:00","level":"debug","msg":"query plan chosen","service":"api","req":{"method":"GET","path":"/api/users","id":"req-16973"},"status":200,"ms":102,"user":"choi"}
+{"ts":"2026-10-14T09:10:56.178+09:00","level":"error","msg":"db timeout","service":"search","req":{"method":"POST","path":"/api/users","id":"req-26244"},"status":503,"ms":5690,"user":"kim"}
+{"ts":"2026-10-14T09:10:57.627+09:00","level":"warn","msg":"retrying upstream","service":"search","req":{"method":"GET","path":"/api/orders/1042","id":"req-12086"},"status":200,"ms":2253,"user":"park"}
+{"ts":"2026-10-14T09:10:57.72+09:00","level":"error","msg":"db timeout","service":"search","req":{"method":"POST","path":"/api/orders","id":"req-69356"},"status":503,"ms":5759,"user":"lee"}
+{"ts":"2026-10-14T09:10:57.843+09:00","level":"debug","msg":"query plan chosen","service":"search","req":{"method":"GET","path":"/api/orders/1042","id":"req-62759"},"status":200,"ms":46,"user":"lee"}
+{"ts":"2026-10-14T09:10:58.36+09:00","level":"warn","msg":"retrying upstream","service":"api","req":{"method":"POST","path":"/api/users","id":"req-63670"},"status":200,"ms":2367,"user":"park"}
+{"ts":"2026-10-14T09:11:01.047+09:00","level":"info","msg":"cache hit","service":"api","req":{"method":"POST","path":"/api/users","id":"req-05647"},"status":200,"ms":18,"user":"park"}
+{"ts":"2026-10-14T09:11:02.853+09:00","level":"info","msg":"request done","service":"search","req":{"method":"POST","path":"/api/users","id":"req-20692"},"status":200,"ms":26,"user":"park"}
+{"ts":"2026-10-14T09:11:03.105+09:00","level":"error","msg":"db timeout","service":"billing","req":{"method":"POST","path":"/api/orders/1042","id":"req-12100"},"status":500,"ms":1667,"user":"choi"}
+{"ts":"2026-10-14T09:11:04.545+09:00","level":"info","msg":"request done","service":"billing","req":{"method":"POST","path":"/api/users","id":"req-26974"},"status":200,"ms":51,"user":"kim"}
+{"ts":"2026-10-14T09:11:04.746+09:00","level":"info","msg":"cache hit","service":"api","req":{"method":"POST","path":"/api/orders","id":"req-73220"},"status":200,"ms":72,"user":"lee"}
+{"ts":"2026-10-14T09:11:06.347+09:00","level":"error","msg":"payment declined","service":"search","req":{"method":"GET","path":"/api/orders","id":"req-59206"},"status":502,"ms":4827,"user":"jung"}
+{"ts":"2026-10-14T09:11:06.43+09:00","level":"debug","msg":"query plan chosen","service":"api","req":{"method":"GET","path":"/api/users","id":"req-94656"},"status":200,"ms":57,"user":"lee"}
+{"ts":"2026-10-14T09:11:07.57+09:00","level":"info","msg":"request done","service":"billing","req":{"method":"GET","path":"/api/orders","id":"req-95632"},"status":200,"ms":121,"user":"lee"}
+{"ts":"2026-10-14T09:11:09.751+09:00","level":"warn","msg":"slow query","service":"billing","req":{"method":"GET","path":"/api/orders","id":"req-39558"},"status":200,"ms":1481,"user":"park"}
+{"ts":"2026-10-14T09:11:09.876+09:00","level":"info","msg":"request done","service":"api","req":{"method":"GET","path":"/api/orders","id":"req-86535"},"status":200,"ms":71,"user":"jung"}
+{"ts":"2026-10-14T09:11:11.938+09:00","level":"warn","msg":"slow query","service":"search","req":{"method":"GET","path":"/api/orders","id":"req-13354"},"status":200,"ms":1599,"user":"kim"}
+{"ts":"2026-10-14T09:11:13.253+09:00","level":"warn","msg":"retrying upstream","service":"api","req":{"method":"GET","path":"/api/orders/1042","id":"req-34431"},"status":200,"ms":2701,"user":"lee"}
+{"ts":"2026-10-14T09:11:14.891+09:00","level":"info","msg":"request done","service":"api","req":{"method":"POST","path":"/api/orders/1042","id":"req-59746"},"status":200,"ms":6,"user":"choi"}
+{"ts":"2026-10-14T09:11:14.975+09:00","level":"info","msg":"cache hit","service":"api","req":{"method":"GET","path":"/api/orders","id":"req-48106"},"status":200,"ms":32,"user":"lee"}
+{"ts":"2026-10-14T09:11:17.09+09:00","level":"error","msg":"payment declined","service":"api","req":{"method":"POST","path":"/api/orders/1042","id":"req-95270"},"status":502,"ms":1059,"user":"kim"}
+{"ts":"2026-10-14T09:11:17.472+09:00","level":"warn","msg":"retrying upstream","service":"api","req":{"method":"GET","path":"/api/orders","id":"req-52229"},"status":200,"ms":2079,"user":"choi"}
+{"ts":"2026-10-14T09:11:19.845+09:00","level":"debug","msg":"query plan chosen","service":"api","req":{"method":"GET","path":"/api/orders","id":"req-14565"},"status":200,"ms":67,"user":"jung"}
+{"ts":"2026-10-14T09:11:22.42+09:00","level":"warn","msg":"slow query","service":"api","req":{"method":"GET","path":"/api/orders","id":"req-47564"},"status":200,"ms":2614,"user":"park"}
+{"ts":"2026-10-14T09:11:22.561+09:00","level":"debug","msg":"query plan chosen","service":"api","req":{"method":"GET","path":"/api/orders","id":"req-53415"},"status":200,"ms":26,"user":"park"}
+{"ts":"2026-10-14T09:11:24.866+09:00","level":"error","msg":"payment declined","service":"api","req":{"method":"GET","path":"/api/orders","id":"req-94959"},"status":502,"ms":5813,"user":"lee"}
+{"ts":"2026-10-14T09:11:27.371+09:00","level":"info","msg":"request done","service":"api","req":{"method":"GET","path":"/api/users","id":"req-64231"},"status":200,"ms":111,"user":"kim"}
+{"ts":"2026-10-14T09:11:28.472+09:00","level":"error","msg":"payment declined","service":"api","req":{"method":"GET","path":"/api/users","id":"req-93829"},"status":502,"ms":5289,"user":"kim"}
+{"ts":"2026-10-14T09:11:28.758+09:00","level":"debug","msg":"query plan chosen","service":"api","req":{"method":"GET","path":"/api/users","id":"req-28805"},"status":200,"ms":78,"user":"lee"}
+{"ts":"2026-10-14T09:11:30.111+09:00","level":"info","msg":"request done","service":"billing","req":{"method":"GET","path":"/api/orders/1042","id":"req-95543"},"status":200,"ms":99,"user":"park"}
+{"ts":"2026-10-14T09:11:31.704+09:00","level":"warn","msg":"retrying upstream","service":"api","req":{"method":"GET","path":"/api/orders","id":"req-07101"},"status":200,"ms":3007,"user":"lee"}
+{"ts":"2026-10-14T09:11:32.595+09:00","level":"error","msg":"payment declined","service":"search","req":{"method":"GET","path":"/api/users","id":"req-73485"},"status":503,"ms":3227,"user":"choi"}
+{"ts":"2026-10-14T09:11:35.524+09:00","level":"info","msg":"request done","service":"api","req":{"method":"POST","path":"/api/users","id":"req-61354"},"status":200,"ms":44,"user":"lee"}
+{"ts":"2026-10-14T09:11:37.021+09:00","level":"error","msg":"payment declined","service":"billing","req":{"method":"POST","path":"/api/orders","id":"req-73024"},"status":500,"ms":5742,"user":"park"}
+{"ts":"2026-10-14T09:11:38.788+09:00","level":"warn","msg":"retrying upstream","service":"billing","req":{"method":"GET","path":"/api/users","id":"req-06574"},"status":200,"ms":3221,"user":"lee"}
+{"ts":"2026-10-14T09:11:41.271+09:00","level":"info","msg":"request done","service":"api","req":{"method":"POST","path":"/api/orders","id":"req-13537"},"status":200,"ms":69,"user":"jung"}
+{"ts":"2026-10-14T09:11:41.284+09:00","level":"error","msg":"db timeout","service":"search","req":{"method":"POST","path":"/api/orders","id":"req-97084"},"status":502,"ms":3001,"user":"jung"}
+{"ts":"2026-10-14T09:11:42.353+09:00","level":"info","msg":"request done","service":"search","req":{"method":"GET","path":"/api/orders/1042","id":"req-74589"},"status":200,"ms":60,"user":"jung"}
+{"ts":"2026-10-14T09:11:43.719+09:00","level":"warn","msg":"slow query","service":"api","req":{"method":"POST","path":"/api/orders","id":"req-45571"},"status":200,"ms":3114,"user":"kim"}
+{"ts":"2026-10-14T09:11:46.013+09:00","level":"error","msg":"payment declined","service":"search","req":{"method":"GET","path":"/api/orders/1042","id":"req-64386"},"status":500,"ms":1097,"user":"park"}
+{"ts":"2026-10-14T09:11:46.178+09:00","level":"error","msg":"db timeout","service":"search","req":{"method":"GET","path":"/api/orders/1042","id":"req-56656"},"status":500,"ms":5359,"user":"kim"}
+{"ts":"2026-10-14T09:11:46.812+09:00","level":"error","msg":"payment declined","service":"api","req":{"method":"GET","path":"/api/orders/1042","id":"req-94820"},"status":503,"ms":2019,"user":"lee"}
+{"ts":"2026-10-14T09:11:49.61+09:00","level":"warn","msg":"retrying upstream","service":"billing","req":{"method":"GET","path":"/api/orders/1042","id":"req-37079"},"status":200,"ms":2224,"user":"jung"}
+{"ts":"2026-10-14T09:11:52.059+09:00","level":"info","msg":"request done","service":"api","req":{"method":"POST","path":"/api/orders","id":"req-45849"},"status":200,"ms":83,"user":"park"}
+{"ts":"2026-10-14T09:11:53.974+09:00","level":"info","msg":"request done","service":"billing","req":{"method":"GET","path":"/api/orders/1042","id":"req-40431"},"status":200,"ms":99,"user":"lee"}
+{"ts":"2026-10-14T09:11:55.756+09:00","level":"error","msg":"db timeout","service":"search","req":{"method":"POST","path":"/api/orders/1042","id":"req-14064"},"status":502,"ms":2707,"user":"lee"}
+{"ts":"2026-10-14T09:11:56.543+09:00","level":"info","msg":"request done","service":"search","req":{"method":"POST","path":"/api/orders/1042","id":"req-48689"},"status":200,"ms":63,"user":"park"}
+{"ts":"2026-10-14T09:11:57.356+09:00","level":"warn","msg":"retrying upstream","service":"search","req":{"method":"POST","path":"/api/orders/1042","id":"req-62872"},"status":200,"ms":1962,"user":"lee"}
+{"ts":"2026-10-14T09:11:57.811+09:00","level":"warn","msg":"slow query","service":"api","req":{"method":"POST","path":"/api/orders/1042","id":"req-61065"},"status":200,"ms":1545,"user":"jung"}
+{"ts":"2026-10-14T09:12:00.36+09:00","level":"error","msg":"payment declined","service":"search","req":{"method":"GET","path":"/api/users","id":"req-62678"},"status":500,"ms":1139,"user":"lee"}
+{"ts":"2026-10-14T09:12:00.935+09:00","level":"error","msg":"db timeout","service":"api","req":{"method":"POST","path":"/api/orders","id":"req-69817"},"status":500,"ms":2432,"user":"lee"}
+{"ts":"2026-10-14T09:12:02.299+09:00","level":"debug","msg":"query plan chosen","service":"api","req":{"method":"GET","path":"/api/orders","id":"req-63662"},"status":200,"ms":23,"user":"choi"}
+{"ts":"2026-10-14T09:12:02.622+09:00","level":"warn","msg":"retrying upstream","service":"api","req":{"method":"POST","path":"/api/users","id":"req-97621"},"status":200,"ms":2851,"user":"jung"}
+{"ts":"2026-10-14T09:12:03.852+09:00","level":"warn","msg":"retrying upstream","service":"billing","req":{"method":"POST","path":"/api/orders/1042","id":"req-52654"},"status":200,"ms":896,"user":"jung"}
+{"ts":"2026-10-14T09:12:04.621+09:00","level":"info","msg":"request done","service":"api","req":{"method":"GET","path":"/api/users","id":"req-54897"},"status":200,"ms":124,"user":"kim"}
+{"ts":"2026-10-14T09:12:06.124+09:00","level":"info","msg":"request done","service":"api","req":{"method":"POST","path":"/api/orders","id":"req-58181"},"status":200,"ms":14,"user":"choi"}
+{"ts":"2026-10-14T09:12:07.822+09:00","level":"info","msg":"request done","service":"api","req":{"method":"GET","path":"/api/orders","id":"req-69565"},"status":200,"ms":50,"user":"lee"}
+{"ts":"2026-10-14T09:12:10.706+09:00","level":"debug","msg":"query plan chosen","service":"api","req":{"method":"GET","path":"/api/users","id":"req-90739"},"status":200,"ms":91,"user":"jung"}
+{"ts":"2026-10-14T09:12:11.34+09:00","level":"warn","msg":"retrying upstream","service":"api","req":{"method":"GET","path":"/api/users","id":"req-05727"},"status":200,"ms":2639,"user":"kim"}
+{"ts":"2026-10-14T09:12:14.159+09:00","level":"info","msg":"request done","service":"api","req":{"method":"GET","path":"/api/orders/1042","id":"req-84139"},"status":200,"ms":87,"user":"jung"}
+{"ts":"2026-10-14T09:12:16.554+09:00","level":"error","msg":"db timeout","service":"billing","req":{"method":"POST","path":"/api/orders","id":"req-65520"},"status":503,"ms":1963,"user":"park"}
+{"ts":"2026-10-14T09:12:18.324+09:00","level":"warn","msg":"retrying upstream","service":"billing","req":{"method":"POST","path":"/api/users","id":"req-30544"},"status":200,"ms":1973,"user":"choi"}
