@@ -18,8 +18,12 @@ type UI struct {
 	status string
 	live   []string
 	drawn  int // lines currently occupied by the live region
-	inRun  bool
-	header *tableHeader // last table header printed
+	// the live region's lines as drawn: their widths and the terminal width,
+	// to find the rows they take after the terminal was resized
+	drawnWidths []int
+	drawnW      int
+	inRun       bool
+	header      *tableHeader // last table header printed
 
 	timeline  *timeline // event search: drawn in the live region, then above the results
 	tlPrinted bool
@@ -78,6 +82,9 @@ func (u *UI) clearRegion() {
 	if u.drawn == 0 {
 		return
 	}
+	if w, _ := u.size(); w != u.drawnW && len(u.drawnWidths) == u.drawn {
+		u.drawn = rowsAfterResize(u.drawnWidths, w)
+	}
 	if u.drawn > 1 {
 		fmt.Fprintf(u.out, "\x1b[%dA", u.drawn-1)
 	}
@@ -94,6 +101,8 @@ func (u *UI) drawRegion() {
 	if len(lines) > h-2 {
 		lines = lines[:max(0, h-2)]
 	}
+	u.drawnW, u.drawnWidths = w, u.drawnWidths[:0]
+	drawn := func(s string) { u.drawnWidths = append(u.drawnWidths, min(w-1, strWidth([]rune(stripColors(s))))) }
 	for i, l := range lines {
 		t := truncateWidth(l, w-1)
 		if i == 0 {
@@ -101,15 +110,28 @@ func (u *UI) drawRegion() {
 		} else {
 			u.out.WriteString(t + "\x1b[0m\n")
 		}
+		drawn(l)
 	}
-	u.drawn = len(lines) + 1
 	if !u.tlPrinted {
 		if tl := u.timeline.render(w); tl != "" {
 			u.out.WriteString(timelineLine(tl, w) + "\n")
-			u.drawn++
+			drawn(tl)
 		}
 	}
 	u.out.WriteString("\x1b[36m" + truncateWidth(u.status, w-1) + "\x1b[0m")
+	drawn(u.status)
+	u.drawn = len(u.drawnWidths)
+}
+
+// rowsAfterResize is the number of rows lines of the given widths take once the
+// terminal is w columns wide: a narrower terminal wraps them (most terminals
+// rewrap on resize), a wider one does not change them.
+func rowsAfterResize(widths []int, w int) int {
+	rows, w := 0, max(1, w)
+	for _, n := range widths {
+		rows += max(1, (n+w-1)/w)
+	}
+	return rows
 }
 
 // Begin starts a pipeline run.

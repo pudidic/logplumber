@@ -344,6 +344,9 @@ appears at start-up and again whenever the line is cleared.
   …) are not previewed. They run only when you press Enter.
 - The file list is cached for 10 seconds, so typing does not rescan the
   directory tree on every key. Pressing Enter clears the cache.
+- Resizing the terminal redraws the screen at the new size, the detail view
+  included. While an Enter run is in progress, its status lines are redrawn
+  below the output already printed.
 
 ## Layout
 
