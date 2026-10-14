@@ -40,6 +40,7 @@ type unit struct {
 	path    string // plain text to read: the original file or a decompressed copy
 	size    int64  // bytes of text at path
 	binary  bool
+	id      int32 // index into store.units; its chunks are in the trigram index
 }
 
 // srcEntry records a file on disk as it was when indexed.
@@ -54,7 +55,10 @@ func (e *srcEntry) valid(fi os.FileInfo) bool {
 
 // storeSnap is an immutable view of the store used by one query.
 type storeSnap struct {
-	srcs map[string]*srcEntry // by absolute path
+	srcs   map[string]*srcEntry // by absolute path
+	dir    string
+	lens   [numBuckets]int64 // committed bucket lengths
+	chunks []chunkRec
 }
 
 type storeStatus struct {
@@ -81,6 +85,12 @@ type store struct {
 	nextFile    int
 	st          storeStatus
 	lastPublish time.Time
+	units       []*unit
+	chunks      []chunkRec
+	lens        [numBuckets]int64
+	bits        []uint64 // trigrams seen in the current chunk (2^24 bits)
+	setTris     []uint32
+	pairs       []uint64 // trigram<<32 | chunk ID, not yet in the buckets
 }
 
 // openStore creates the store directory and starts the indexing goroutine.
@@ -97,7 +107,7 @@ func openStore() (*store, error) {
 	}
 	s := &store{dir: dir, lock: lock, rootCh: make(chan string, 1), done: make(chan struct{}),
 		srcs: map[string]*srcEntry{}, pending: map[string]*srcEntry{}}
-	s.snap.Store(&storeSnap{srcs: map[string]*srcEntry{}})
+	s.snap.Store(&storeSnap{srcs: map[string]*srcEntry{}, dir: dir})
 	s.status.Store(&storeStatus{})
 	ctx, cancel := context.WithCancel(context.Background())
 	s.cancel = cancel
@@ -230,7 +240,9 @@ func (s *store) pass(ctx context.Context, root string) error {
 		}
 	}
 	s.st.building = false
-	return s.publish()
+	err := s.publish()
+	s.bits = nil // free 2MB until the next pass
+	return err
 }
 
 // indexFile unpacks one file. Plain text is used in place; text that was
@@ -251,11 +263,21 @@ func (s *store) indexFile(ctx context.Context, f walkedFile) (*srcEntry, error) 
 				u.binary = true
 				return nil
 			}
-			if !decoded {
+			c := s.newChunker(u)
+			var err error
+			if decoded {
+				err = s.writeCache(u, br, c)
+			} else {
 				u.path, u.size = f.path, f.fi.Size()
-				return nil
+				_, err = io.CopyBuffer(c, br, make([]byte, copyBufSize))
 			}
-			return s.writeCache(u, br)
+			if err == nil {
+				err = c.close()
+			}
+			if err != nil {
+				s.discardChunk()
+			}
+			return err
 		}}
 	if err := a.walkFile(&pausingReaderAt{ra: fh, s: s, ctx: ctx}, f.fi.Size(), pr); err != nil {
 		return nil, err
@@ -266,14 +288,14 @@ func (s *store) indexFile(ctx context.Context, f walkedFile) (*srcEntry, error) 
 	return e, nil
 }
 
-func (s *store) writeCache(u *unit, br *bufio.Reader) error {
+func (s *store) writeCache(u *unit, br *bufio.Reader, c *chunker) error {
 	name := filepath.Join(s.dir, fmt.Sprintf(cacheFileName, s.nextFile))
 	s.nextFile++
 	out, err := os.Create(name)
 	if err != nil {
 		return err
 	}
-	n, err := io.CopyBuffer(out, br, make([]byte, copyBufSize))
+	n, err := io.CopyBuffer(io.MultiWriter(out, c), br, make([]byte, copyBufSize))
 	if cerr := out.Close(); err == nil {
 		err = cerr
 	}
@@ -286,9 +308,13 @@ func (s *store) writeCache(u *unit, br *bufio.Reader) error {
 	return nil
 }
 
-// publish makes recorded files visible to queries.
+// publish writes buffered trigrams to the buckets and then makes recorded files
+// visible to queries, so a query never sees a file whose chunks aren't indexed yet.
 func (s *store) publish() error {
 	s.lastPublish = time.Now()
+	if err := s.flushPairs(); err != nil {
+		return err
+	}
 	if len(s.pending) > 0 {
 		m := make(map[string]*srcEntry, len(s.srcs)+len(s.pending))
 		for k, v := range s.srcs {
@@ -299,7 +325,8 @@ func (s *store) publish() error {
 		}
 		s.srcs = m
 		s.pending = map[string]*srcEntry{}
-		s.snap.Store(&storeSnap{srcs: m})
+		n := len(s.chunks)
+		s.snap.Store(&storeSnap{srcs: m, dir: s.dir, lens: s.lens, chunks: s.chunks[:n:n]})
 	}
 	s.st.files = len(s.srcs)
 	s.publishStatus()

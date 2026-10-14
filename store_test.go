@@ -151,6 +151,61 @@ func TestStoreCacheMatchesDirectReads(t *testing.T) {
 	}
 }
 
+func TestTrigramCandidates(t *testing.T) {
+	old := chunkSize
+	chunkSize = 16 // several chunks per file
+	defer func() { chunkSize = old }()
+	dir := t.TempDir()
+	writeFixtures(t, dir)
+	os.WriteFile(filepath.Join(dir, "long.log"), []byte(strings.Repeat("filler line\n", 20)+"needle here\n"+strings.Repeat("filler line\n", 20)), 0o644)
+	t.Chdir(dir)
+	st, err := openStore()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer st.close()
+	st.setRoot(".")
+	waitIndexed(t, st)
+	snap := st.snap.Load()
+
+	units := map[int32]string{}
+	for p, e := range snap.srcs {
+		for _, u := range e.units {
+			units[u.id] = filepath.Base(p) + u.member
+		}
+	}
+	names := func(term string) []string {
+		cand, ok := snap.candidates([][]byte{[]byte(term)})
+		if !ok {
+			t.Fatalf("%s: index not usable", term)
+		}
+		var out []string
+		for id := range cand {
+			out = append(out, units[id])
+		}
+		sort.Strings(out)
+		return out
+	}
+	want := "bundle.tar.gz::in/m0.txt plain.log single.log.gz z.zip::z/inside.txt"
+	if got := strings.Join(names("error"), " "); got != want {
+		t.Errorf("error: got %q want %q", got, want)
+	}
+	// Only the chunk holding the needle is a candidate, with its line number.
+	cand, _ := snap.candidates([][]byte{[]byte("needle")})
+	var chunks []chunkRec
+	for id, cs := range cand {
+		if units[id] == "long.log" {
+			chunks = cs
+		}
+	}
+	if len(chunks) != 1 || chunks[0].line != 20 && chunks[0].line != 21 {
+		t.Errorf("needle chunks: %+v", chunks)
+	}
+	if _, ok := snap.candidates([][]byte{[]byte("ab")}); ok {
+		t.Error("a 2-byte term must not use the index")
+	}
+}
+
 func TestStaleStoreCleanup(t *testing.T) {
 	stale, err := os.MkdirTemp("", storePrefix+"*")
 	if err != nil {
