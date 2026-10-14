@@ -1,0 +1,5 @@
+# build outputs
+/psh
+/psh.exe
+/psh-*
+*.test
