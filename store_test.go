@@ -220,3 +220,5 @@ func TestStaleStoreCleanup(t *testing.T) {
 		os.RemoveAll(stale)
 	}
 }
+
+func (c *captureDisplay) SetTimeline(*timeline) {}

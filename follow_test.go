@@ -176,3 +176,5 @@ func TestRealtimeSyntax(t *testing.T) {
 		}
 	}
 }
+
+func (d *capDisplay) SetTimeline(*timeline) {}

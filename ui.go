@@ -19,7 +19,19 @@ type UI struct {
 	drawn  int // lines currently occupied by the live region
 	inRun  bool
 	header *tableHeader // last table header printed
+
+	timeline  *timeline // event search: drawn in the live region, then above the results
+	tlPrinted bool
 }
+
+// SetTimeline sets the timeline of the current run (nil: none).
+func (u *UI) SetTimeline(t *timeline) {
+	u.mu.Lock()
+	defer u.mu.Unlock()
+	u.timeline, u.tlPrinted = t, false
+}
+
+const timelineStyle = "\x1b[32m"
 
 func newUI() *UI {
 	u := &UI{out: bufio.NewWriterSize(os.Stdout, 256<<10)}
@@ -75,8 +87,14 @@ func (u *UI) drawRegion() {
 			u.out.WriteString(t + "\n")
 		}
 	}
-	u.out.WriteString("\x1b[36m" + truncateWidth(u.status, w-1) + "\x1b[0m")
 	u.drawn = len(lines) + 1
+	if !u.tlPrinted {
+		if tl := u.timeline.render(w); tl != "" {
+			u.out.WriteString(timelineStyle + truncateWidth(tl, w-1) + "\x1b[0m\n")
+			u.drawn++
+		}
+	}
+	u.out.WriteString("\x1b[36m" + truncateWidth(u.status, w-1) + "\x1b[0m")
 }
 
 // Begin starts a pipeline run.
@@ -119,6 +137,14 @@ func (u *UI) Print(lines []Line) {
 	u.mu.Lock()
 	defer u.mu.Unlock()
 	u.clearRegion()
+	if u.active && !u.tlPrinted && len(lines) > 0 {
+		// the results of an event search come after all input: the timeline is complete
+		u.tlPrinted = true
+		w, _ := u.size()
+		if tl := u.timeline.render(w); tl != "" {
+			u.out.WriteString(timelineStyle + truncateWidth(tl, w-1) + "\x1b[0m\n")
+		}
+	}
 	for _, l := range lines {
 		if h := lineHeader(l); h != nil && h != u.header {
 			u.header = h

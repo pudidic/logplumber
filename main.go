@@ -407,9 +407,10 @@ SPL mode (default) — Splunk's Search Processing Language
     sort [N] [-|+]f, ...       head N   tail N       reverse
     fieldsummary               outputcsv file
     aggs: count dc sum avg min max median p50..p99 values first last
-  Events come newest first. Fields: JSON and key=value are extracted
-  automatically (nested JSON keys joined with dots: req.path); built-ins are
-  _raw _src _line _time. In where/eval, "..." is a string and '...' a field.
+  Events come newest first, below a one-line timeline of all matching events
+  (events per time slot, time left to right). Fields: JSON and key=value are
+  extracted automatically (nested JSON keys joined with dots: req.path);
+  built-ins are _raw _src _line _time. In where/eval, "..." is a string and '...' a field.
   Functions: if case coalesce isnull isnotnull isnum len lower upper trim substr
              round floor ceil abs tonumber tostring match like replace min max
              now time relative_time(t, "-1d@d") strftime(t, "%F %T") strptime(s, fmt)

@@ -125,7 +125,8 @@ func TestImplicitTimeOrder(t *testing.T) {
 			specs = append(specs, s)
 		}
 		var out []string
-		for _, s := range orderSPL(specs, live, nil) {
+		ordered, _ := orderSPL(specs, live, nil)
+		for _, s := range ordered {
 			n := s.Name
 			if f, ok := s.New().(*fieldSortStage); ok && f.limit > 0 {
 				n += "*" // a bounded sort
@@ -139,10 +140,10 @@ func TestImplicitTimeOrder(t *testing.T) {
 		live bool
 		want string
 	}{
-		{`error`, false, "search sort"},
-		{`error`, true, "search sort*"},
-		{`error | where x > 1 | head 5`, false, "search where sort* head"},
-		{`error | dedup user | table user`, false, "search sort dedup table"},
+		{`error`, false, "search timeline sort"},
+		{`error`, true, "search timeline sort*"},
+		{`error | where x > 1 | head 5`, false, "search where timeline sort* head"},
+		{`error | dedup user | table user`, false, "search timeline sort dedup table"},
 		{`error | stats count`, false, "search stats"},
 		{`error | sort user`, false, "search sort"},
 		{`error | stats count by x | rename count AS n`, false, "search stats rename retable"},

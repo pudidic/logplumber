@@ -238,9 +238,9 @@ var (
 const liveEventLimit = 1000
 
 // orderSPL adds what SPL does implicitly: events come newest first (as in
-// Splunk, a search returns events in reverse time order), and tables are
-// redrawn when a command changes their fields.
-func orderSPL(specs []*Spec, live bool, rt *followCfg) []*Spec {
+// Splunk, a search returns events in reverse time order) with a timeline of
+// all of them, and tables are redrawn when a command changes their fields.
+func orderSPL(specs []*Spec, live bool, rt *followCfg) ([]*Spec, *timeline) {
 	j := 1
 	for j < len(specs) && streamingSPL[specs[j].Name] {
 		j++
@@ -259,9 +259,16 @@ func orderSPL(specs []*Spec, live bool, rt *followCfg) []*Spec {
 			limit = liveEventLimit
 		}
 		s := newFieldSort([]sortTerm{{field: "_time", desc: true}}, limit)
-		specs = append(specs[:j], append([]*Spec{s}, specs[j:]...)...)
+		add := []*Spec{s}
+		var tl *timeline
+		if rt == nil { // an event search: count all its events for the timeline
+			tl = newTimeline()
+			add = []*Spec{timelineSpec(tl), s}
+		}
+		specs = append(specs[:j], append(add, specs[j:]...)...)
+		return retableSPL(specs), tl
 	}
-	return retableSPL(specs)
+	return retableSPL(specs), nil
 }
 
 // retableSPL appends a stage that redraws result tables when a later command
