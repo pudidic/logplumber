@@ -20,6 +20,9 @@ type Line struct {
 	Raw  int         // original byte length including newline (0 = unknown)
 	Rec  *Record     // extracted or computed fields (nil until first used)
 	Agg  *statsState // partial aggregation sent from a worker thread
+	// grep's "file:" or "file:line:" prefix: Text[:Pre], of which Text[:PreName]
+	// is the file name part (shown as a column in a terminal, see columns.go)
+	Pre, PreName int
 }
 
 // Emit passes a line downstream. It returns false when downstream wants no more input.
@@ -84,20 +87,23 @@ func (g *grepStage) out(l Line, lineNo int, text string) Line {
 	if !c.withName && !c.number && text == l.Text {
 		return l // unchanged line keeps its fields
 	}
+	pre, preName := 0, 0
 	if c.withName || c.number {
 		var b strings.Builder
 		if c.withName {
 			b.WriteString(l.Src)
 			b.WriteByte(':')
+			preName = b.Len()
 		}
 		if c.number {
 			b.WriteString(strconv.Itoa(lineNo))
 			b.WriteByte(':')
 		}
+		pre = b.Len()
 		b.WriteString(text)
 		text = b.String()
 	}
-	return Line{Text: text, Src: l.Src, No: l.No}
+	return Line{Text: text, Src: l.Src, No: l.No, Pre: pre, PreName: preName}
 }
 
 func (g *grepStage) Push(l Line, emit Emit) bool {
@@ -147,7 +153,7 @@ func (g *grepStage) EndFile(src string, emit Emit) bool {
 	switch {
 	case c.count:
 		if c.withName {
-			ok = emit(Line{Text: src + ":" + strconv.Itoa(g.cnt), Src: src})
+			ok = emit(Line{Text: src + ":" + strconv.Itoa(g.cnt), Src: src, Pre: len(src) + 1, PreName: len(src) + 1})
 		} else {
 			ok = emit(Line{Text: strconv.Itoa(g.cnt), Src: src})
 		}

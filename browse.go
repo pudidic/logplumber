@@ -121,12 +121,13 @@ func (e *liveEditor) bodyLines(room int) []string {
 		if e.sel >= e.top+room {
 			e.top = e.sel - room + 1
 		}
-		for i := e.top; i < n && i < e.top+room; i++ {
-			l, _ := e.rows.get(i)
-			if i == e.sel {
-				out = append(out, "\x00S"+l.Text)
+		page := e.page(e.top, min(n, e.top+room))
+		w := columnWidth(page, e.srcCol)
+		for i, l := range page {
+			if e.top+i == e.sel {
+				out = append(out, "\x00S"+displayLine(l, e.srcCol, w))
 			} else {
-				out = append(out, l.Text)
+				out = append(out, displayLine(l, e.srcCol, w))
 			}
 		}
 		return out
@@ -135,9 +136,10 @@ func (e *liveEditor) bodyLines(room int) []string {
 	if n > room {
 		show = room - 1
 	}
-	for i := 0; i < show; i++ {
-		l, _ := e.rows.get(i)
-		out = append(out, l.Text)
+	page := e.page(0, show)
+	w := columnWidth(page, e.srcCol)
+	for _, l := range page {
+		out = append(out, displayLine(l, e.srcCol, w))
 	}
 	if n > show {
 		hint := ", Enter for full output"
@@ -145,6 +147,16 @@ func (e *liveEditor) bodyLines(room int) []string {
 			hint = ""
 		}
 		out = append(out, fmt.Sprintf("\x00D… %s more lines — ↓ to browse all results%s", commas(int64(n-show)), hint))
+	}
+	return out
+}
+
+// page returns results from..to-1.
+func (e *liveEditor) page(from, to int) []Line {
+	out := make([]Line, 0, max(0, to-from))
+	for i := from; i < to; i++ {
+		l, _ := e.rows.get(i)
+		out = append(out, l)
 	}
 	return out
 }

@@ -198,6 +198,7 @@ type liveEditor struct {
 	detail       []string // detail view of the selected result
 	detailScroll int
 	timeline     *timeline // of the current run (event searches)
+	srcCol       bool      // events: file names as a column
 }
 
 type editMode int
@@ -815,6 +816,7 @@ func (r *liveRun) SetLive(lines []string) {
 }
 
 func (r *liveRun) SetTimeline(t *timeline) { r.update(func() { r.e.timeline = t }) }
+func (r *liveRun) SetColumns(src bool)     { r.update(func() { r.e.srcCol = src }) }
 
 func (r *liveRun) PreviewRows() int {
 	_, h := r.e.size()
