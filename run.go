@@ -25,6 +25,7 @@ type display interface {
 	Live() bool       // whether previews should be computed
 	PreviewRows() int // number of preview lines that fit
 	SetTimeline(t *timeline)
+	SetColumns(src bool) // show the events' file names as a column
 }
 
 var errInterrupted = errors.New("interrupted (Ctrl+C)")
@@ -55,6 +56,7 @@ type runner struct {
 	snap        *storeSnap           // index snapshot taken when the run starts
 	follow      *followCfg           // real-time: keep reading what is appended
 	timeline    *timeline            // event search: events per time slot
+	srcCol      bool                 // SPL events: show their file names as a column
 	need        []needAlt            // what a matching line must contain (index)
 	cand        map[int32][]chunkRec // indexed units: the chunks to read (nil: all)
 	exclude     string
@@ -163,6 +165,12 @@ func (r *runner) planSPL(ast *pipelineAST) error {
 	r.need = r.specs[0].need
 	_, typeAhead := r.ui.(*liveRun) // a preview while typing, not the full output
 	r.specs, r.timeline = orderSPL(r.specs, typeAhead, r.follow)
+	r.srcCol = true // events, unless a command makes a table of them
+	for _, s := range r.specs {
+		if tableSPL[s.Name] {
+			r.srcCol = false
+		}
+	}
 	return nil
 }
 
@@ -246,6 +254,7 @@ func (sh *Shell) runPipeline(userCtx context.Context, ast *pipelineAST, disp dis
 
 	r.ui.Begin()
 	r.ui.SetTimeline(r.timeline)
+	r.ui.SetColumns(r.srcCol)
 	stopStatus := make(chan struct{})
 	statusDone := make(chan struct{})
 	go func() {
@@ -499,7 +508,7 @@ func (r *runner) preview(specs []*Spec, st []Stage, b int) {
 	if !ok {
 		return
 	}
-	pv := &previewBuf{rows: max(3, r.ui.PreviewRows())}
+	pv := &previewBuf{rows: max(3, r.ui.PreviewRows()), srcCol: r.srcCol}
 	down, emits := instantiate(specs[b+1:])
 	chain(down, emits, pv.add)
 	snap.Snapshot(emits[0])
@@ -512,10 +521,11 @@ func (r *runner) preview(specs []*Spec, st []Stage, b int) {
 type previewBuf struct {
 	header *tableHeader
 	rows   int
-	head   []string
-	last   string
+	head   []Line
+	last   Line
 	count  int
 	cut    bool
+	srcCol bool
 }
 
 func (p *previewBuf) add(l Line) bool {
@@ -524,9 +534,9 @@ func (p *previewBuf) add(l Line) bool {
 	}
 	p.count++
 	if len(p.head) < p.rows {
-		p.head = append(p.head, l.Text)
+		p.head = append(p.head, l)
 	}
-	p.last = l.Text
+	p.last = l
 	if p.count >= 200000 {
 		p.cut = true
 		return false
@@ -543,15 +553,22 @@ func (p *previewBuf) render(stage string) []string {
 	if p.header != nil {
 		out = append(out, p.header.text, p.header.rule)
 	}
-	if p.count <= p.rows {
-		return append(out, p.head...)
+	w := columnWidth(append(p.head, p.last), p.srcCol)
+	show := func(ls ...Line) {
+		for _, l := range ls {
+			out = append(out, displayLine(l, p.srcCol, w))
+		}
 	}
-	out = append(out, p.head[:p.rows-2]...)
-	out = append(out, fmt.Sprintf("   … %s%s more lines …", commas(int64(p.count-p.rows+1)), more))
-	if p.cut {
+	if p.count <= p.rows {
+		show(p.head...)
 		return out
 	}
-	return append(out, p.last)
+	show(p.head[:p.rows-2]...)
+	out = append(out, fmt.Sprintf("   … %s%s more lines …", commas(int64(p.count-p.rows+1)), more))
+	if !p.cut {
+		show(p.last)
+	}
+	return out
 }
 
 // ---------------- output sink ----------------

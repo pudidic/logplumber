@@ -178,3 +178,4 @@ func TestRealtimeSyntax(t *testing.T) {
 }
 
 func (d *capDisplay) SetTimeline(*timeline) {}
+func (d *capDisplay) SetColumns(bool)       {}

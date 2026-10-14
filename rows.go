@@ -39,6 +39,8 @@ func encodeLine(b []byte, l Line) []byte {
 	} else {
 		b = append(b, 0)
 	}
+	b = binary.AppendUvarint(b, uint64(l.Pre))
+	b = binary.AppendUvarint(b, uint64(l.PreName))
 	return b
 }
 
@@ -84,11 +86,15 @@ func decodeLine(b []byte, header *tableHeader) (Line, error) {
 			l.Rec.set[k] = d.str()
 		}
 	}
-	if d.err == nil && len(d.b) > 0 && d.b[0] == 1 {
-		if l.Rec == nil {
-			l.Rec = &Record{}
+	if d.err == nil && len(d.b) > 0 {
+		if d.b[0] == 1 {
+			if l.Rec == nil {
+				l.Rec = &Record{}
+			}
+			l.Rec.row, l.Rec.header = true, header
 		}
-		l.Rec.row, l.Rec.header = true, header
+		d.b = d.b[1:]
+		l.Pre, l.PreName = int(d.uvarint()), int(d.uvarint())
 	}
 	return l, d.err
 }

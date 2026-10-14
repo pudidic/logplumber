@@ -302,6 +302,15 @@ characters use the word filters alone. It is not used for `NOT`, numeric
 comparisons, `*` alone, non-ASCII text, real-time searches, or
 `grep -v`/`-c`/`-L`.
 
+## File column
+
+In a terminal, result lines that come from a file are shown in two aligned
+columns: the file name (magenta) and the content. This applies to the events of
+an SPL search and to grep's `file:` and `file:line:` prefixes (the line number
+in green). Names wider than 40 columns are shortened at the front, so the file
+name itself stays visible. Output to a file or a pipe keeps the plain text,
+e.g. `app/worker.log:11:time=…`.
+
 ## Type-ahead mode
 
 With an empty command line psh shows the **latest events**: the 1000 newest lines
@@ -351,6 +360,7 @@ appears at start-up and again whenever the line is cleared.
 | `source.go` | File discovery, archive decoding (tar/gz/bz2/zip, nested), worker threads, progress counters |
 | `follow.go` | Real-time: following files (appends, new files, truncation), `tail -f`, sliding window |
 | `timeline.go` | One-line event timeline above search results |
+| `columns.go` | File column and colors for result lines in a terminal |
 | `run.go` | Execution engine: parallel/serial split, live previews, status line, file-list cache |
 | `store.go` | On-disk store of an interactive session: archive cache, background indexing |
 | `persist.go` | Keeping the index across sessions: manifest, recovery, cleanup, the exit question |

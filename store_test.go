@@ -222,3 +222,4 @@ func TestStaleStoreCleanup(t *testing.T) {
 }
 
 func (c *captureDisplay) SetTimeline(*timeline) {}
+func (c *captureDisplay) SetColumns(bool)       {}

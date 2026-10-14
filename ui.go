@@ -6,6 +6,7 @@ import (
 	"os"
 	"strings"
 	"sync"
+	"unicode/utf8"
 )
 
 // UI owns the terminal. Results scroll normally; below them a "live region"
@@ -22,6 +23,14 @@ type UI struct {
 
 	timeline  *timeline // event search: drawn in the live region, then above the results
 	tlPrinted bool
+	srcCol    bool // SPL events: file names as a column
+	colWidth  int  // width of the file column so far in this run (it only grows)
+}
+
+func (u *UI) SetColumns(src bool) {
+	u.mu.Lock()
+	defer u.mu.Unlock()
+	u.srcCol, u.colWidth = src, 0
 }
 
 // SetTimeline sets the timeline of the current run (nil: none).
@@ -84,7 +93,7 @@ func (u *UI) drawRegion() {
 		if i == 0 {
 			u.out.WriteString("\x1b[2m" + t + "\x1b[0m\n")
 		} else {
-			u.out.WriteString(t + "\n")
+			u.out.WriteString(t + "\x1b[0m\n")
 		}
 	}
 	u.drawn = len(lines) + 1
@@ -145,12 +154,19 @@ func (u *UI) Print(lines []Line) {
 			u.out.WriteString(timelineStyle + truncateWidth(tl, w-1) + "\x1b[0m\n")
 		}
 	}
+	if u.active {
+		u.colWidth = max(u.colWidth, columnWidth(lines, u.srcCol))
+	}
 	for _, l := range lines {
 		if h := lineHeader(l); h != nil && h != u.header {
 			u.header = h
 			u.out.WriteString(h.text + "\n" + h.rule + "\n")
 		}
-		u.out.WriteString(l.Text)
+		if u.active {
+			u.out.WriteString(ansiColors(displayLine(l, u.srcCol, u.colWidth)))
+		} else {
+			u.out.WriteString(l.Text) // a file or pipe: plain text
+		}
 		u.out.WriteByte('\n')
 	}
 	u.drawRegion()
@@ -211,7 +227,14 @@ func runeWidth(r rune) int {
 func truncateWidth(s string, w int) string {
 	var b strings.Builder
 	cols := 0
-	for _, r := range s {
+	for i := 0; i < len(s); {
+		if code, n := colorMarker(s, i); n > 0 { // a color marker (see columns.go): no width
+			b.WriteString("\x1b[" + code + "m")
+			i += n
+			continue
+		}
+		r, size := utf8.DecodeRuneInString(s[i:])
+		i += size
 		if r == '\t' {
 			r = ' '
 		} else if r < 32 || r == 0x7f {
