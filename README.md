@@ -34,16 +34,15 @@ Download the archive for your system from the
 
 `SHA256SUMS` lists the checksums. On macOS, a downloaded binary is quarantined;
 run `xattr -d com.apple.quarantine plumb` once (it is not notarized). With Go
-installed: `go install github.com/pudidic/logplumber@latest` (the binary is then
-named `logplumber`).
+installed: `go install github.com/pudidic/logplumber/cmd/plumb@latest`.
 
 ## Build
 
 ```bash
-go build -o plumb .                                   # current OS
-GOOS=linux   GOARCH=amd64 go build -o plumb-linux .
-GOOS=darwin  GOARCH=arm64 go build -o plumb-mac .
-GOOS=windows GOARCH=amd64 go build -o plumb.exe .
+go build -o plumb ./cmd/plumb                                   # current OS
+GOOS=linux   GOARCH=amd64 go build -o plumb-linux ./cmd/plumb
+GOOS=darwin  GOARCH=arm64 go build -o plumb-mac ./cmd/plumb
+GOOS=windows GOARCH=amd64 go build -o plumb.exe ./cmd/plumb
 go test ./...
 ./release.sh v0.3.0     # all six release archives in dist/
 ```
@@ -369,6 +368,9 @@ appears at start-up and again whenever the line is cleared.
   below the output already printed.
 
 ## Layout
+
+The sources are in `cmd/plumb/` (one `main` package); `samples/` holds example
+logs and their generator, `release.sh` builds the release archives.
 
 | File | Role |
 |---|---|
