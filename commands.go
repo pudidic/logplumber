@@ -71,6 +71,20 @@ func parseGrep(name string, args []word) (*Spec, []word, error) {
 		only: p.has('o'), list: p.has('l'), listNot: p.has('L'),
 		forceName: p.has('H'), noName: p.has('h')}
 	s := &Spec{Name: "grep", Parallel: true, New: func() Stage { return &grepStage{c: c} }}
+	// Lines without the pattern's text can be skipped via the index when the
+	// pattern is literal and the output only depends on matching lines.
+	if !c.invert && !c.count && !c.listNot {
+		var alts [][]string
+		for _, pat := range pats {
+			literal := p.has('F') || name == "fgrep" || regexp.QuoteMeta(pat) == pat
+			if !literal || len(pat) < 3 || !isASCII(pat) || strings.Contains(pat, "\n") {
+				alts = nil
+				break
+			}
+			alts = append(alts, []string{strings.ToLower(pat)})
+		}
+		s.need = alts
+	}
 	s.Setup = func(pc planCtx, s *Spec) {
 		c.perFile = pc.first
 		c.withName = pc.first && (pc.multi || c.forceName) && !c.noName

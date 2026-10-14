@@ -67,8 +67,9 @@ func (sAll) match(*searchCtx) bool     { return true }
 
 // sTerm matches a word or phrase in _raw, bounded by non-word characters.
 type sTerm struct {
-	lit string         // lowercased literal (no wildcards)
-	re  *regexp.Regexp // with wildcards
+	lit   string         // lowercased literal (no wildcards)
+	re    *regexp.Regexp // with wildcards
+	parts []string       // with wildcards: the literal pieces between them
 }
 
 func isWordRune(r rune) bool { return r == '_' || unicode.IsLetter(r) || unicode.IsDigit(r) }
@@ -115,7 +116,79 @@ func newTerm(s string) snode {
 	if err != nil {
 		return sTerm{lit: strings.ToLower(s)}
 	}
-	return sTerm{re: re}
+	return sTerm{re: re, parts: strings.Split(strings.ToLower(s), "*")}
+}
+
+// ---------------- index requirements ----------------
+
+// maxNeedAlternatives caps the alternatives of an index requirement; a query
+// with more is read in full.
+const maxNeedAlternatives = 32
+
+// indexNeeds returns the text a line must contain to match n, as alternatives
+// of literals that must all appear (case-insensitive ASCII), for the trigram
+// index. It is a superset condition: every matching line meets it, so lines
+// that do not can be skipped. ok is false when nothing can be required.
+func indexNeeds(n snode) (alts [][]string, ok bool) {
+	switch n := n.(type) {
+	case sTerm:
+		var lits []string
+		if n.re == nil {
+			lits = []string{n.lit}
+		} else {
+			lits = n.parts
+		}
+		var out []string
+		for _, l := range lits {
+			if len(l) >= 3 && isASCII(l) {
+				out = append(out, l)
+			}
+		}
+		return [][]string{out}, len(out) > 0
+	case sCmp:
+		if n.lit != "" { // field=value whose value is literal text of the line
+			return [][]string{{n.lit}}, true
+		}
+	case sAnd:
+		alts = [][]string{nil}
+		for _, x := range n {
+			xa, xok := indexNeeds(x)
+			if !xok {
+				continue // no requirement from this part
+			}
+			ok = true
+			var next [][]string
+			for _, a := range alts {
+				for _, b := range xa {
+					next = append(next, append(append([]string(nil), a...), b...))
+				}
+			}
+			if len(next) > maxNeedAlternatives {
+				return nil, false
+			}
+			alts = next
+		}
+		return alts, ok
+	case sOr:
+		for _, x := range n {
+			xa, xok := indexNeeds(x)
+			if !xok {
+				return nil, false // one branch may match anything
+			}
+			alts = append(alts, xa...)
+		}
+		return alts, len(alts) <= maxNeedAlternatives
+	}
+	return nil, false // NOT, time ranges, numeric comparisons, *
+}
+
+func isASCII(s string) bool {
+	for i := 0; i < len(s); i++ {
+		if s[i] >= 0x80 {
+			return false
+		}
+	}
+	return true
 }
 
 // sCmp compares a field with a value.
@@ -623,6 +696,9 @@ func parseSearchCmd(src string, pos int, first bool) (*Spec, []string, error) {
 		return nil, nil, err
 	}
 	s := &Spec{Name: "search", Parallel: true, rt: p.rt, New: func() Stage { return searchStage{n: n} }}
+	if first {
+		s.need, _ = indexNeeds(n)
+	}
 	if _, all := n.(sAll); all || n == nil {
 		s.New = func() Stage { return passStage{} }
 	}
