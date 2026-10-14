@@ -280,6 +280,25 @@ Commands:
   find [path...] [-name glob] [-iname glob] [-type f|d]   lists archive members too
   ls   [-la] [dir]           echo text
 
+Field commands (work on extracted fields; JSON and key=value lines are parsed
+automatically, nested JSON keys are joined with dots, e.g. req.path):
+  rex [field=F] "regex with (?<name>...) groups"
+  where <condition>          e.g. where status >= 500 and req.path like "/api/%"
+  eval name = <expr>[, ...]  e.g. eval sec = round(ms / 1000, 1)
+  stats agg[(field)] [as name], ... [by field, ...]
+        aggs: count dc sum avg min max median p50..p99 values first last
+        rows are ordered by the first aggregation, largest first
+  top [N] [limit=N] field... [by field...]     rare ... (least common)
+  table field...             fieldsummary (fields, coverage, distinct, top values)
+  sort [N] -field +field     (field form; POSIX flags such as sort -rn still work)
+  head N                     same as head -n N
+  Built-in fields: _raw _src _line. Missing fields are null; comparisons with
+  null are false. Operators: = == != < <= > >= + - * / %  and or not  in (..)  like
+  Functions: if case coalesce isnull isnotnull isnum len lower upper trim substr
+             round floor ceil abs tonumber tostring match like replace min max
+  Expression commands take no file operands: use  cat file | where ...
+  '>' inside where/eval is a comparison; redirect after stats/top/table works.
+
 Built-ins: cd, pwd, threads [N], clear, help, version, exit
 
 Type-ahead: results are recomputed on every keystroke and shown below the
@@ -297,4 +316,8 @@ Examples:
   grep -ohE '[A-Za-z_]+' *.go | sort | uniq -c | sort -rn | head
   cat *.log | cut -d' ' -f1 | sort | uniq -c | sort -rn > top.txt
   find -name '*.txt' | wc -l
+  where level = "error" | top 10 msg
+  where status >= 500 | stats count, avg(ms), p95(ms) by req.path
+  cat access.log | rex "\" (?<status>\d{3}) (?<bytes>\d+)" | stats sum(bytes) by status
+  fieldsummary
 `

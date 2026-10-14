@@ -29,6 +29,40 @@ psh -j 8                  # number of worker threads (default: number of CPUs)
 
 Type `help` inside the shell for the list of commands and options.
 
+## Field commands
+
+Besides the POSIX text tools, psh has pipeline commands that work on fields.
+JSON lines (also a JSON object at the end of a line) and `key=value` text are
+parsed automatically. Nested JSON keys are joined with dots (`req.path`). Every
+line also has `_raw`, `_src` (file name) and `_line`.
+
+| Command | Example |
+|---|---|
+| `rex [field=F] "regex"` | `rex "\" (?<status>\d{3}) (?<bytes>\d+)"` — named groups become fields |
+| `where <condition>` | `where status >= 500 and req.path like "/api/%"` |
+| `eval name = <expr>, ...` | `eval sec = round(ms / 1000, 1), slow = if(ms > 1000, "y", "n")` |
+| `stats agg, ... [by f, ...]` | `stats count, avg(ms), p95(ms) as p95 by host` |
+| `top` / `rare [N] field... [by f...]` | `top 10 msg by level` |
+| `table field...` | `table _src status user` |
+| `fieldsummary` | fields with coverage, distinct count, min/max and top values |
+| `sort [N] -field +field` | `stats count by user \| sort -count` |
+
+- Aggregations: `count`, `dc`, `sum`, `avg`, `min`, `max`, `median`, `p50`…`p99`,
+  `values`, `first`, `last`. Rows are ordered by the first aggregation, largest first.
+- Operators: `= == != < <= > >= + - * / %`, `and or not`, `in (...)`, `like`
+  (`%` and `_` wildcards). Functions: `if case coalesce isnull isnotnull isnum len
+  lower upper trim substr round floor ceil abs tonumber tostring match like replace min max`.
+- A missing field is null. Comparisons with null are false, so `where status != 200`
+  skips lines without a status.
+- Results of `stats`, `top`, `table` and `fieldsummary` are aligned tables whose rows
+  keep their fields, so later commands can filter (`where count > 10`) or sort them.
+- `stats` and `top` pre-aggregate in every worker thread and merge the partial
+  results, and they update a live preview while reading.
+- Expression commands receive their argument text verbatim, so `>` inside
+  `where`/`eval` is a comparison. Redirection still works after `stats`, `top`,
+  `table` and the text commands. Expression commands take no file operands; use
+  `cat file | where ...`.
+
 ## Type-ahead mode
 
 | Key | Action |
@@ -60,6 +94,9 @@ Type `help` inside the shell for the list of commands and options.
 | `parse.go` | Tokenizer that records positions; parsing of `\|` `>` `>>` `;`; getopt |
 | `commands.go` | Per-command option parsing into a Spec |
 | `stages.go` | grep, sort (parallel), uniq, wc, head, tail, cat, cut, tr, sed |
+| `record.go` | Fields of a line: automatic JSON/key=value extraction, aligned table output |
+| `expr.go` | Expression language of `where` and `eval` (lexer, parser, evaluator) |
+| `fieldcmds.go` | rex, where, eval, stats (mergeable), top, rare, table, fieldsummary, field sort |
 | `source.go` | File discovery, archive decoding (tar/gz/bz2/zip, nested), worker threads, progress counters |
 | `run.go` | Execution engine: parallel/serial split, live previews, status line, file-list cache |
 | `ui.go`, `term_*.go` | ANSI live-region rendering, OS-specific terminal handling |
