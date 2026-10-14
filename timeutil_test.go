@@ -252,3 +252,22 @@ func TestTimechartAutoSpan(t *testing.T) {
 		t.Errorf("merged count %d, want 350", total)
 	}
 }
+
+func TestSortLimitKeepsNewest(t *testing.T) {
+	utc(t)
+	var in []string
+	for _, m := range []int{5, 1, 9, 3, 7, 9, 2} {
+		in = append(in, fmt.Sprintf("2026-10-14T09:%02d:00Z m%d", m, m))
+	}
+	in = append(in, "no time")
+	in[5] += " second" // equal times keep their arrival order
+	out := runText(t, "where isnotnull(_time) | sort 3 -_time", in...)
+	want := []string{"2026-10-14T09:09:00Z m9", "2026-10-14T09:09:00Z m9 second", "2026-10-14T09:07:00Z m7"}
+	if strings.Join(out, "|") != strings.Join(want, "|") {
+		t.Errorf("sort 3 -_time: %q", out)
+	}
+	out = runText(t, "where isnotnull(_time) | sort 2 +_time", in...)
+	if len(out) != 2 || !strings.HasSuffix(out[0], "m1") || !strings.HasSuffix(out[1], "m2") {
+		t.Errorf("sort 2 +_time: %q", out)
+	}
+}

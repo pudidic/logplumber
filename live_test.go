@@ -9,7 +9,8 @@ func TestAnalyze(t *testing.T) {
 		runCmds int // commands in the runnable prefix
 		badFrom int
 	}{
-		{"", 0, -1},
+		{"", 2, -1}, // empty line: the latest events
+		{"  ", 2, -1},
 		{"gr", 0, 0},
 		{"grep", 0, 0},
 		{"grep foo", 1, -1},

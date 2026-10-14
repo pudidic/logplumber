@@ -358,7 +358,8 @@ time/ts/timestamp field; zoneless times are local):
 Built-ins: cd, pwd, threads [N], clear, help, version, exit
 
 Type-ahead: results are recomputed on every keystroke and shown below the
-  prompt. If the last part of a pipeline is incomplete or invalid it is
+  prompt. An empty line shows the latest events (newest first). If the last
+  part of a pipeline is incomplete or invalid it is
   underlined in red and only the complete commands before it are run.
   Enter runs the line with full output, Up/Down browse history,
   Ctrl+U clears the line, Ctrl+C stops a run, Esc exits psh.

@@ -230,7 +230,8 @@ func (sh *Shell) liveLoop(in io.Reader) error {
 	tick := time.NewTicker(30 * time.Millisecond)
 	defer tick.Stop()
 	var lastStatus *storeStatus
-	e.dirty = true
+	e.reanalyze()
+	e.startRun() // the empty line shows the latest events
 	e.render()
 	for {
 		select {
@@ -256,7 +257,7 @@ func (sh *Shell) liveLoop(in io.Reader) error {
 				}
 				e.buf, e.cur = nil, 0
 				e.reanalyze()
-				e.resetResults("")
+				e.startRun()
 				e.render()
 				continue
 			}
@@ -441,11 +442,21 @@ type analysis struct {
 	badFrom int          // rune offset of the first incomplete command, -1 if none
 	note    string
 	noteErr bool
+	latest  bool // the line is empty: ast shows the latest events
 }
+
+// latestQuery is previewed while the command line is empty: the newest events first.
+const latestQuery = "where isnotnull(_time) | sort 1000 -_time"
 
 func (sh *Shell) analyze(line string) analysis {
 	a := analysis{badFrom: -1}
 	if strings.TrimSpace(line) == "" {
+		if toks, err := lex(latestQuery); err == nil {
+			if ast, err := parsePipeline(toks); err == nil {
+				a.ast, a.latest = ast, true
+				a.note = "latest events — type a command to search"
+			}
+		}
 		return a
 	}
 	toks, errPos, lexErr := lexPos(line)

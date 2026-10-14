@@ -140,7 +140,11 @@ func (e *liveEditor) bodyLines(room int) []string {
 		out = append(out, l.Text)
 	}
 	if n > show {
-		out = append(out, fmt.Sprintf("\x00D… %s more lines — ↓ to browse all results, Enter for full output", commas(int64(n-show))))
+		hint := ", Enter for full output"
+		if e.ana.latest {
+			hint = ""
+		}
+		out = append(out, fmt.Sprintf("\x00D… %s more lines — ↓ to browse all results%s", commas(int64(n-show)), hint))
 	}
 	return out
 }
