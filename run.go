@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -25,7 +26,9 @@ type display interface {
 	Live() bool       // whether previews should be computed
 	PreviewRows() int // number of preview lines that fit
 	SetTimeline(t *timeline)
-	SetColumns(src bool) // show the events' file names as a column
+	// SetColumns says whether the events' file names are a column, and the
+	// column width to start with (it covers every file the run will read).
+	SetColumns(src bool, width int)
 }
 
 var errInterrupted = errors.New("interrupted (Ctrl+C)")
@@ -57,6 +60,7 @@ type runner struct {
 	follow      *followCfg           // real-time: keep reading what is appended
 	timeline    *timeline            // event search: events per time slot
 	srcCol      bool                 // SPL events: show their file names as a column
+	colWidth    int                  // file column width that fits every file read
 	need        []needAlt            // what a matching line must contain (index)
 	cand        map[int32][]chunkRec // indexed units: the chunks to read (nil: all)
 	exclude     string
@@ -174,6 +178,52 @@ func (r *runner) planSPL(ast *pipelineAST) error {
 	return nil
 }
 
+// columnHint is a file column width that fits the labels of all files a run
+// reads, so a piped or scrolling output stays aligned. Members of archives come
+// from the index when it has them; otherwise an archive gets the widest column.
+// With grep -n the line number gets the digits of the largest file's size.
+func (r *runner) columnHint(jobs []job) int {
+	if len(r.specs) == 0 || !r.srcCol && !r.specs[0].labels {
+		return 0
+	}
+	w, size := 0, int64(0)
+	for _, j := range jobs {
+		size = max(size, j.size)
+		if !isArchiveName(j.disp) {
+			w = max(w, strWidth([]rune(j.disp)))
+			continue
+		}
+		e := r.cachedEntry(j.path)
+		if e == nil {
+			return maxSrcColumn
+		}
+		for _, u := range e.units {
+			w = max(w, strWidth([]rune(j.disp+u.member)))
+			size = max(size, u.size)
+		}
+	}
+	if r.specs[0].numbered {
+		w += 1 + len(strconv.FormatInt(max(size, 1), 10))
+	}
+	return min(w, maxSrcColumn)
+}
+
+// cachedEntry returns the index entry of an unchanged file, or nil.
+func (r *runner) cachedEntry(path string) *srcEntry {
+	if r.snap == nil {
+		return nil
+	}
+	abs, err := filepath.Abs(path)
+	if err != nil {
+		return nil
+	}
+	e := r.snap.srcs[abs]
+	if fi, err := os.Stat(path); e == nil || err != nil || !e.valid(fi) {
+		return nil
+	}
+	return e
+}
+
 func (r *runner) setup(multi bool) {
 	for i, s := range r.specs {
 		if s.Setup != nil {
@@ -254,7 +304,6 @@ func (sh *Shell) runPipeline(userCtx context.Context, ast *pipelineAST, disp dis
 
 	r.ui.Begin()
 	r.ui.SetTimeline(r.timeline)
-	r.ui.SetColumns(r.srcCol)
 	stopStatus := make(chan struct{})
 	statusDone := make(chan struct{})
 	go func() {
@@ -281,6 +330,7 @@ func (sh *Shell) runPipeline(userCtx context.Context, ast *pipelineAST, disp dis
 		r.ui.End("")
 		return err
 	}
+	r.ui.SetColumns(r.srcCol, r.colWidth) // the files are known now
 
 	stoppedEarly := r.serial(runCtx, cancelSrc, sink)
 	sink.flush()
@@ -399,6 +449,7 @@ func (r *runner) source(ctx context.Context, ready chan<- error) {
 		return
 	}
 	r.setup(multi)
+	r.colWidth = r.columnHint(jobs)
 	ready <- nil
 	r.prog.phase.Store(1)
 	if r.follow != nil {

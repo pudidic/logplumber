@@ -27,10 +27,10 @@ type UI struct {
 	colWidth  int  // width of the file column so far in this run (it only grows)
 }
 
-func (u *UI) SetColumns(src bool) {
+func (u *UI) SetColumns(src bool, width int) {
 	u.mu.Lock()
 	defer u.mu.Unlock()
-	u.srcCol, u.colWidth = src, 0
+	u.srcCol, u.colWidth = src, width
 }
 
 // SetTimeline sets the timeline of the current run (nil: none).

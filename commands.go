@@ -85,6 +85,7 @@ func parseGrep(name string, args []word) (*Spec, []word, error) {
 		}
 		s.need = alts
 	}
+	s.labels, s.numbered = !c.noName || c.number, c.number
 	s.Setup = func(pc planCtx, s *Spec) {
 		c.perFile = pc.first
 		c.withName = pc.first && (pc.multi || c.forceName) && !c.noName
