@@ -222,3 +222,34 @@ func TestShellMode(t *testing.T) {
 		t.Errorf("grep in SPL: %v", err)
 	}
 }
+
+func TestDetailFields(t *testing.T) {
+	utc(t)
+	join := func(ls []string) string {
+		var out []string
+		for _, s := range ls {
+			out = append(out, strings.Join(strings.Fields(strings.TrimPrefix(s, "\x00D")), " "))
+		}
+		return strings.Join(out, "|")
+	}
+	l := Line{Text: `2026-10-14T09:00:01Z level=error msg="db timeout"`, Src: "app.log", No: 7}
+	want := "_time 2026-10-14 09:00:01 (1791968401)|_src app.log|_line 7||level error|msg db timeout"
+	if got := join(fieldLines(l, 80)); got != want {
+		t.Errorf("event:\n got  %q\n want %q", got, want)
+	}
+	l = Line{Text: "[Wed Oct 14 09:00:01 2026] [core:error] no fields", Src: "error.log", No: 1}
+	if got := join(fieldLines(l, 80)); !strings.HasSuffix(got, "(no other fields: JSON and key=value are extracted automatically; add more with rex)") {
+		t.Errorf("no fields: %q", got)
+	}
+	// table rows keep the column order
+	var row Line
+	makeTable([]string{"level", "count"}, [][]string{{"error", "2"}}, func(x Line) bool { row = x; return true })
+	if got := join(fieldLines(row, 80)); got != "level error|count 2" {
+		t.Errorf("row: %q", got)
+	}
+	// long values wrap under the value column
+	l = Line{Text: `k="` + strings.Repeat("x", 30) + `"`}
+	if got := fieldLines(l, 20); len(got) != 2 || got[1] != "     "+strings.Repeat("x", 15) {
+		t.Errorf("wrap: %q", got)
+	}
+}
