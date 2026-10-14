@@ -1,4 +1,4 @@
-module psh
+module github.com/pudidic/logplumber
 
 go 1.27.2
 

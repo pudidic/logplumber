@@ -75,9 +75,9 @@ func (r *runner) reportErr(err error) {
 	n := r.errN
 	r.errMu.Unlock()
 	if n <= 20 {
-		r.ui.Errorf("psh: %v", err)
+		r.ui.Errorf("plumb: %v", err)
 	} else if n == 21 {
-		r.ui.Errorf("psh: (more errors suppressed)")
+		r.ui.Errorf("plumb: (more errors suppressed)")
 	}
 }
 

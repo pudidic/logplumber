@@ -1,5 +1,5 @@
 # build outputs
-/psh
-/psh.exe
-/psh-*
+/plumb
+/plumb.exe
+/plumb-*
 *.test

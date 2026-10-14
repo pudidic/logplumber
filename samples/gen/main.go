@@ -155,7 +155,7 @@ func syslog(start time.Time, n int) []byte {
 }
 
 // payments writes a custom format that no built-in sourcetype knows; the
-// sample .psh.conf defines its sourcetype.
+// sample .plumb.conf defines its sourcetype.
 func payments(start time.Time, n int) []byte {
 	cards := []string{"visa", "master", "amex", "local"}
 	var b strings.Builder

@@ -1,4 +1,4 @@
-// psh is a cross-platform, multi-threaded shell for searching and aggregating the
+// plumb is a cross-platform, multi-threaded shell for searching and aggregating the
 // files below the current directory (including the contents of tar/zip/gz archives)
 // with POSIX-style pipelines. Results and progress update in real time, and in an
 // interactive terminal the command line is re-run on every keystroke.
@@ -66,7 +66,7 @@ func main() {
 	flag.Parse()
 	mode, err := parseColorMode(*color)
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "psh:", err)
+		fmt.Fprintln(os.Stderr, "plumb:", err)
 		os.Exit(2)
 	}
 	if os.Getenv("NO_COLOR") != "" && *color == "auto" {
@@ -76,7 +76,7 @@ func main() {
 
 	sh := &Shell{ui: newUI(), threads: max(1, *jobs)}
 	if err := loadConfig(); err != nil {
-		fmt.Fprintln(os.Stderr, "psh: config:", err)
+		fmt.Fprintln(os.Stderr, "plumb: config:", err)
 	}
 	if *shellMode {
 		sh.lang = langShell
@@ -99,7 +99,7 @@ func main() {
 	}
 	if *cmd != "" {
 		if err := sh.runLine(*cmd); err != nil && err != errExit {
-			fmt.Fprintln(os.Stderr, "psh:", err)
+			fmt.Fprintln(os.Stderr, "plumb:", err)
 			os.Exit(1)
 		}
 		return
@@ -107,15 +107,15 @@ func main() {
 
 	interactive := isTerminal(os.Stdin)
 	if interactive {
-		fmt.Printf("psh %s — parallel file shell (%d threads, %s mode). Type help for commands. Press Esc to exit.\n", version, sh.threads, sh.lang)
+		fmt.Printf("plumb %s — Log Plumber (%d threads, %s mode). Type help for commands. Press Esc to exit.\n", version, sh.threads, sh.lang)
 	}
 	if interactive && !*noIndex {
 		st, note, err := openIndex()
 		if note != "" {
-			fmt.Fprintln(os.Stderr, "psh:", note)
+			fmt.Fprintln(os.Stderr, "plumb:", note)
 		}
 		if err != nil {
-			fmt.Fprintln(os.Stderr, "psh: no index:", err)
+			fmt.Fprintln(os.Stderr, "plumb: no index:", err)
 		} else {
 			sh.store = st
 			defer func() {
@@ -129,12 +129,12 @@ func main() {
 				}
 				if del {
 					if err := st.remove(); err != nil {
-						fmt.Fprintln(os.Stderr, "psh: could not delete the index:", err)
+						fmt.Fprintln(os.Stderr, "plumb: could not delete the index:", err)
 					}
 					return
 				}
 				if err := st.close(); err != nil {
-					fmt.Fprintln(os.Stderr, "psh: could not save the index:", err)
+					fmt.Fprintln(os.Stderr, "plumb: could not save the index:", err)
 				}
 			}()
 			st.setRoot(".")
@@ -142,14 +142,14 @@ func main() {
 	}
 	if interactive && sh.ui.active && !*noLive {
 		var in io.Reader = os.Stdin
-		if keys := os.Getenv("PSH_TEST_KEYS"); keys != "" {
+		if keys := os.Getenv("PLUMB_TEST_KEYS"); keys != "" {
 			in = newScriptedKeys(keys) // for automated terminal tests
 		}
 		err := sh.liveLoop(in)
 		if err == nil {
 			return
 		}
-		fmt.Fprintln(os.Stderr, "psh: type-ahead mode unavailable:", err)
+		fmt.Fprintln(os.Stderr, "plumb: type-ahead mode unavailable:", err)
 	}
 
 	in := bufio.NewReader(os.Stdin)
@@ -172,7 +172,7 @@ func main() {
 			if err == errExit {
 				return
 			}
-			fmt.Fprintln(os.Stderr, "psh:", err)
+			fmt.Fprintln(os.Stderr, "plumb:", err)
 		}
 	}
 }
@@ -196,7 +196,7 @@ func (sh *Shell) cwdLabel() string {
 // modeName is the prompt label of the current mode.
 func (sh *Shell) modeName() string {
 	if sh.lang == langShell {
-		return "psh"
+		return "sh"
 	}
 	return "spl"
 }
@@ -315,8 +315,8 @@ func (sh *Shell) builtin(args []word) (bool, error) {
 		if sh.store != nil {
 			sh.store.setRoot(".")
 		}
-		if err := loadConfig(); err != nil { // .psh.conf of the new directory
-			fmt.Fprintln(os.Stderr, "psh: config:", err)
+		if err := loadConfig(); err != nil { // .plumb.conf of the new directory
+			fmt.Fprintln(os.Stderr, "plumb: config:", err)
 		}
 		return true, nil
 	case "config":
@@ -355,7 +355,7 @@ func (sh *Shell) builtin(args []word) (bool, error) {
 		os.Stdout.WriteString(helpText)
 		return true, nil
 	case "version":
-		fmt.Printf("psh %s (%s/%s, %s)\n", version, runtime.GOOS, runtime.GOARCH, runtime.Version())
+		fmt.Printf("plumb %s (%s/%s, %s)\n", version, runtime.GOOS, runtime.GOARCH, runtime.Version())
 		return true, nil
 	case "index":
 		if sh.store == nil {
@@ -388,7 +388,7 @@ func (sh *Shell) builtin(args []word) (bool, error) {
 	return false, nil
 }
 
-// scriptedKeys replays keystrokes from PSH_TEST_KEYS (Go string escapes allowed);
+// scriptedKeys replays keystrokes from PLUMB_TEST_KEYS (Go string escapes allowed);
 // each key is delivered 120ms apart and a NUL character pauses for 1.5s.
 type scriptedKeys struct{ keys []rune }
 
@@ -426,12 +426,12 @@ func (k *scriptedKeys) Read(p []byte) (int, error) {
 	return copy(p, s), nil
 }
 
-const helpText = `psh — parallel file shell
+const helpText = `plumb (Log Plumber) — parallel log search
 
-psh reads every file below the current directory, including members of
+plumb reads every file below the current directory, including members of
 archives (tar, tar.gz/tgz, tar.bz2, zip/jar, gz, bz2 — nested too), in
 parallel. It has two query languages; Tab (or the built-ins spl and sh)
-switches between them. The prompt shows the mode: spl> or psh>.
+switches between them. The prompt shows the mode: spl> or sh>.
 
 SPL mode (default) — Splunk's Search Processing Language
   The first part of a query is a search; commands follow after '|'.
@@ -479,16 +479,16 @@ Sourcetypes: fields are extracted by the sourcetype of each line, detected
   automatically: _json, access_combined (clientip method uri uri_path status
   bytes referer useragent ...), apache_error (module log_level pid clientip
   error_code message), nginx_error, syslog (host process pid message) and kv.
-  Every event also has sourcetype and source. .psh.conf (current directory) and
-  ~/.config/psh/psh.conf add sourcetypes, aliases, calculated fields, macros
+  Every event also has sourcetype and source. .plumb.conf (current directory) and
+  ~/.config/plumb/plumb.conf add sourcetypes, aliases, calculated fields, macros
   (name in backquotes) and saved searches (savedsearch name); see README.
 
 Built-ins (both modes): spl, sh, config [reload], index [clear], cd, pwd,
   threads [N], clear, help, version, exit
 
-Index: kept across sessions (PSH_INDEX_DIR or the user cache directory), so
-  only new or changed files are indexed again. On exit psh asks whether to
-  delete it; Enter keeps it. psh -noindex turns it off.
+Index: kept across sessions (PLUMB_INDEX_DIR or the user cache directory), so
+  only new or changed files are indexed again. On exit plumb asks whether to
+  delete it; Enter keeps it. plumb -noindex turns it off.
 
 Real-time: earliest=rt... (SPL) and tail -f (shell) keep reading what is
   written to the files; new files are picked up and truncated files reread.
@@ -499,7 +499,7 @@ Type-ahead: results are recomputed on every keystroke and shown below the
   part of a query is incomplete or invalid it is underlined in red and only
   the complete commands before it are run. Tab switches SPL/shell, Enter runs
   the line with full output, Up/Down browse results or history, Ctrl+U clears
-  the line, Ctrl+C stops a run, Esc exits psh.
+  the line, Ctrl+C stops a run, Esc exits plumb.
 
 Examples (SPL):
   error | stats count by _src

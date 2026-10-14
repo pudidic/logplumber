@@ -616,7 +616,7 @@ func (s *outputCSVStage) Push(l Line, emit Emit) bool {
 	if s.w == nil && !s.failed {
 		f, err := os.Create(s.path)
 		if err != nil {
-			fmt.Fprintln(os.Stderr, "psh: outputcsv:", err)
+			fmt.Fprintln(os.Stderr, "plumb: outputcsv:", err)
 			s.failed = true
 		} else {
 			s.f, s.bw = f, bufio.NewWriter(f)

@@ -56,7 +56,7 @@ func withConfig(t *testing.T, text string) {
 	t.Helper()
 	dir := t.TempDir()
 	old, _ := os.Getwd()
-	if err := os.WriteFile(filepath.Join(dir, ".psh.conf"), []byte(text), 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(dir, ".plumb.conf"), []byte(text), 0o644); err != nil {
 		t.Fatal(err)
 	}
 	os.Chdir(dir)

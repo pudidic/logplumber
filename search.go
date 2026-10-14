@@ -22,7 +22,7 @@ import (
 //	                          as in Splunk, OR binds tighter than AND
 //	earliest=-24h latest=now  time range
 //	source=*.jsonl            files to read (by path or name, archive members too)
-//	index=...                 accepted and ignored: psh has no indexes
+//	index=...                 accepted and ignored: plumb has no indexes
 
 type searchCtx struct {
 	l     *Line
@@ -652,7 +652,7 @@ func (p *searchParser) comparison(f *stok, op string, v *stok) (snode, error) {
 		}
 		return sTime{r: r}, nil
 	case "index":
-		return nil, nil // psh has no indexes: every event matches
+		return nil, nil // plumb has no indexes: every event matches
 	case "source":
 		if op == "=" && p.depth == 0 && p.selectFiles {
 			p.sources = append(p.sources, v.s)

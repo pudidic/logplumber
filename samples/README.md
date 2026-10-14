@@ -1,7 +1,7 @@
 # Sample logs
 
-Small, synthetic logs in common formats for trying psh. Start psh in this
-directory (`cd samples` inside psh, or run it here) and try the queries below.
+Small, synthetic logs in common formats for trying plumb. Start plumb in this
+directory (`cd samples` inside plumb, or run it here) and try the queries below.
 All addresses use documentation ranges; nothing here is real data.
 
 | Path | Format |
@@ -15,8 +15,8 @@ All addresses use documentation ranges; nothing here is real data.
 | `syslog/messages` | BSD syslog (sshd, kernel, cron, systemd) |
 | `archives/support-bundle.tar.gz` | tar.gz bundle with a nested `.gz` log inside |
 | `archives/workers.zip` | zip with logs from two nodes |
-| `payments/payments.log` | a custom format; its sourcetype is defined in `.psh.conf` |
-| `.psh.conf` | sample configuration: the `payments` sourcetype, additions to `access_combined`, macros, saved searches |
+| `payments/payments.log` | a custom format; its sourcetype is defined in `.plumb.conf` |
+| `.plumb.conf` | sample configuration: the `payments` sourcetype, additions to `access_combined`, macros, saved searches |
 
 ## Example queries (SPL mode)
 
@@ -57,11 +57,11 @@ source=app/app.jsonl | timechart span=5m count by level
 # 5xx errors over time, top 3 paths
 source=apache/access.log status>=500 | timechart span=10m count by uri_path limit=3
 
-# The custom payments format (sourcetype from .psh.conf)
+# The custom payments format (sourcetype from .plumb.conf)
 sourcetype=payments | stats count, sum(amount) as won, avg(ms) by card, outcome | sort -count
 savedsearch declined-payments
 
-# Macros from .psh.conf
+# Macros from .plumb.conf
 `errors` | stats count by sourcetype
 source=access.log | stats count by status_class
 
