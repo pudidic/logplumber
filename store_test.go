@@ -29,9 +29,11 @@ func (c *captureDisplay) Errorf(string, ...any) {}
 func (c *captureDisplay) End(string)            {}
 func (c *captureDisplay) Live() bool            { return false }
 func (c *captureDisplay) PreviewRows() int      { return 10 }
-func (c *captureDisplay) Print(l []string) {
+func (c *captureDisplay) Print(lines []Line) {
 	c.mu.Lock()
-	c.lines = append(c.lines, l...)
+	for _, l := range lines {
+		c.lines = append(c.lines, l.Text)
+	}
 	c.mu.Unlock()
 }
 

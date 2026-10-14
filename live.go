@@ -20,7 +20,11 @@ import (
 
 const liveDebounce = 40 * time.Millisecond
 
-const liveHint = " Esc: exit psh │ Enter: run with full output │ ↑/↓: history │ Ctrl+U: clear line "
+const (
+	liveHint   = " Esc: exit psh │ Enter: run with full output │ ↑/↓: browse results │ Ctrl+P/N: history "
+	listHint   = " ↑/↓ PgUp/PgDn: move │ Enter: details │ Esc: back to input │ type to edit "
+	detailHint = " ↑/↓: previous/next result │ PgUp/PgDn: scroll │ Esc/Enter: back to list "
+)
 
 type keyKind int
 
@@ -43,6 +47,10 @@ const (
 	kCtrlK
 	kCtrlL
 	kEOF
+	kPgUp
+	kPgDn
+	kHistPrev // Ctrl+P
+	kHistNext // Ctrl+N
 )
 
 type keyEvent struct {
@@ -88,6 +96,10 @@ func parseKeys(b []byte) ([]keyEvent, []byte) {
 						ev = append(ev, keyEvent{kind: kEnd})
 					case "3":
 						ev = append(ev, keyEvent{kind: kDelete})
+					case "5":
+						ev = append(ev, keyEvent{kind: kPgUp})
+					case "6":
+						ev = append(ev, keyEvent{kind: kPgDn})
 					}
 				}
 				b = b[j+1:]
@@ -111,7 +123,7 @@ func parseKeys(b []byte) ([]keyEvent, []byte) {
 			b = b[1:]
 		case c < 0x20:
 			k := map[byte]keyKind{0x01: kHome, 0x05: kEnd, 0x02: kLeft, 0x06: kRight, 0x03: kCtrlC,
-				0x04: kCtrlD, 0x15: kCtrlU, 0x17: kCtrlW, 0x0b: kCtrlK, 0x0c: kCtrlL, 0x10: kUp, 0x0e: kDown}
+				0x04: kCtrlD, 0x15: kCtrlU, 0x17: kCtrlW, 0x0b: kCtrlK, 0x0c: kCtrlL, 0x10: kHistPrev, 0x0e: kHistNext}
 			if kind, ok := k[c]; ok {
 				ev = append(ev, keyEvent{kind: kind})
 			} else if c == '\t' {
@@ -172,16 +184,27 @@ type liveEditor struct {
 	gen       int
 	status    string
 	statusErr bool
-	results   []string
-	resCount  int
+	rows      *rowLog // results of the current run
 	preview   []string
 	errs      []string
 	done      bool
 	dirty     bool
 	drawnRows int // rows below the input line drawn by the last render
+
+	// browsing results (guarded by mu)
+	mode         editMode
+	sel, top     int      // selected result, first result shown
+	detail       []string // detail view of the selected result
+	detailScroll int
 }
 
-const maxKeptResults = 2000
+type editMode int
+
+const (
+	modeEdit   editMode = iota // typing the command line
+	modeList                   // browsing results with the arrow keys
+	modeDetail                 // showing one result in full
+)
 
 func (sh *Shell) liveLoop(in io.Reader) error {
 	fd := int(os.Stdin.Fd())
@@ -191,6 +214,12 @@ func (sh *Shell) liveLoop(in io.Reader) error {
 	}
 	e := &liveEditor{sh: sh, keys: make(chan keyEvent, 256)}
 	defer func() {
+		e.stopRun()
+		e.mu.Lock()
+		if e.rows != nil {
+			e.rows.close()
+		}
+		e.mu.Unlock()
 		e.clearRegion()
 		term.Restore(fd, old)
 	}()
@@ -272,6 +301,12 @@ func (e *liveEditor) commit(line string) error {
 // handle applies one key. It reports whether the line changed, psh should exit, or
 // the line should be committed.
 func (e *liveEditor) handle(k keyEvent) (edited, quit, enter bool) {
+	e.mu.Lock()
+	mode := e.mode
+	e.mu.Unlock()
+	if mode != modeEdit && e.browse(k, mode) {
+		return false, false, false
+	}
 	switch k.kind {
 	case kRune:
 		e.buf = append(e.buf[:e.cur], append([]rune{k.r}, e.buf[e.cur:]...)...)
@@ -313,14 +348,22 @@ func (e *liveEditor) handle(k keyEvent) (edited, quit, enter bool) {
 		e.buf = append(e.buf[:i], e.buf[e.cur:]...)
 		e.cur = i
 		return true, false, false
-	case kUp, kDown:
+	case kUp, kDown, kPgUp, kPgDn:
+		if e.startBrowsing(k.kind) {
+			return
+		}
+		if k.kind == kPgUp || k.kind == kPgDn {
+			return
+		}
+		fallthrough // no results: arrows browse the history
+	case kHistPrev, kHistNext:
 		if len(e.hist) == 0 {
 			return
 		}
 		if e.histPos == len(e.hist) {
 			e.draft = append([]rune(nil), e.buf...)
 		}
-		if k.kind == kUp {
+		if k.kind == kUp || k.kind == kHistPrev {
 			e.histPos = max(0, e.histPos-1)
 		} else {
 			e.histPos = min(len(e.hist), e.histPos+1)
@@ -374,7 +417,16 @@ func (e *liveEditor) resetResults(status string) int {
 	defer e.mu.Unlock()
 	e.gen++
 	e.status, e.statusErr = status, false
-	e.results, e.resCount, e.preview, e.errs, e.done = nil, 0, nil, nil, false
+	if e.rows != nil {
+		e.rows.close()
+	}
+	dir := ""
+	if e.sh.store != nil {
+		dir = e.sh.store.dir
+	}
+	e.rows = &rowLog{dir: dir}
+	e.preview, e.errs, e.done = nil, nil, false
+	e.mode, e.sel, e.top, e.detail = modeEdit, 0, 0, nil
 	e.dirty = true
 	return e.gen
 }
@@ -541,29 +593,16 @@ func (e *liveEditor) render() {
 	maxRows := max(2, h-2) // rows below the input line
 
 	var body []string
-	for _, er := range e.errs {
-		body = append(body, "\x00E"+er)
-	}
-	res := e.results
-	if len(res) == 0 && !e.done {
-		res = e.preview
-	}
-	room := maxRows - 3 - len(body) // keep note, status and hint rows
-	if room < 1 {
-		room = 1
-	}
-	if len(res) > room {
-		body = append(body, res[:room-1]...)
-		more := e.resCount - (room - 1)
-		if len(e.results) == 0 {
-			more = len(res) - (room - 1)
+	if e.mode == modeEdit {
+		for _, er := range e.errs {
+			body = append(body, "\x00E"+er)
 		}
-		body = append(body, fmt.Sprintf("\x00D… %s more lines — press Enter for full output", commas(int64(more))))
-	} else {
-		body = append(body, res...)
 	}
+	room := max(1, maxRows-3-len(body)) // keep note, status and hint rows
+	body = append(body, e.bodyLines(room)...)
 	status, statusErr := e.status, e.statusErr
 	ana := e.ana
+	hint := map[editMode]string{modeEdit: liveHint, modeList: listHint, modeDetail: detailHint}[e.mode]
 	e.mu.Unlock()
 
 	var b strings.Builder
@@ -618,13 +657,16 @@ func (e *liveEditor) render() {
 			line(l[2:], "\x1b[31m")
 		case strings.HasPrefix(l, "\x00D"):
 			line(l[2:], "\x1b[2m")
+		case strings.HasPrefix(l, "\x00S"): // selected result
+			line(l[2:], "\x1b[7m")
+		case strings.HasPrefix(l, "\x00H"): // detail heading
+			line(l[2:], "\x1b[1m")
 		case strings.HasPrefix(l, "── live preview"):
 			line(l, "\x1b[2m")
 		default:
 			line(l, "")
 		}
 	}
-	hint := liveHint
 	if e.sh.store != nil {
 		if t := e.sh.store.statusText(); t != "" {
 			hint += "│ " + t + " "
@@ -672,12 +714,10 @@ func (r *liveRun) PreviewRows() int {
 	return max(3, h-6)
 }
 
-func (r *liveRun) Print(lines []string) {
+func (r *liveRun) Print(lines []Line) {
 	r.update(func() {
-		e := r.e
-		e.resCount += len(lines)
-		if n := maxKeptResults - len(e.results); n > 0 {
-			e.results = append(e.results, lines[:min(n, len(lines))]...)
+		for _, l := range lines {
+			r.e.rows.add(l)
 		}
 	})
 }

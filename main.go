@@ -267,7 +267,8 @@ func (sh *Shell) builtin(args []word) (bool, error) {
 type scriptedKeys struct{ keys []rune }
 
 func newScriptedKeys(s string) *scriptedKeys {
-	if u, err := strconv.Unquote(`"` + s + `"`); err == nil {
+	quoted := strings.ReplaceAll(s, `"`, `\"`) // plain double quotes are typed as-is
+	if u, err := strconv.Unquote(`"` + quoted + `"`); err == nil {
 		s = u
 	}
 	return &scriptedKeys{keys: []rune(s)}
@@ -285,7 +286,18 @@ func (k *scriptedKeys) Read(p []byte) (int, error) {
 		return 0, nil
 	}
 	time.Sleep(120 * time.Millisecond)
-	return copy(p, string(r)), nil
+	s := string(r)
+	if r == 0x1b && len(k.keys) > 0 && (k.keys[0] == '[' || k.keys[0] == 'O') {
+		// deliver an escape sequence (arrow keys) in one read, as a terminal does
+		i := 1
+		for i < len(k.keys) && !(k.keys[i] >= 0x40 && k.keys[i] <= 0x7e) {
+			i++
+		}
+		i = min(i+1, len(k.keys))
+		s += string(k.keys[:i])
+		k.keys = k.keys[i:]
+	}
+	return copy(p, s), nil
 }
 
 const helpText = `psh — parallel file shell

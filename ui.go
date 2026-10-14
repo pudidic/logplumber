@@ -18,6 +18,7 @@ type UI struct {
 	live   []string
 	drawn  int // lines currently occupied by the live region
 	inRun  bool
+	header *tableHeader // last table header printed
 }
 
 func newUI() *UI {
@@ -82,7 +83,7 @@ func (u *UI) drawRegion() {
 func (u *UI) Begin() {
 	u.mu.Lock()
 	defer u.mu.Unlock()
-	u.inRun, u.status, u.live = true, "", nil
+	u.inRun, u.status, u.live, u.header = true, "", nil, nil
 	if u.active {
 		u.out.WriteString("\x1b[?25l")
 		u.out.Flush()
@@ -114,12 +115,16 @@ func (u *UI) SetLive(lines []string) {
 }
 
 // Print writes result lines above the live region.
-func (u *UI) Print(lines []string) {
+func (u *UI) Print(lines []Line) {
 	u.mu.Lock()
 	defer u.mu.Unlock()
 	u.clearRegion()
 	for _, l := range lines {
-		u.out.WriteString(l)
+		if h := lineHeader(l); h != nil && h != u.header {
+			u.header = h
+			u.out.WriteString(h.text + "\n" + h.rule + "\n")
+		}
+		u.out.WriteString(l.Text)
 		u.out.WriteByte('\n')
 	}
 	u.drawRegion()

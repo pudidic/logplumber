@@ -19,7 +19,7 @@ type display interface {
 	Begin()
 	SetStatus(s string)
 	SetLive(lines []string) // preview of a blocking stage (nil clears it)
-	Print(lines []string)   // final result lines
+	Print(lines []Line)     // result lines; the display takes ownership of the slice
 	Errorf(format string, a ...any)
 	End(summary string)
 	Live() bool       // whether previews should be computed
@@ -494,8 +494,8 @@ type outSink struct {
 	ctx       context.Context
 	prog      *progress
 	file      *bufio.Writer
-	header    *tableHeader // last table header written
-	pending   []string
+	header    *tableHeader // last table header written to the file
+	pending   []Line
 	lastFlush time.Time
 	n         int
 }
@@ -505,26 +505,29 @@ func (o *outSink) emit(l Line) bool {
 		return false
 	}
 	o.prog.outLines.Add(1)
-	if l.Rec != nil && l.Rec.header != nil && l.Rec.header != o.header {
-		o.header = l.Rec.header
-		o.write(o.header.text)
-		o.write(o.header.rule)
-	}
-	o.write(l.Text)
-	return true
-}
-
-func (o *outSink) write(text string) {
 	if o.file != nil {
-		o.file.WriteString(text)
+		if h := lineHeader(l); h != nil && h != o.header {
+			o.header = h
+			o.file.WriteString(h.text + "\n" + h.rule + "\n")
+		}
+		o.file.WriteString(l.Text)
 		o.file.WriteByte('\n')
-		return
+		return true
 	}
-	o.pending = append(o.pending, text)
+	o.pending = append(o.pending, l)
 	o.n++
 	if len(o.pending) >= 4096 || o.n&255 == 0 {
 		o.flushIfDue()
 	}
+	return true
+}
+
+// lineHeader returns the table header of a row produced by stats, top or table.
+func lineHeader(l Line) *tableHeader {
+	if l.Rec != nil {
+		return l.Rec.header
+	}
+	return nil
 }
 
 func (o *outSink) flushIfDue() {
@@ -539,7 +542,7 @@ func (o *outSink) flush() {
 		return
 	}
 	o.ui.Print(o.pending)
-	o.pending = o.pending[:0]
+	o.pending = nil
 }
 
 // ---------------- status ----------------

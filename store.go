@@ -35,12 +35,13 @@ var errLocked = errors.New("in use by another psh")
 
 // unit is one plain text source: a file on disk or a member of an archive.
 type unit struct {
-	member  string // "::path" suffix of an archive member, "" for the file itself
-	logical string // base name used by name filters
-	path    string // plain text to read: the original file or a decompressed copy
-	size    int64  // bytes of text at path
-	binary  bool
-	id      int32 // index into store.units; its chunks are in the trigram index
+	member              string // "::path" suffix of an archive member, "" for the file itself
+	logical             string // base name used by name filters
+	path                string // plain text to read: the original file or a decompressed copy
+	size                int64  // bytes of text at path
+	binary              bool
+	id                  int32 // index into store.units; its chunks are in the trigram index
+	firstChunk, nChunks int32 // the unit's chunks: store.chunks[firstChunk:firstChunk+nChunks]
 }
 
 // srcEntry records a file on disk as it was when indexed.
@@ -257,7 +258,7 @@ func (s *store) indexFile(ctx context.Context, f walkedFile) (*srcEntry, error) 
 	pr := &pausingReader{r: fh, s: s, ctx: ctx}
 	a := &archiveWalker{ctx: ctx, disp: f.path, onErr: func(error) {},
 		leaf: func(member, logical string, br *bufio.Reader, decoded bool) error {
-			u := &unit{member: member, logical: logical}
+			u := &unit{member: member, logical: logical, id: -1}
 			e.units = append(e.units, u)
 			if isBinary(br) {
 				u.binary = true

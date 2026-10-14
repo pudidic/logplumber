@@ -30,6 +30,7 @@ type chunkRec struct {
 // chunker receives a unit's text and records its chunks and trigrams.
 type chunker struct {
 	s          *store
+	u          *unit
 	unit       int32
 	start      int64 // offset of the current chunk
 	size       int64 // bytes in the current chunk
@@ -45,7 +46,8 @@ func (s *store) newChunker(u *unit) *chunker {
 	if s.bits == nil {
 		s.bits = make([]uint64, 1<<24/64)
 	}
-	return &chunker{s: s, unit: u.id, line: 1}
+	u.firstChunk = int32(len(s.chunks))
+	return &chunker{s: s, u: u, unit: u.id, line: 1}
 }
 
 func (c *chunker) Write(p []byte) (int, error) {
@@ -100,10 +102,12 @@ func (c *chunker) commit() error {
 
 // close ends the last chunk.
 func (c *chunker) close() error {
+	var err error
 	if c.size > 0 {
-		return c.commit()
+		err = c.commit()
 	}
-	return nil
+	c.u.nChunks = int32(c.chunkCount)
+	return err
 }
 
 // discard drops trigrams collected for an unfinished chunk (on errors).
