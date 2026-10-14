@@ -5,6 +5,8 @@ including files inside archives. It uses multiple threads and shows progress and
 results in real time. In an interactive terminal the query is **re-run on every
 keystroke**.
 
+![plumb in action: latest events, search, stats, timechart, detail view, shell mode](docs/demo.gif)
+
 It has two query languages, each with its own unchanged syntax:
 
 - **SPL mode** (default, prompt `spl>`): Splunk's Search Processing Language.
@@ -18,6 +20,23 @@ start-up).
 Its only dependencies are the Go standard library and `golang.org/x/term` (for
 terminal raw mode).
 
+## Install
+
+Download the archive for your system from the
+[releases page](https://github.com/pudidic/logplumber/releases) and put `plumb`
+(`plumb.exe` on Windows) on your `PATH`:
+
+| OS | Intel / AMD (x86-64) | ARM |
+|---|---|---|
+| Linux | `plumb_<ver>_linux_amd64.tar.gz` | `plumb_<ver>_linux_arm64.tar.gz` |
+| macOS | `plumb_<ver>_darwin_amd64.tar.gz` | `plumb_<ver>_darwin_arm64.tar.gz` (Apple Silicon) |
+| Windows | `plumb_<ver>_windows_amd64.zip` | `plumb_<ver>_windows_arm64.zip` |
+
+`SHA256SUMS` lists the checksums. On macOS, a downloaded binary is quarantined;
+run `xattr -d com.apple.quarantine plumb` once (it is not notarized). With Go
+installed: `go install github.com/pudidic/logplumber@latest` (the binary is then
+named `logplumber`).
+
 ## Build
 
 ```bash
@@ -26,6 +45,7 @@ GOOS=linux   GOARCH=amd64 go build -o plumb-linux .
 GOOS=darwin  GOARCH=arm64 go build -o plumb-mac .
 GOOS=windows GOARCH=amd64 go build -o plumb.exe .
 go test ./...
+./release.sh v0.3.0     # all six release archives in dist/
 ```
 
 ## Run
