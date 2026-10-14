@@ -1,79 +1,92 @@
-# psh — 병렬 파일 셸
+# psh — parallel file shell
 
-현재 디렉토리와 하위 디렉토리의 파일(압축 파일 내부 포함)을 대상으로 POSIX 스타일 파이프라인을
-멀티 스레드로 실행하고, 진행률과 결과를 실시간으로 보여 주는 셸입니다.
-대화형 터미널에서는 **키를 누를 때마다** 명령줄을 다시 실행해 결과를 갱신합니다.
-프로그램이 출력하는 메시지는 모두 영어입니다.
+psh runs POSIX-style pipelines over every file in the current directory and its
+subdirectories, including files inside archives. It uses multiple threads and
+shows progress and results in real time. In an interactive terminal the command
+line is **re-run on every keystroke**.
 
-의존성은 Go 표준 라이브러리와 `golang.org/x/term`(터미널 raw 모드) 하나뿐입니다.
+Its only dependencies are the Go standard library and `golang.org/x/term` (for
+terminal raw mode).
 
-## 빌드
+## Build
 
 ```bash
-go build -o psh .                                   # 현재 OS
+go build -o psh .                                   # current OS
 GOOS=linux   GOARCH=amd64 go build -o psh-linux .
 GOOS=darwin  GOARCH=arm64 go build -o psh-mac .
 GOOS=windows GOARCH=amd64 go build -o psh.exe .
 go test ./...
 ```
 
-## 실행
+## Run
 
 ```bash
-psh                       # 대화형 셸 (타이핑 즉시 결과 표시)
-psh -nolive               # 일반 줄 입력 모드
+psh                       # interactive shell (results update as you type)
+psh -nolive               # plain line input
 psh -c "grep -i error | wc -l"
-psh -j 8                  # 작업 스레드 수 (기본: CPU 수)
+psh -j 8                  # number of worker threads (default: number of CPUs)
 ```
 
-셸 안에서 `help`를 입력하면 지원 명령과 옵션이 나옵니다.
+Type `help` inside the shell for the list of commands and options.
 
-## 실시간 입력 모드
+## Type-ahead mode
 
-| 키 | 동작 |
+| Key | Action |
 |---|---|
-| 아무 문자 | 입력과 동시에 결과를 다시 계산해 프롬프트 아래에 표시 |
-| **Esc** | **psh 종료** (화면 맨 아래 안내 줄에 항상 표시) |
-| Enter | 전체 출력으로 실행하고 결과를 스크롤백에 남김 |
-| ↑ / ↓ | 명령 기록 |
-| ←/→, Home/End, Del | 커서 이동, 삭제 |
-| Ctrl+U / Ctrl+K / Ctrl+W | 줄 지우기, 커서 뒤 지우기, 단어 지우기 |
-| Ctrl+C | 실행 중인 미리보기 중단, 아니면 줄 지우기 |
+| Any character | Recompute the results and show them below the prompt |
+| **Esc** | **Exit psh** (always shown in the hint bar at the bottom) |
+| Enter | Run the line with full output, which stays in the scrollback |
+| ↑ / ↓ | Command history |
+| ← / →, Home / End, Del | Move the cursor, delete |
+| Ctrl+U / Ctrl+K / Ctrl+W | Clear the line, delete to end of line, delete the previous word |
+| Ctrl+C | Stop the running preview; otherwise clear the line |
 
-- 파이프라인의 앞에서부터 명령을 하나씩 검사합니다. 아직 완성되지 않았거나 잘못된 명령이 나오면,
-  그 명령부터 줄 끝까지를 **빨간 밑줄**로 강조합니다. 결과는 그 앞까지 완성된 파이프라인만 실행해 보여 줍니다.
-  예: `grep -i apple | so`는 `so`에 밑줄을 긋고 `grep -i apple`의 결과를 보여 줍니다.
-- 리다이렉션(`>`), 여러 명령(`;`), 내장 명령(`cd` 등)은 미리 실행하지 않습니다. Enter를 눌러야 실행됩니다.
-- 입력할 때마다 디렉토리를 다시 훑지 않도록 파일 목록을 10초 동안 캐시합니다. Enter를 누르면 캐시를 비웁니다.
+- The pipeline is checked command by command from the left. The first command
+  that is incomplete or invalid, and everything after it, is **underlined in
+  red**. Only the complete commands before it are run.
+  Example: in `grep -i apple | so`, `so` is underlined and the results of
+  `grep -i apple` are shown.
+- Redirections (`>`), multiple commands (`;`) and built-ins (`cd`, …) are not
+  previewed. They run only when you press Enter.
+- The file list is cached for 10 seconds, so typing does not rescan the
+  directory tree on every key. Pressing Enter clears the cache.
 
-## 구조
+## Layout
 
-| 파일 | 역할 |
+| File | Role |
 |---|---|
-| `main.go` | 진입점, 줄 입력 REPL, 내장 명령, Ctrl+C 처리, 도움말 |
-| `live.go` | 실시간 입력 모드: 키 해석, 줄 편집, 미완성 구간 분석, 화면 렌더링 |
-| `parse.go` | 위치를 기록하는 토크나이저, `|` `>` `>>` `;` 파싱, getopt |
-| `commands.go` | 명령별 옵션 파싱 → Spec |
-| `stages.go` | grep, sort(병렬 정렬), uniq, wc, head, tail, cat, cut, tr, sed |
-| `source.go` | 파일 탐색, 압축 해제(tar/gz/bz2/zip, 중첩), 워커 스레드, 진행률 카운터 |
-| `run.go` | 실행 엔진: 병렬/직렬 구간 분리, 실시간 미리보기, 상태 줄, 파일 목록 캐시 |
-| `ui.go`, `term_*.go` | ANSI 라이브 영역 렌더링, OS별 터미널 처리 |
+| `main.go` | Entry point, line-input REPL, built-ins, Ctrl+C handling, help text |
+| `live.go` | Type-ahead mode: key decoding, line editing, incomplete-command analysis, rendering |
+| `parse.go` | Tokenizer that records positions; parsing of `\|` `>` `>>` `;`; getopt |
+| `commands.go` | Per-command option parsing into a Spec |
+| `stages.go` | grep, sort (parallel), uniq, wc, head, tail, cat, cut, tr, sed |
+| `source.go` | File discovery, archive decoding (tar/gz/bz2/zip, nested), worker threads, progress counters |
+| `run.go` | Execution engine: parallel/serial split, live previews, status line, file-list cache |
+| `ui.go`, `term_*.go` | ANSI live-region rendering, OS-specific terminal handling |
 
-### 실행 모델
+### Execution model
 
-1. 입력 파일 목록을 먼저 수집합니다. 전체 바이트 수가 진행률의 분모가 됩니다.
-2. 파이프라인 앞쪽의 줄 단위 무상태 명령(grep, cut, tr, sed, cat)은 **N개의 워커 스레드**가 파일별로 나눠 실행합니다.
-3. 순서에 의존하는 나머지 명령(sort, uniq, wc, head …)은 하나의 직렬 고루틴에서 실행합니다.
-4. sort, wc, tail처럼 끝까지 읽어야 하는 단계는 실행 중에도 주기적으로 스냅샷을 찍습니다.
-   스냅샷을 뒤 단계의 새 인스턴스에 통과시켜 **실시간 미리보기**를 그립니다.
-5. `head`가 다 차면 입력 읽기를 조기에 중단합니다.
-6. 실시간 입력 모드에서는 키를 누를 때마다 이전 실행을 취소하고, 40ms 뒤에 새로 실행합니다.
-   지난 실행이 늦게 보낸 결과는 세대 번호로 걸러 냅니다.
+1. psh collects the list of input files first. Their total size is the
+   denominator of the progress percentage.
+2. The stateless, line-by-line commands at the front of the pipeline (grep, cut,
+   tr, sed, cat) run in **N worker threads**, each handling whole files.
+3. The order-dependent commands that follow (sort, uniq, wc, head, …) run in a
+   single serial goroutine.
+4. Stages that need all of their input (sort, wc, tail) are snapshotted
+   periodically. Each snapshot is passed through fresh copies of the later
+   stages to draw a **live preview**.
+5. Once `head` has enough lines, reading stops early.
+6. In type-ahead mode every keystroke cancels the running pipeline and starts a
+   new one 40 ms later. Each run has a generation number, so late results from
+   a cancelled run are discarded.
 
-## 제한 사항
+## Limitations
 
-- 정규식은 Go RE2 문법입니다. 역참조(`\1`)는 패턴 안에서 쓸 수 없고, sed 치환 문자열에서만 쓸 수 있습니다.
-- `tr`은 줄 단위로 동작하므로 개행 문자 자체는 변환하지 않습니다.
-- xz/zstd 압축은 표준 라이브러리에 없어서 지원하지 않습니다.
-- 여러 파일을 병렬로 읽으므로 파일 사이의 출력 순서는 실행할 때마다 달라질 수 있습니다. 한 파일 안의 순서는 유지됩니다.
-- 파일이 아주 많으면 키를 누를 때마다 전체를 다시 읽습니다. OS 파일 캐시 덕분에 두 번째부터는 빠릅니다.
+- Regular expressions use Go's RE2 syntax. Backreferences (`\1`) cannot be used
+  in patterns, only in sed replacement strings.
+- `tr` works line by line, so it does not translate the newline character.
+- xz and zstd archives are not supported (they are not in the standard library).
+- Files are read in parallel, so the order of output between files can change
+  from run to run. The order of lines within a file is preserved.
+- With very many files, each keystroke rereads all of them. After the first
+  run, the OS file cache makes this fast.

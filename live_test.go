@@ -38,7 +38,7 @@ func TestAnalyze(t *testing.T) {
 }
 
 func TestParseKeys(t *testing.T) {
-	ev, rest := parseKeys([]byte("a\x1b[A\x1b[3~한\r\x1b"))
+	ev, rest := parseKeys([]byte("a\x1b[A\x1b[3~\xed\x95\x9c\r\x1b"))
 	kinds := []keyKind{kRune, kUp, kDelete, kRune, kEnter, kEsc}
 	if len(ev) != len(kinds) || len(rest) != 0 {
 		t.Fatalf("got %v rest %v", ev, rest)
@@ -48,7 +48,7 @@ func TestParseKeys(t *testing.T) {
 			t.Errorf("event %d: got %v want %v", i, ev[i].kind, k)
 		}
 	}
-	if ev[3].r != '한' {
+	if ev[3].r != 0xD55C { // U+D55C HANGUL SYLLABLE HAN, encoded as ED 95 9C
 		t.Errorf("got rune %q", ev[3].r)
 	}
 	_, rest = parseKeys([]byte{0xed, 0x95})
