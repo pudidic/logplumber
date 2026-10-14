@@ -198,6 +198,7 @@ type liveEditor struct {
 	detail       []string // detail view of the selected result
 	detailScroll int
 	timeline     *timeline // of the current run (event searches)
+	lastW, lastH int       // terminal size of the last frame
 	srcCol       bool      // events: file names as a column
 }
 
@@ -267,6 +268,9 @@ func (sh *Shell) liveLoop(in io.Reader) error {
 					return err
 				}
 				e.buf, e.cur = nil, 0
+				e.mu.Lock()
+				e.lastW, e.lastH = e.size() // a resize during the run: keep its output on screen
+				e.mu.Unlock()
 				e.reanalyze()
 				e.startRun()
 				e.render()
@@ -282,6 +286,7 @@ func (sh *Shell) liveLoop(in io.Reader) error {
 		case <-debounce.C:
 			e.startRun()
 		case <-tick.C:
+			e.checkResize()
 			if e.sh.store != nil {
 				if st := e.sh.store.status.Load(); st != lastStatus {
 					lastStatus = st
@@ -292,6 +297,30 @@ func (sh *Shell) liveLoop(in io.Reader) error {
 			}
 			e.render()
 		}
+	}
+}
+
+// checkResize redraws the whole screen when the terminal size changed: lines
+// drawn for the old width may have wrapped, so the region can't be redrawn in
+// place. (Polling the size works on every platform, Windows included.)
+func (e *liveEditor) checkResize() {
+	w, h := e.size()
+	e.mu.Lock()
+	defer e.mu.Unlock()
+	if w == e.lastW && h == e.lastH {
+		return
+	}
+	first := e.lastW == 0
+	e.lastW, e.lastH = w, h
+	if first {
+		return
+	}
+	os.Stdout.WriteString("\x1b[2J\x1b[H")
+	e.drawnRows, e.dirty = 0, true
+	if e.mode == modeDetail {
+		scroll := e.detailScroll
+		e.buildDetail() // wrapped for the new width
+		e.detailScroll = min(scroll, max(0, len(e.detail)-1))
 	}
 }
 
