@@ -22,7 +22,7 @@ import (
 )
 
 // version is set by release builds (-ldflags "-X main.version=...").
-var version = "0.3.0"
+var version = "0.3.2"
 
 var errExit = errors.New("exit")
 
