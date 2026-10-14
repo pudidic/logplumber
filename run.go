@@ -52,9 +52,11 @@ type runner struct {
 	serialSpecs []*Spec // run in one goroutine after the workers
 	ops         []word
 	batches     chan []Line
-	snap        *storeSnap // index snapshot taken when the run starts
-	follow      *followCfg // real-time: keep reading what is appended
-	timeline    *timeline  // event search: events per time slot
+	snap        *storeSnap           // index snapshot taken when the run starts
+	follow      *followCfg           // real-time: keep reading what is appended
+	timeline    *timeline            // event search: events per time slot
+	need        [][]string           // text a matching line must contain (index)
+	cand        map[int32][]chunkRec // indexed units: the chunks to read (nil: all)
 	exclude     string
 	errMu       sync.Mutex
 	errN        int
@@ -119,6 +121,9 @@ func (sh *Shell) plan(ast *pipelineAST, disp display) (*runner, error) {
 			}
 			r.ops = ops
 		}
+		if i == 0 && r.kind == kindContent {
+			r.need = s.need
+		}
 		if s.rt != nil {
 			if i > 0 || r.kind != kindContent {
 				return nil, fmt.Errorf("tail -f: only allowed as the first command (tail -f file | grep ...)")
@@ -155,6 +160,7 @@ func (r *runner) planSPL(ast *pipelineAST) error {
 	if len(r.specs) > 0 {
 		r.follow = r.specs[0].rt
 	}
+	r.need = r.specs[0].need
 	_, typeAhead := r.ui.(*liveRun) // a preview while typing, not the full output
 	r.specs, r.timeline = orderSPL(r.specs, typeAhead, r.follow)
 	return nil
@@ -389,6 +395,11 @@ func (r *runner) source(ctx context.Context, ready chan<- error) {
 	if r.follow != nil {
 		r.followSource(ctx, jobs)
 		return
+	}
+	if r.snap != nil && r.need != nil {
+		if cand, ok := r.snap.chunkSet(r.need); ok {
+			r.cand = cand // indexed files: read only the chunks that may match
+		}
 	}
 
 	jobCh := make(chan job)
@@ -655,6 +666,9 @@ func (r *runner) summary(interrupted, early bool, redirect string) string {
 	}
 	if n := p.errors.Load(); n > 0 {
 		s += fmt.Sprintf(" · %d errors", n)
+	}
+	if total := p.idxTotal.Load(); total > 0 {
+		s += fmt.Sprintf(" · index: read %s of %s", human(p.idxRead.Load()), human(total))
 	}
 	if redirect != "" {
 		s += " → " + redirect

@@ -258,11 +258,12 @@ type worker struct {
 	out    chan<- []Line
 	lines  int64
 	onErr  func(error)
-	snap   *storeSnap // index snapshot, nil without a store
+	snap   *storeSnap           // index snapshot, nil without a store
+	cand   map[int32][]chunkRec // chunks to read of indexed units (nil: all)
 }
 
 func newWorker(ctx context.Context, r *runner, specs []*Spec) *worker {
-	w := &worker{ctx: ctx, prog: r.prog, mode: r.mode, find: r.find, out: r.batches, onErr: r.reportErr, snap: r.snap}
+	w := &worker{ctx: ctx, prog: r.prog, mode: r.mode, find: r.find, out: r.batches, onErr: r.reportErr, snap: r.snap, cand: r.cand}
 	w.stages = make([]Stage, len(specs))
 	for i, s := range specs {
 		w.stages[i] = s.New()
@@ -422,12 +423,37 @@ func (w *worker) doCached(j job, e *srcEntry, jc *jobCounter) error {
 			w.prog.skipped.Add(1)
 			continue
 		}
+		chunks, some := w.cand[u.id]
+		whole := w.cand == nil
+		if w.cand != nil {
+			w.prog.idxTotal.Add(u.size)
+			if !some {
+				continue // no chunk of this unit can match
+			}
+			if len(chunks) >= int(u.nChunks) { // every chunk may match: one plain read
+				w.prog.idxRead.Add(u.size)
+				whole = true
+			}
+		}
 		f, err := os.Open(u.path)
 		if err != nil {
 			w.onErr(fmt.Errorf("%s: %v", disp, err))
 			continue
 		}
-		err = w.scanText(disp, bufio.NewReaderSize(&scaledReader{r: f, c: jc, scale: scale}, 256<<10), 1)
+		if whole {
+			err = w.scanText(disp, bufio.NewReaderSize(&scaledReader{r: f, c: jc, scale: scale}, 256<<10), 1)
+		} else {
+			// only the candidate chunks (they end at line boundaries), adjacent ones in one read
+			for i := 0; i < len(chunks) && err == nil; {
+				first, n := chunks[i], chunks[i].n
+				for i++; i < len(chunks) && chunks[i].off == first.off+n; i++ {
+					n += chunks[i].n
+				}
+				w.prog.idxRead.Add(n)
+				sr := io.NewSectionReader(f, first.off, n)
+				err = w.scanText(disp, bufio.NewReaderSize(&scaledReader{r: sr, c: jc, scale: scale}, 256<<10), first.line)
+			}
+		}
 		f.Close()
 		if err != nil {
 			return err
@@ -518,6 +544,8 @@ type progress struct {
 	errors     atomic.Int64
 	phase      atomic.Int32 // 0 scanning, 1 reading, 2 finalizing, 3 following
 	following  atomic.Int64 // files followed (real-time)
+	idxTotal   atomic.Int64 // text of indexed files that the index applied to
+	idxRead    atomic.Int64 // of that, the bytes read (the candidate chunks)
 	newLines   atomic.Int64 // lines written to them while following
 	finalizing atomic.Value // string: name of the stage being finalized
 }

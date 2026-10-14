@@ -62,7 +62,7 @@ operators follow Splunk: `"..."` is a string, `'...'` is a field name inside
 | `earliest=-24h latest=now` | time range `[earliest, latest)` |
 | `earliest=rt`, `earliest=rt-5m latest=rt` | real-time: follow the files (see below) |
 | `source=*.jsonl` `source=app/app.log` | files to read: a name matches in all subdirectories and archives |
-| `index=main` | accepted and ignored (psh has no indexes) |
+| `index=main` | accepted and ignored (psh has no Splunk indexes) |
 
 `*` alone matches everything: `* | stats count`. A query such as `stats count`
 searches for the words "stats" and "count", as in Splunk; type-ahead mode points
@@ -251,6 +251,27 @@ are local time. Tables show `_time` as a date, but the value stays numeric, so
 - Functions: `now()` (when the query started), `time()`, `relative_time(t, "-1d@d")`,
   `strftime(t, "%Y-%m-%d %H:%M")`, `strptime(s, "%d/%b/%Y:%H:%M:%S")`.
 
+## Index
+
+In an interactive session psh builds a temporary index in the background (the
+hint bar shows `index ready · N files`): archive and compressed members are
+unpacked once into a cache, and every file is split into chunks of about 256KB
+whose trigrams (3-character sequences) are recorded. It is deleted when psh
+exits; `psh -noindex` turns it off, and `psh -c` does not build one.
+
+A query whose first search requires literal text reads only the chunks that
+contain all of its trigrams, so rare terms are found without reading
+everything. On 250MB of logs a request ID appearing 57 times takes 0.04s
+instead of 0.44s. The summary line shows the effect: `index: read 14.0MB of
+248.2MB`. Results are the same as without the index; files not indexed yet,
+or changed since, are read in full.
+
+The index is used for words, phrases, wildcard pieces of 3 or more characters,
+and `field=value` with a literal text value, combined with AND and OR (in shell
+mode: `grep` with a literal pattern as the first command). It is not used for
+`NOT`, numeric comparisons, `*` alone, non-ASCII text, real-time searches, or
+`grep -v`/`-c`/`-L`. Common words appear in every chunk, so they gain nothing.
+
 ## Type-ahead mode
 
 With an empty command line psh shows the **latest events**: the 1000 newest lines
@@ -301,6 +322,9 @@ appears at start-up and again whenever the line is cleared.
 | `follow.go` | Real-time: following files (appends, new files, truncation), `tail -f`, sliding window |
 | `timeline.go` | One-line event timeline above search results |
 | `run.go` | Execution engine: parallel/serial split, live previews, status line, file-list cache |
+| `store.go` | Temporary on-disk store of an interactive session: archive cache, background indexing |
+| `index.go`, `bucket.go` | Trigram index: chunks, bucket files, lookup of the chunks a query needs |
+| `browse.go`, `rows.go` | Type-ahead result list and detail view; result storage that spills to disk |
 | `ui.go`, `term_*.go` | ANSI live-region rendering, OS-specific terminal handling |
 
 ### Execution model

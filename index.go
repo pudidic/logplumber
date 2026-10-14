@@ -185,6 +185,34 @@ func (sn *storeSnap) candidates(terms [][]byte) (map[int32][]chunkRec, bool) {
 	return out, true
 }
 
+// chunkSet returns, per unit ID, the chunks that may hold a line meeting need
+// (alternatives of literals; see indexNeeds), sorted by offset. ok is false when
+// the index can't narrow it down; then everything has to be read.
+func (sn *storeSnap) chunkSet(need [][]string) (map[int32][]chunkRec, bool) {
+	if sn == nil || len(need) == 0 {
+		return nil, false
+	}
+	out := map[int32][]chunkRec{}
+	for _, alt := range need {
+		terms := make([][]byte, len(alt))
+		for i, t := range alt {
+			terms[i] = []byte(t)
+		}
+		c, ok := sn.candidates(terms)
+		if !ok {
+			return nil, false
+		}
+		for u, chs := range c {
+			out[u] = append(out[u], chs...)
+		}
+	}
+	for u, chs := range out {
+		sort.Slice(chs, func(i, j int) bool { return chs[i].off < chs[j].off })
+		out[u] = slices.CompactFunc(chs, func(a, b chunkRec) bool { return a.off == b.off })
+	}
+	return out, true
+}
+
 func intersect(a, b []uint32) []uint32 {
 	var out []uint32
 	for i, j := 0, 0; i < len(a) && j < len(b); {
