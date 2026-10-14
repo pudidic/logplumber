@@ -74,14 +74,14 @@ func parseGrep(name string, args []word) (*Spec, []word, error) {
 	// Lines without the pattern's text can be skipped via the index when the
 	// pattern is literal and the output only depends on matching lines.
 	if !c.invert && !c.count && !c.listNot {
-		var alts [][]string
+		var alts []needAlt
 		for _, pat := range pats {
 			literal := p.has('F') || name == "fgrep" || regexp.QuoteMeta(pat) == pat
 			if !literal || len(pat) < 3 || !isASCII(pat) || strings.Contains(pat, "\n") {
 				alts = nil
 				break
 			}
-			alts = append(alts, []string{strings.ToLower(pat)})
+			alts = append(alts, needAlt{lits: []string{strings.ToLower(pat)}}) // substrings: no words
 		}
 		s.need = alts
 	}

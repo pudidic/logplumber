@@ -5,7 +5,7 @@ import (
 	"sort"
 )
 
-// Trigram index
+// Trigram index (and word filters, see wordbloom.go)
 //
 // While the store records a unit (see store.go) it splits the unit's text into
 // chunks of about chunkSize bytes, ending at line boundaries, and records which
@@ -24,7 +24,9 @@ type chunkRec struct {
 	unit int32 // index into store.units
 	off  int64 // byte offset in the unit's text
 	n    int64
-	line int // number of the chunk's first line
+	line int    // number of the chunk's first line
+	bf   int64  // offset of the chunk's word filter in words.bf
+	bfn  uint32 // its length in uint64s
 }
 
 // chunker receives a unit's text and records its chunks and trigrams.
@@ -38,6 +40,8 @@ type chunker struct {
 	w0, w1     byte  // previous two bytes
 	wn         int
 	chunkCount int
+	wh         uint64 // hash of the word being read
+	wlen       int
 }
 
 func (s *store) newChunker(u *unit) *chunker {
@@ -47,6 +51,9 @@ func (s *store) newChunker(u *unit) *chunker {
 		s.bits = make([]uint64, 1<<24/64)
 	}
 	u.firstChunk = int32(len(s.chunks))
+	if s.words == nil {
+		s.words = map[uint64]struct{}{}
+	}
 	return &chunker{s: s, u: u, unit: u.id, line: 1}
 }
 
@@ -54,6 +61,16 @@ func (c *chunker) Write(p []byte) (int, error) {
 	s := c.s
 	for _, b := range p {
 		c.size++
+		if isWordByte(b) {
+			if c.wlen == 0 {
+				c.wh = fnvOffset
+			}
+			c.wh = (c.wh ^ uint64(lowerASCII(b))) * fnvPrime
+			c.wlen++
+		} else if c.wlen > 0 {
+			s.words[c.wh] = struct{}{}
+			c.wlen = 0
+		}
 		if b == '\n' {
 			c.wn = 0
 			c.nl++
@@ -83,8 +100,16 @@ func (c *chunker) Write(p []byte) (int, error) {
 // commit ends the current chunk.
 func (c *chunker) commit() error {
 	s := c.s
+	if c.wlen > 0 { // the last word of a unit without a final newline
+		s.words[c.wh] = struct{}{}
+		c.wlen = 0
+	}
 	id := uint64(len(s.chunks))
-	s.chunks = append(s.chunks, chunkRec{unit: c.unit, off: c.start, n: c.size, line: c.line})
+	bf := buildBloom(s.words)
+	clear(s.words)
+	s.chunks = append(s.chunks, chunkRec{unit: c.unit, off: c.start, n: c.size, line: c.line,
+		bf: s.bfLen + int64(len(s.bfBuf)), bfn: uint32(len(bf) / 8)})
+	s.bfBuf = append(s.bfBuf, bf...)
 	for _, t := range s.setTris {
 		s.pairs = append(s.pairs, uint64(t)<<32|id)
 		s.bits[t>>6] = 0
@@ -116,9 +141,13 @@ func (s *store) discardChunk() {
 		s.bits[t>>6] = 0
 	}
 	s.setTris = s.setTris[:0]
+	clear(s.words)
 }
 
 func (s *store) flushPairs() error {
+	if err := s.flushBlooms(); err != nil { // before the chunks become visible
+		return err
+	}
 	if len(s.pairs) == 0 {
 		return nil
 	}
@@ -186,20 +215,27 @@ func (sn *storeSnap) candidates(terms [][]byte) (map[int32][]chunkRec, bool) {
 }
 
 // chunkSet returns, per unit ID, the chunks that may hold a line meeting need
-// (alternatives of literals; see indexNeeds), sorted by offset. ok is false when
-// the index can't narrow it down; then everything has to be read.
-func (sn *storeSnap) chunkSet(need [][]string) (map[int32][]chunkRec, bool) {
+// (see indexNeeds), sorted by offset. ok is false when the index can't narrow
+// it down; then everything has to be read.
+func (sn *storeSnap) chunkSet(need []needAlt) (map[int32][]chunkRec, bool) {
 	if sn == nil || len(need) == 0 {
 		return nil, false
 	}
 	out := map[int32][]chunkRec{}
 	for _, alt := range need {
-		terms := make([][]byte, len(alt))
-		for i, t := range alt {
+		terms := make([][]byte, len(alt.lits))
+		for i, t := range alt.lits {
 			terms[i] = []byte(t)
 		}
 		c, ok := sn.candidates(terms)
 		if !ok {
+			if len(alt.words) == 0 {
+				return nil, false
+			}
+			c = sn.allChunks() // only words (shorter than a trigram): check every filter
+		}
+		c, err := sn.wordFilter(c, alt.words)
+		if err != nil {
 			return nil, false
 		}
 		for u, chs := range c {
@@ -211,6 +247,14 @@ func (sn *storeSnap) chunkSet(need [][]string) (map[int32][]chunkRec, bool) {
 		out[u] = slices.CompactFunc(chs, func(a, b chunkRec) bool { return a.off == b.off })
 	}
 	return out, true
+}
+
+func (sn *storeSnap) allChunks() map[int32][]chunkRec {
+	out := map[int32][]chunkRec{}
+	for _, ch := range sn.chunks {
+		out[ch.unit] = append(out[ch.unit], ch)
+	}
+	return out
 }
 
 func intersect(a, b []uint32) []uint32 {

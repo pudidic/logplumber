@@ -55,7 +55,7 @@ type runner struct {
 	snap        *storeSnap           // index snapshot taken when the run starts
 	follow      *followCfg           // real-time: keep reading what is appended
 	timeline    *timeline            // event search: events per time slot
-	need        [][]string           // text a matching line must contain (index)
+	need        []needAlt            // what a matching line must contain (index)
 	cand        map[int32][]chunkRec // indexed units: the chunks to read (nil: all)
 	exclude     string
 	errMu       sync.Mutex

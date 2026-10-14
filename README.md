@@ -255,22 +255,38 @@ are local time. Tables show `_time` as a date, but the value stays numeric, so
 
 In an interactive session psh builds a temporary index in the background (the
 hint bar shows `index ready · N files`): archive and compressed members are
-unpacked once into a cache, and every file is split into chunks of about 256KB
-whose trigrams (3-character sequences) are recorded. It is deleted when psh
-exits; `psh -noindex` turns it off, and `psh -c` does not build one.
+unpacked once into a cache, and every file is split into chunks of about 256KB.
+For each chunk psh records its trigrams (3-byte sequences) in an inverted
+index, and its words (runs of ASCII letters, digits and `_`) in a Bloom filter.
+It is deleted when psh exits; `psh -noindex` turns it off, and `psh -c` does not
+build one.
 
-A query whose first search requires literal text reads only the chunks that
-contain all of its trigrams, so rare terms are found without reading
-everything. On 250MB of logs a request ID appearing 57 times takes 0.04s
-instead of 0.44s. The summary line shows the effect: `index: read 14.0MB of
-248.2MB`. Results are the same as without the index; files not indexed yet,
-or changed since, are read in full.
+A query whose first search requires literal text reads only the chunks that may
+contain it: the trigram index finds the chunks with all its trigrams, and the
+word filters drop those without its whole words. Trigrams alone cannot tell IDs
+made of few characters apart (every 3-character piece of a hex trace ID occurs
+almost everywhere); the word filters can. Results are the same as without the
+index; files not indexed yet, or changed since, are read in full. The summary
+line shows the effect: `index: read 4.5MB of 1.0GB`.
+
+Measured on 1GB of mixed logs (4,160 chunks):
+
+| Query | Without index | With index |
+|---|---|---|
+| a 32-digit hex trace ID | 1.7s | 0.016s (4.5MB read) |
+| `INC-77fe31` (22 lines) | 1.7s | 0.013s |
+| `"Failed password" \| stats count` (1 in 20 lines) | 1.6s | 0.39s |
+| `error \| stats count` (common) | 1.8s | 0.76s |
+
+The index takes about 4% of the data (trigrams 1.5%, word filters 2.7%) and
+18s to build for 1GB.
 
 The index is used for words, phrases, wildcard pieces of 3 or more characters,
 and `field=value` with a literal text value, combined with AND and OR (in shell
-mode: `grep` with a literal pattern as the first command). It is not used for
-`NOT`, numeric comparisons, `*` alone, non-ASCII text, real-time searches, or
-`grep -v`/`-c`/`-L`. Common words appear in every chunk, so they gain nothing.
+mode: `grep` with a literal pattern as the first command). Words shorter than 3
+characters use the word filters alone. It is not used for `NOT`, numeric
+comparisons, `*` alone, non-ASCII text, real-time searches, or
+`grep -v`/`-c`/`-L`.
 
 ## Type-ahead mode
 
@@ -324,6 +340,7 @@ appears at start-up and again whenever the line is cleared.
 | `run.go` | Execution engine: parallel/serial split, live previews, status line, file-list cache |
 | `store.go` | Temporary on-disk store of an interactive session: archive cache, background indexing |
 | `index.go`, `bucket.go` | Trigram index: chunks, bucket files, lookup of the chunks a query needs |
+| `wordbloom.go` | Per-chunk Bloom filters of words, used to narrow the trigram candidates |
 | `browse.go`, `rows.go` | Type-ahead result list and detail view; result storage that spills to disk |
 | `ui.go`, `term_*.go` | ANSI live-region rendering, OS-specific terminal handling |
 

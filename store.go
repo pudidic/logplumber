@@ -91,7 +91,10 @@ type store struct {
 	lens        [numBuckets]int64
 	bits        []uint64 // trigrams seen in the current chunk (2^24 bits)
 	setTris     []uint32
-	pairs       []uint64 // trigram<<32 | chunk ID, not yet in the buckets
+	pairs       []uint64            // trigram<<32 | chunk ID, not yet in the buckets
+	words       map[uint64]struct{} // word hashes of the current chunk
+	bfBuf       []byte              // word filters not yet in words.bf
+	bfLen       int64               // committed length of words.bf
 }
 
 // openStore creates the store directory and starts the indexing goroutine.

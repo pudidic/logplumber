@@ -60,7 +60,7 @@ type Spec struct {
 	limit      int        // head N (SPL): lets an implicit time sort keep only N lines
 	out        string     // file written by the command (outputcsv)
 	rt         *followCfg // real-time search (SPL earliest=rt...) or tail -f
-	need       [][]string // first command: text a line must contain (see indexNeeds)
+	need       []needAlt  // first command: what a line must contain (see indexNeeds)
 }
 
 // ---------------- grep ----------------
