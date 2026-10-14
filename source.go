@@ -1,12 +1,7 @@
 package main
 
 import (
-	"archive/tar"
-	"archive/zip"
 	"bufio"
-	"bytes"
-	"compress/bzip2"
-	"compress/gzip"
 	"context"
 	"errors"
 	"fmt"
@@ -263,10 +258,11 @@ type worker struct {
 	out    chan<- []Line
 	lines  int64
 	onErr  func(error)
+	snap   *storeSnap // index snapshot, nil without a store
 }
 
 func newWorker(ctx context.Context, r *runner, specs []*Spec) *worker {
-	w := &worker{ctx: ctx, prog: r.prog, mode: r.mode, find: r.find, out: r.batches, onErr: r.reportErr}
+	w := &worker{ctx: ctx, prog: r.prog, mode: r.mode, find: r.find, out: r.batches, onErr: r.reportErr, snap: r.snap}
 	w.stages = make([]Stage, len(specs))
 	for i, s := range specs {
 		w.stages[i] = s.New()
@@ -343,129 +339,127 @@ func (w *worker) doJob(j job) error {
 			return nil
 		}
 	}
+	if e := w.cached(j); e != nil {
+		return w.doCached(j, e, jc)
+	}
 	f, err := os.Open(j.path)
 	if err != nil {
 		w.onErr(err)
 		return nil
 	}
 	defer f.Close()
-	var magic [4]byte
-	if n, _ := f.ReadAt(magic[:], 0); n == 4 && string(magic[:]) == "PK\x03\x04" {
-		zr, err := zip.NewReader(&countingReaderAt{f, jc}, j.size)
-		if err != nil {
-			w.onErr(fmt.Errorf("%s: %v", j.disp, err))
+	a := &archiveWalker{ctx: w.ctx, disp: j.disp, onErr: w.onErr,
+		leaf: func(member, logical string, br *bufio.Reader, _ bool) error {
+			disp := j.disp + member
+			if w.mode == modeNames {
+				if member != "" && !w.emitName(disp, false) {
+					return errStop
+				}
+				return nil
+			}
+			if len(j.filters) > 0 && !matchAny(j.filters, logical) {
+				return nil
+			}
+			if isBinary(br) {
+				w.prog.skipped.Add(1)
+				return nil
+			}
+			if err := w.scanText(disp, br, 1); err != nil {
+				return err
+			}
+			if !w.endFile(disp) {
+				return errStop
+			}
 			return nil
-		}
-		return w.zipMembers(j.disp, zr, 0, j.filters)
-	}
-	return w.stream(j.disp, path.Base(j.disp), &countingReader{f, jc}, 0, j.filters, true)
+		}}
+	return a.walkFile(&countingReaderAt{f, jc}, j.size, &countingReader{f, jc})
 }
 
-func (w *worker) zipMembers(disp string, zr *zip.Reader, depth int, filters []string) error {
-	for _, zf := range zr.File {
-		if strings.HasSuffix(zf.Name, "/") {
+// cached returns the store entry for the job's file if it is still valid.
+func (w *worker) cached(j job) *srcEntry {
+	if w.snap == nil {
+		return nil
+	}
+	abs, err := filepath.Abs(j.path)
+	if err != nil {
+		return nil
+	}
+	e := w.snap.srcs[abs]
+	if e == nil {
+		return nil
+	}
+	if fi, err := os.Stat(j.path); err != nil || !e.valid(fi) {
+		return nil
+	}
+	return e
+}
+
+// doCached reads a file through the store: archive members come from their
+// decompressed copies, so nothing is unpacked again.
+func (w *worker) doCached(j job, e *srcEntry, jc *jobCounter) error {
+	var units []*unit
+	var total int64
+	for _, u := range e.units {
+		if len(j.filters) > 0 && !matchAny(j.filters, u.logical) {
 			continue
 		}
-		rc, err := zf.Open()
+		units = append(units, u)
+		total += u.size
+	}
+	scale := 1.0
+	if total > 0 {
+		scale = float64(j.size) / float64(total)
+	}
+	for _, u := range units {
+		disp := j.disp + u.member
+		if w.mode == modeNames {
+			if u.member != "" && !w.emitName(disp, false) {
+				return errStop
+			}
+			continue
+		}
+		if u.binary {
+			w.prog.skipped.Add(1)
+			continue
+		}
+		f, err := os.Open(u.path)
 		if err != nil {
-			w.onErr(fmt.Errorf("%s::%s: %v", disp, zf.Name, err))
+			w.onErr(fmt.Errorf("%s: %v", disp, err))
 			continue
 		}
-		err = w.stream(disp+"::"+zf.Name, path.Base(zf.Name), rc, depth+1, filters, false)
-		rc.Close()
+		err = w.scanText(disp, bufio.NewReaderSize(&scaledReader{r: f, c: jc, scale: scale}, 256<<10), 1)
+		f.Close()
 		if err != nil {
 			return err
+		}
+		if !w.endFile(disp) {
+			return errStop
 		}
 	}
 	return nil
 }
 
-// stream sniffs r: archives/compressed data are unpacked recursively, plain text is
-// scanned line by line. logical is the name used for member filters.
-func (w *worker) stream(disp, logical string, r io.Reader, depth int, filters []string, top bool) error {
-	if w.ctx.Err() != nil {
-		return errStop
-	}
-	br := bufio.NewReaderSize(r, 256<<10)
-	head, _ := br.Peek(512)
-	if depth < maxNestDepth {
-		switch {
-		case len(head) >= 2 && head[0] == 0x1f && head[1] == 0x8b:
-			gz, err := gzip.NewReader(br)
-			if err != nil {
-				w.onErr(fmt.Errorf("%s: %v", disp, err))
-				return nil
-			}
-			defer gz.Close()
-			inner := logical
-			if l := strings.ToLower(inner); strings.HasSuffix(l, ".tgz") {
-				inner = inner[:len(inner)-4] + ".tar"
-			} else if strings.HasSuffix(l, ".gz") {
-				inner = inner[:len(inner)-3]
-			}
-			return w.stream(disp, inner, gz, depth+1, filters, top)
-		case len(head) >= 4 && string(head[:3]) == "BZh" && head[3] >= '1' && head[3] <= '9':
-			inner := logical
-			if l := strings.ToLower(inner); strings.HasSuffix(l, ".tbz2") || strings.HasSuffix(l, ".tbz") {
-				inner = inner[:strings.LastIndexByte(inner, '.')] + ".tar"
-			} else if strings.HasSuffix(l, ".bz2") {
-				inner = inner[:len(inner)-4]
-			}
-			return w.stream(disp, inner, bzip2.NewReader(br), depth+1, filters, top)
-		case len(head) >= 4 && string(head[:4]) == "PK\x03\x04":
-			data, err := io.ReadAll(io.LimitReader(br, maxInMemoryZip+1))
-			if err != nil || len(data) > maxInMemoryZip {
-				w.onErr(fmt.Errorf("%s: nested zip too large or unreadable", disp))
-				return nil
-			}
-			zr, err := zip.NewReader(bytes.NewReader(data), int64(len(data)))
-			if err != nil {
-				w.onErr(fmt.Errorf("%s: %v", disp, err))
-				return nil
-			}
-			return w.zipMembers(disp, zr, depth, filters)
-		case len(head) >= 262 && string(head[257:262]) == "ustar":
-			tr := tar.NewReader(br)
-			for {
-				hdr, err := tr.Next()
-				if err == io.EOF {
-					return nil
-				}
-				if err != nil {
-					w.onErr(fmt.Errorf("%s: %v", disp, err))
-					return nil
-				}
-				if !hdr.FileInfo().Mode().IsRegular() {
-					continue
-				}
-				name := strings.TrimPrefix(hdr.Name, "./")
-				if err := w.stream(disp+"::"+name, path.Base(name), tr, depth+1, filters, false); err != nil {
-					return err
-				}
-			}
-		}
-	}
-	// leaf
-	if w.mode == modeNames {
-		if !top {
-			if !w.emitName(disp, false) {
-				return errStop
-			}
-		}
-		return nil
-	}
-	if len(filters) > 0 && !matchAny(filters, logical) {
-		return nil
-	}
-	if p, _ := br.Peek(8000); bytes.IndexByte(p, 0) >= 0 {
-		w.prog.skipped.Add(1)
-		return nil
-	}
-	return w.scanText(disp, br)
+// scaledReader reports progress in units of the original (compressed) file.
+type scaledReader struct {
+	r     io.Reader
+	c     *jobCounter
+	scale float64
+	frac  float64
 }
 
-func (w *worker) scanText(disp string, br *bufio.Reader) error {
-	no := 0
+func (s *scaledReader) Read(p []byte) (int, error) {
+	n, err := s.r.Read(p)
+	s.frac += float64(n) * s.scale
+	whole := int64(s.frac)
+	s.frac -= float64(whole)
+	s.c.add(whole)
+	return n, err
+}
+
+// scanText feeds the lines of br into the worker's stages; no is the number of
+// the first line.
+func (w *worker) scanText(disp string, br *bufio.Reader, no int) error {
+	no--
 	var acc []byte
 	entry := w.emits[0]
 	for {
@@ -503,16 +497,12 @@ func (w *worker) scanText(disp string, br *bufio.Reader) error {
 		acc = acc[:0]
 		if err != nil {
 			if err == io.EOF {
-				break
+				return nil
 			}
 			w.onErr(fmt.Errorf("%s: %v", disp, err))
-			break
+			return nil
 		}
 	}
-	if !w.endFile(disp) {
-		return errStop
-	}
-	return nil
 }
 
 // ---------------- progress ----------------

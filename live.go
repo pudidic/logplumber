@@ -200,6 +200,7 @@ func (sh *Shell) liveLoop(in io.Reader) error {
 	debounce.Stop()
 	tick := time.NewTicker(30 * time.Millisecond)
 	defer tick.Stop()
+	var lastStatus *storeStatus
 	e.dirty = true
 	e.render()
 	for {
@@ -240,6 +241,14 @@ func (sh *Shell) liveLoop(in io.Reader) error {
 		case <-debounce.C:
 			e.startRun()
 		case <-tick.C:
+			if e.sh.store != nil {
+				if st := e.sh.store.status.Load(); st != lastStatus {
+					lastStatus = st
+					e.mu.Lock()
+					e.dirty = true
+					e.mu.Unlock()
+				}
+			}
 			e.render()
 		}
 	}
@@ -371,7 +380,7 @@ func (e *liveEditor) resetResults(status string) int {
 }
 
 var builtinNames = map[string]bool{"exit": true, "quit": true, "cd": true, "pwd": true, "threads": true,
-	"jobs": true, "clear": true, "cls": true, "help": true, "?": true, "version": true}
+	"jobs": true, "clear": true, "cls": true, "help": true, "?": true, "version": true, "index": true}
 
 // analysis is the type-ahead view of the current line: the longest runnable prefix
 // of the pipeline and where the incomplete part starts.
@@ -615,7 +624,13 @@ func (e *liveEditor) render() {
 			line(l, "")
 		}
 	}
-	line(liveHint, "\x1b[7m")
+	hint := liveHint
+	if e.sh.store != nil {
+		if t := e.sh.store.statusText(); t != "" {
+			hint += "│ " + t + " "
+		}
+	}
+	line(hint, "\x1b[7m")
 	b.WriteString("\x1b[J") // remove leftovers of a taller previous frame
 	fmt.Fprintf(&b, "\x1b[%dA\r", rows)
 	if cursorCol > 0 {

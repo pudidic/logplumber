@@ -32,6 +32,7 @@ type Shell struct {
 	cancel  context.CancelFunc
 	lastSig time.Time
 	jobs    *jobCache
+	store   *store // temporary on-disk index (interactive sessions only)
 }
 
 func main() {
@@ -39,6 +40,7 @@ func main() {
 	cmd := flag.String("c", "", "run one command line and exit")
 	jobs := flag.Int("j", runtime.NumCPU(), "number of worker threads")
 	noLive := flag.Bool("nolive", false, "disable type-ahead results (plain line input)")
+	noIndex := flag.Bool("noindex", false, "don't build a temporary index on disk")
 	flag.Parse()
 
 	sh := &Shell{ui: newUI(), threads: max(1, *jobs)}
@@ -69,6 +71,20 @@ func main() {
 	interactive := isTerminal(os.Stdin)
 	if interactive {
 		fmt.Printf("psh %s — parallel file shell (%d threads). Type help for commands. Press Esc to exit.\n", version, sh.threads)
+	}
+	if interactive && !*noIndex {
+		st, err := openStore()
+		if err != nil {
+			fmt.Fprintln(os.Stderr, "psh: no index:", err)
+		} else {
+			sh.store = st
+			defer func() {
+				if err := st.close(); err != nil {
+					fmt.Fprintln(os.Stderr, "psh: could not delete the index:", err)
+				}
+			}()
+			st.setRoot(".")
+		}
 	}
 	if interactive && sh.ui.active && !*noLive {
 		var in io.Reader = os.Stdin
@@ -197,6 +213,9 @@ func (sh *Shell) builtin(args []word) (bool, error) {
 		if err := os.Chdir(dir); err != nil {
 			return true, fmt.Errorf("cd: %v", unwrapPathErr(err))
 		}
+		if sh.store != nil {
+			sh.store.setRoot(".")
+		}
 		return true, nil
 	case "pwd":
 		wd, err := os.Getwd()
@@ -225,6 +244,19 @@ func (sh *Shell) builtin(args []word) (bool, error) {
 		return true, nil
 	case "version":
 		fmt.Printf("psh %s (%s/%s, %s)\n", version, runtime.GOOS, runtime.GOARCH, runtime.Version())
+		return true, nil
+	case "index":
+		if sh.store == nil {
+			fmt.Println("index: off")
+			return true, nil
+		}
+		st := sh.store.status.Load()
+		state := "ready"
+		if st.building {
+			state = fmt.Sprintf("building %d%%", 100*st.done/max(1, st.total))
+		}
+		fmt.Printf("index: %s\n  directory: %s\n  root:      %s\n  files:     %s\n  disk use:  %s\n",
+			state, sh.store.dir, st.root, commas(int64(st.files)), human(st.disk))
 		return true, nil
 	}
 	return false, nil

@@ -51,6 +51,7 @@ type runner struct {
 	serialSpecs []*Spec // run in one goroutine after the workers
 	ops         []word
 	batches     chan []Line
+	snap        *storeSnap // index snapshot taken when the run starts
 	exclude     string
 	errMu       sync.Mutex
 	errN        int
@@ -165,6 +166,11 @@ func (sh *Shell) runPipeline(userCtx context.Context, ast *pipelineAST, disp dis
 	}
 	r.start = time.Now()
 	r.live = live
+	if sh.store != nil {
+		sh.store.busy.Add(1) // indexing pauses while a query runs
+		defer sh.store.busy.Add(-1)
+		r.snap = sh.store.snap.Load()
+	}
 
 	sink := &outSink{ui: r.ui, ctx: userCtx, prog: r.prog}
 	if ast.redirect != "" {
