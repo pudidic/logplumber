@@ -755,7 +755,11 @@ func (e *liveEditor) render() {
 		line(status, "\x1b[36m")
 	}
 	if tl != "" {
-		line(tl, timelineStyle)
+		if colorMode == colorNever {
+			line(tl, "")
+		} else {
+			line(tl, "\x1b[32m")
+		}
 	}
 	for _, l := range body {
 		switch {

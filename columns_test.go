@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"strings"
 	"testing"
 )
@@ -88,5 +89,38 @@ func TestSpilledRowsKeepPrefix(t *testing.T) {
 	got, err := decodeLine(encodeLine(nil, l), nil)
 	if err != nil || got.Pre != 8 || got.PreName != 6 || got.Text != l.Text {
 		t.Errorf("round trip: %+v %v", got, err)
+	}
+}
+
+func TestColorModes(t *testing.T) {
+	defer func(m colorSetting) { colorMode = m }(colorMode)
+	for _, c := range []struct{ in string }{{"auto"}, {"always"}, {"never"}} {
+		if _, err := parseColorMode(c.in); err != nil {
+			t.Error(err)
+		}
+	}
+	if _, err := parseColorMode("sometimes"); err == nil {
+		t.Error("sometimes: expected an error")
+	}
+	lines := []Line{{Text: "app.log:3:hello", Src: "app.log", Pre: 10, PreName: 8}}
+	print := func(mode colorSetting, active bool) string {
+		colorMode = mode
+		var buf strings.Builder
+		u := &UI{out: bufio.NewWriter(&buf), active: active}
+		u.Print(lines)
+		u.out.Flush()
+		return buf.String()
+	}
+	if got := print(colorAuto, false); got != "app.log:3:hello\n" {
+		t.Errorf("auto, pipe: %q", got)
+	}
+	if got := print(colorAlways, false); !strings.Contains(got, "\x1b[35mapp.log\x1b[39m") || !strings.Contains(got, "  hello") {
+		t.Errorf("always, pipe: %q", got)
+	}
+	if got := print(colorNever, true); strings.Contains(got, "\x1b") || !strings.HasPrefix(got, "app.log:3  hello") {
+		t.Errorf("never, terminal: %q", got)
+	}
+	if got := truncateWidth(displayLine(lines[0], false, 9), 40); strings.Contains(got, "\x1b") {
+		t.Errorf("never, live screen: %q", got)
 	}
 }

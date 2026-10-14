@@ -62,7 +62,17 @@ func main() {
 	noIndex := flag.Bool("noindex", false, "don't build a temporary index on disk")
 	shellMode := flag.Bool("sh", false, "start in shell mode (POSIX pipelines) instead of SPL")
 	flag.Bool("spl", true, "start in SPL mode (the default)")
+	color := flag.String("color", "auto", "file column and colors: auto (in a terminal), always (also in pipes and files) or never")
 	flag.Parse()
+	mode, err := parseColorMode(*color)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "psh:", err)
+		os.Exit(2)
+	}
+	if os.Getenv("NO_COLOR") != "" && *color == "auto" {
+		mode = colorNever
+	}
+	colorMode = mode
 
 	sh := &Shell{ui: newUI(), threads: max(1, *jobs)}
 	if err := loadConfig(); err != nil {

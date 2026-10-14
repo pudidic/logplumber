@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"strconv"
 	"strings"
 )
@@ -21,6 +22,31 @@ import (
 // drawn, so escape sequences inside log text are still neutralized.
 
 const maxSrcColumn = 40 // wider file names are shortened at the front
+
+// colorMode is set by -color: auto (columns and colors in a terminal), always
+// (also when the output is a pipe or file) or never (no colors). NO_COLOR in the
+// environment means never.
+type colorSetting int
+
+const (
+	colorAuto colorSetting = iota
+	colorAlways
+	colorNever
+)
+
+var colorMode = colorAuto
+
+func parseColorMode(s string) (colorSetting, error) {
+	switch s {
+	case "auto", "":
+		return colorAuto, nil
+	case "always":
+		return colorAlways, nil
+	case "never":
+		return colorNever, nil
+	}
+	return colorAuto, fmt.Errorf("-color: auto, always or never expected, not %q", s)
+}
 
 const (
 	colorFile = 35 // magenta
@@ -104,10 +130,13 @@ func colorMarker(s string, i int) (code string, n int) {
 }
 
 // ansiColors turns color markers into ANSI codes (for output that is not
-// truncated, such as the full output of Enter).
+// truncated, such as the full output of Enter); with -color=never it removes them.
 func ansiColors(s string) string {
 	if strings.IndexByte(s, 0) < 0 {
 		return s
+	}
+	if colorMode == colorNever {
+		return stripColors(s)
 	}
 	var b strings.Builder
 	for i := 0; i < len(s); {

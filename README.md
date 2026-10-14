@@ -37,6 +37,7 @@ psh -nolive               # plain line input
 psh -c 'error | stats count by _src'
 psh -sh -c "grep -i error | wc -l"
 psh -j 8                  # number of worker threads (default: number of CPUs)
+psh -color=always -c 'error' | less -R   # file column and colors in a pipe
 ```
 
 Type `help` inside the shell for the list of commands and options.
@@ -308,8 +309,13 @@ In a terminal, result lines that come from a file are shown in two aligned
 columns: the file name (magenta) and the content. This applies to the events of
 an SPL search and to grep's `file:` and `file:line:` prefixes (the line number
 in green). Names wider than 40 columns are shortened at the front, so the file
-name itself stays visible. Output to a file or a pipe keeps the plain text,
-e.g. `app/worker.log:11:time=…`.
+name itself stays visible.
+
+`-color` decides where: `auto` (the default) uses columns and colors in a
+terminal and plain text (`app/worker.log:11:time=…`) in a pipe or file;
+`always` uses them in pipes and files too, e.g.
+`psh -color=always -c 'error' | less -R`; `never` turns colors off (also when
+`NO_COLOR` is set). A `> file` inside psh always writes plain text.
 
 ## Type-ahead mode
 
