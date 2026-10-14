@@ -209,7 +209,7 @@ func fieldLines(l Line, width int) []string {
 	type kv struct{ k, v string }
 	var builtin, extracted []kv
 	row := l.Rec != nil && l.Rec.row
-	for _, n := range []string{"_time", "_src", "_line"} {
+	for _, n := range []string{"_time", "_src", "_line", "sourcetype"} {
 		if v, ok := l.Field(n); ok && v != "" {
 			if n == "_time" {
 				v = formatTime(v) + "  (" + v + ")"
@@ -238,7 +238,7 @@ func fieldLines(l Line, width int) []string {
 		sort.Strings(names)
 	}
 	for _, n := range names {
-		if n == "_time" || n == "_src" || n == "_line" {
+		if n == "_time" || n == "_src" || n == "_line" || n == "sourcetype" {
 			continue
 		}
 		v, _ := l.Field(n)

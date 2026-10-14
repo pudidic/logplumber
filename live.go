@@ -441,17 +441,18 @@ func (e *liveEditor) resetResults(status string) int {
 	return e.gen
 }
 
-var builtinNames = map[string]bool{"exit": true, "quit": true, "spl": true, "sh": true, "cd": true, "pwd": true, "threads": true,
+var builtinNames = map[string]bool{"exit": true, "quit": true, "spl": true, "sh": true, "config": true, "cd": true, "pwd": true, "threads": true,
 	"jobs": true, "clear": true, "cls": true, "help": true, "?": true, "version": true, "index": true}
 
 // analysis is the type-ahead view of the current line: the longest runnable prefix
 // of the pipeline and where the incomplete part starts.
 type analysis struct {
-	ast     *pipelineAST // runnable leading commands (nil: nothing to run)
-	badFrom int          // rune offset of the first incomplete command, -1 if none
-	note    string
-	noteErr bool
-	latest  bool // the line is empty: ast shows the latest events
+	ast      *pipelineAST // runnable leading commands (nil: nothing to run)
+	badFrom  int          // rune offset of the first incomplete command, -1 if none
+	note     string
+	noteErr  bool
+	latest   bool // the line is empty: ast shows the latest events
+	expanded bool // macros were expanded: badFrom is not a position in the line
 }
 
 // latestQuery (SPL) is previewed while the command line is empty: the newest
@@ -495,6 +496,13 @@ func (sh *Shell) analyze(line string) analysis {
 	spl := sh.lang == langSPL
 	notPreviewed := ""
 	if spl {
+		if q, err := expandQuery(line); err != nil {
+			a.note, a.noteErr, a.badFrom = "incomplete: "+err.Error(), true, 0
+			return a
+		} else if q != line {
+			line = q // macros and saved searches: positions refer to the expanded query
+			a.expanded = true
+		}
 		for _, s := range splitSPL(line) {
 			if s.err == nil && s.cmd.args[0].s == "outputcsv" {
 				notPreviewed = "outputcsv is not previewed — press Enter to run"
@@ -565,6 +573,9 @@ func (sh *Shell) analyze(line string) analysis {
 		}
 		cmds = append(cmds, s.cmd)
 		valid++
+	}
+	if a.expanded && a.badFrom >= 0 {
+		a.badFrom = len([]rune(line)) // underline nothing rather than the wrong part
 	}
 	if valid > 0 {
 		a.ast = &pipelineAST{cmds: cmds, spl: spl}

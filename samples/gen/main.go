@@ -154,6 +154,25 @@ func syslog(start time.Time, n int) []byte {
 	return []byte(b.String())
 }
 
+// payments writes a custom format that no built-in sourcetype knows; the
+// sample .psh.conf defines its sourcetype.
+func payments(start time.Time, n int) []byte {
+	cards := []string{"visa", "master", "amex", "local"}
+	var b strings.Builder
+	t := start
+	for i := 0; i < n; i++ {
+		t = t.Add(time.Duration(rnd.Intn(6000)) * time.Millisecond)
+		lvl, outcome := "INFO ", "approved"
+		if rnd.Intn(7) == 0 {
+			lvl, outcome = "WARN ", pick([]string{"declined", "declined", "fraud_check"})
+		}
+		fmt.Fprintf(&b, "%s %s [payment-svc] order %d charged %d KRW in %dms (card=%s) %s\n",
+			t.Format("02.01.2006 15:04:05,000"), lvl, 1000+rnd.Intn(9000), (1+rnd.Intn(300))*100,
+			40+rnd.Intn(900), pick(cards), outcome)
+	}
+	return []byte(b.String())
+}
+
 var fixed = time.Date(2026, 10, 14, 0, 0, 0, 0, time.UTC)
 
 func gz(b []byte) []byte {
@@ -204,4 +223,6 @@ func main() {
 	}
 	zw.Close()
 	w("archives/workers.zip", zb.Bytes())
+
+	w("payments/payments.log", payments(day, 300)) // last, so the files above stay the same
 }

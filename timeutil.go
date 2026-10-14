@@ -270,6 +270,25 @@ func (l *Line) lineTime() (int64, bool) {
 		return 0, false
 	}
 	now := time.Now()
+	if activeConfig().hasTimeRules {
+		if !r.parsed {
+			l.parseFields()
+		}
+		if st := r.st; st != nil && st.timeField != "" {
+			if v, ok := r.auto[st.timeField]; ok {
+				var t time.Time
+				if st.timeFormat != "" {
+					t, ok = strptime(v, st.timeFormat)
+				} else if t, ok = findTime(v, now); !ok {
+					t, ok = epochTime(v)
+				}
+				if ok {
+					r.tm, r.tState = t.UnixMilli(), 1
+					return r.tm, true
+				}
+			}
+		}
+	}
 	t, ok := findTime(l.Text, now)
 	if !ok {
 		for _, k := range timeKeys {

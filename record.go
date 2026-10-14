@@ -18,6 +18,7 @@ type Record struct {
 	auto   map[string]string // automatically extracted fields
 	parsed bool
 	row    bool         // produced by an aggregation: no automatic extraction
+	st     *sourcetype  // set with auto
 	header *tableHeader // column header shared by the rows of one table
 	tm     int64        // _time in Unix milliseconds, valid when tState == 1
 	tState uint8        // 0 not looked for yet, 1 found, 2 none
@@ -94,11 +95,29 @@ func (l *Line) Field(name string) (string, bool) {
 		return "", false
 	}
 	if !r.parsed {
-		r.auto = autoFields(l.Text)
-		r.parsed = true
+		l.parseFields()
 	}
 	v, ok := r.auto[name]
+	if !ok && name == "source" { // Splunk's default field
+		return l.Src, l.Src != ""
+	}
 	return v, ok
+}
+
+// parseFields extracts the automatic fields of the line's sourcetype and adds its
+// calculated fields.
+func (l *Line) parseFields() {
+	r := l.rec()
+	r.auto, r.st = l.extractFields()
+	r.parsed = true
+	if r.st == nil {
+		return
+	}
+	for _, a := range r.st.evals {
+		if v := a.x.eval(l); !v.null {
+			r.auto[a.name] = v.String()
+		}
+	}
 }
 
 func (l *Line) SetField(name, v string) {
@@ -132,38 +151,6 @@ func (l *Line) FieldNames() []string {
 }
 
 var reKV = regexp.MustCompile(`(?:^|[\s,;\[(])([A-Za-z_][\w.\-]*)=("(?:[^"\\]|\\.)*"|[^\s,;"\])]*)`)
-
-// autoFields extracts JSON fields (also from a JSON object that ends the line, as
-// in "2026-01-02 INFO {...}") or key=value pairs.
-func autoFields(text string) map[string]string {
-	m := map[string]string{}
-	t := strings.TrimSpace(text)
-	if strings.HasSuffix(t, "}") {
-		if i := strings.IndexByte(t, '{'); i >= 0 {
-			dec := json.NewDecoder(strings.NewReader(t[i:]))
-			dec.UseNumber()
-			var v map[string]any
-			if dec.Decode(&v) == nil {
-				flattenJSON("", v, m)
-				return m
-			}
-		}
-	}
-	for _, kv := range reKV.FindAllStringSubmatch(text, -1) {
-		v := kv[2]
-		if len(v) >= 2 && v[0] == '"' {
-			if u, err := strconv.Unquote(v); err == nil {
-				v = u
-			} else {
-				v = v[1 : len(v)-1]
-			}
-		}
-		if _, dup := m[kv[1]]; !dup {
-			m[kv[1]] = v
-		}
-	}
-	return m
-}
 
 func flattenJSON(prefix string, v map[string]any, m map[string]string) {
 	for k, x := range v {

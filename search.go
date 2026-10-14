@@ -186,9 +186,19 @@ func newCmp(field, op, val string) sCmp {
 			}
 			b.WriteString("$")
 			n.pat = regexp.MustCompile(b.String())
-		} else if op == "=" && !n.val.num && !strings.HasPrefix(field, "_") && plainText(val) {
-			n.lit = strings.ToLower(val)
 		}
+	}
+	return n
+}
+
+// literalCmp enables the raw-text check of a field comparison when the field's
+// value must appear in _raw: on events straight from the files (the first
+// search), and not for sourcetype, source or calculated fields.
+func literalCmp(n sCmp) sCmp {
+	if n.op == "=" && n.pat == nil && !n.exists && !n.val.num && plainText(n.val.s) &&
+		!strings.HasPrefix(n.field, "_") && n.field != "sourcetype" && n.field != "source" &&
+		!activeConfig().calcFields[n.field] {
+		n.lit = strings.ToLower(n.val.s)
 	}
 	return n
 }
@@ -530,6 +540,9 @@ func (p *searchParser) comparison(f *stok, op string, v *stok) (snode, error) {
 			return nil, nil
 		}
 		return newCmp("_src", op, v.s), nil
+	}
+	if p.selectFiles {
+		return literalCmp(newCmp(f.s, op, v.s)), nil
 	}
 	return newCmp(f.s, op, v.s), nil
 }

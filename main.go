@@ -63,6 +63,9 @@ func main() {
 	flag.Parse()
 
 	sh := &Shell{ui: newUI(), threads: max(1, *jobs)}
+	if err := loadConfig(); err != nil {
+		fmt.Fprintln(os.Stderr, "psh: config:", err)
+	}
 	if *shellMode {
 		sh.lang = langShell
 	}
@@ -203,7 +206,11 @@ func (sh *Shell) runLine(line string) error {
 		return nil
 	}
 	if sh.lang == langSPL && !isBuiltinLine(line) {
-		ast, err := splParse(line)
+		q, err := expandQuery(line)
+		if err != nil {
+			return err
+		}
+		ast, err := splParse(q)
 		if err != nil {
 			return err
 		}
@@ -279,6 +286,19 @@ func (sh *Shell) builtin(args []word) (bool, error) {
 		if sh.store != nil {
 			sh.store.setRoot(".")
 		}
+		if err := loadConfig(); err != nil { // .psh.conf of the new directory
+			fmt.Fprintln(os.Stderr, "psh: config:", err)
+		}
+		return true, nil
+	case "config":
+		if len(args) > 1 && args[1].s == "reload" {
+			if err := loadConfig(); err != nil {
+				return true, fmt.Errorf("config: %v", err)
+			}
+		} else if len(args) > 1 {
+			return true, fmt.Errorf("config: unknown argument %q (config or config reload)", args[1].s)
+		}
+		fmt.Print(activeConfig().describe())
 		return true, nil
 	case "pwd":
 		wd, err := os.Getwd()
@@ -410,7 +430,16 @@ Shell mode — POSIX pipelines
   Without file operands the first command reads every file. A glob without a
   path separator (*.log) matches file names in all subdirectories and archives.
 
-Built-ins (both modes): spl, sh, cd, pwd, threads [N], clear, help, version, exit
+Sourcetypes: fields are extracted by the sourcetype of each line, detected
+  automatically: _json, access_combined (clientip method uri uri_path status
+  bytes referer useragent ...), apache_error (module log_level pid clientip
+  error_code message), nginx_error, syslog (host process pid message) and kv.
+  Every event also has sourcetype and source. .psh.conf (current directory) and
+  ~/.config/psh/psh.conf add sourcetypes, aliases, calculated fields, macros
+  (name in backquotes) and saved searches (savedsearch name); see README.
+
+Built-ins (both modes): spl, sh, config [reload], cd, pwd, threads [N], clear,
+  help, version, exit
 
 Type-ahead: results are recomputed on every keystroke and shown below the
   prompt. An empty line shows the latest events (newest first). If the last
