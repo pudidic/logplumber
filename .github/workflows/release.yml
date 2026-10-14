@@ -1,10 +1,16 @@
-# Pushing a tag vX.Y.Z builds the six release archives and publishes them as a
-# GitHub release.
+# Builds the six release archives and publishes them as a GitHub release: on a
+# pushed tag vX.Y.Z, or run by hand (Actions → release → Run workflow) with the
+# tag to create on the chosen branch's head.
 name: release
 
 on:
   push:
     tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag, e.g. v0.3.0"
+        required: true
 
 permissions:
   contents: write
@@ -12,13 +18,15 @@ permissions:
 jobs:
   release:
     runs-on: ubuntu-latest
+    env:
+      TAG: ${{ inputs.tag || github.ref_name }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
         with:
           go-version-file: go.mod
       - run: go vet ./... && go test ./...
-      - run: ./release.sh "$GITHUB_REF_NAME"
-      - run: gh release create "$GITHUB_REF_NAME" dist/* --title "plumb $GITHUB_REF_NAME" --generate-notes
+      - run: ./release.sh "$TAG"
+      - run: gh release create "$TAG" dist/* --target "$GITHUB_SHA" --title "plumb $TAG" --generate-notes
         env:
           GH_TOKEN: ${{ github.token }}
