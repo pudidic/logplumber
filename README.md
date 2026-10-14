@@ -63,6 +63,38 @@ line also has `_raw`, `_src` (file name) and `_line`.
   `table` and the text commands. Expression commands take no file operands; use
   `cat file | where ...`.
 
+## Time
+
+Every line gets a `_time` field: the first timestamp near the start of the line,
+as Unix seconds. Recognized formats are ISO 8601 / RFC 3339 (`T` or space, `,` or
+`.` fractions, `Z` or an offset), `2026/10/14 09:00:00`, Apache/nginx
+`[14/Oct/2026:09:00:00 +0900]`, ctime (`Wed Oct 14 09:01:48 2026`) and BSD syslog
+(`Oct 14 09:00:46`, the year is the latest one that is not in the future). If the
+text has none, a JSON or key=value field named `time`, `ts`, `timestamp` or
+`@timestamp` holding epoch seconds or milliseconds is used. Times without a zone
+are local time. Tables show `_time` as a date, but the value stays numeric, so
+`where`, `sort -_time` and arithmetic work on it.
+
+| Command | Example |
+|---|---|
+| `search earliest=T [latest=T]` | `search earliest=-24h` — events in `[earliest, latest)`; lines without a time are dropped |
+| `bin [field] span=S [as name]` | `bin span=5m \| stats count by _time`, `bin ms span=100` (gives `100-200`) |
+| `timechart [span=S] agg, ... [by field] [limit=N]` | `timechart span=1m count by level`, `timechart p95(ms)` |
+
+- Time values: `now`, `-15m`, `-24h`, `-7d`, snaps such as `@h`, `-1d@d`, `@w1`
+  (Monday), `@mon`, offsets after a snap (`@d+9h`), absolute times
+  (`2026-10-14T09:00:00`, `2026-10-14`, `10/14/2026:09:00:00`) and epoch seconds.
+- Spans: `s m h d w mon q y` (`30s`, `5m`, `1h`, `1d`, `1w`, `1mon`); a plain number
+  is seconds. Buckets of a day or less start at local midnight; weeks start on Sunday.
+- `timechart` gives one row per bucket in time order and fills empty buckets
+  (`0` for `count`/`dc`). Without `span` it starts at 1s and switches to coarser
+  spans (10s, 30s, 1m, 5m, … 1w) while there are more than 100 buckets. With `by`,
+  the `limit` (default 10) largest series are kept and the rest are summed into
+  `OTHER` (`limit=0` keeps all). A bar column is added for a single series, or
+  stacked bars (`█ ▓ ▒ ░`) for up to four `count`/`sum` series.
+- Functions: `now()` (when the query started), `time()`, `relative_time(t, "-1d@d")`,
+  `strftime(t, "%Y-%m-%d %H:%M")`, `strptime(s, "%d/%b/%Y:%H:%M:%S")`.
+
 ## Type-ahead mode
 
 | Key | Action |
@@ -97,6 +129,8 @@ line also has `_raw`, `_src` (file name) and `_line`.
 | `record.go` | Fields of a line: automatic JSON/key=value extraction, aligned table output |
 | `expr.go` | Expression language of `where` and `eval` (lexer, parser, evaluator) |
 | `fieldcmds.go` | rex, where, eval, stats (mergeable), top, rare, table, fieldsummary, field sort |
+| `timeutil.go` | Timestamp detection, spans and bucketing, relative times, strftime/strptime |
+| `timecmds.go` | search (time range), bin, timechart (on the stats engine, bar charts) |
 | `source.go` | File discovery, archive decoding (tar/gz/bz2/zip, nested), worker threads, progress counters |
 | `run.go` | Execution engine: parallel/serial split, live previews, status line, file-list cache |
 | `ui.go`, `term_*.go` | ANSI live-region rendering, OS-specific terminal handling |

@@ -43,6 +43,15 @@ cat apache/error.log | rex '\[(?<module>\w+):(?<sev>\w+)\]' | stats count by mod
 # What fields does the JSON log have?
 cat app/app.jsonl | fieldsummary
 
+# Requests per minute by level, with a stacked bar chart
+cat app/app.jsonl | timechart span=1m count by level
+
+# 5xx errors over time, top 3 paths
+cat access.log* | rex '"\w+ (?<path>\S+) [^"]*" (?<status>\d{3})' | where status >= 500 | timechart span=10m count by path limit=3
+
+# Latest 5 events across all logs
+sort 5 -_time | table _time _src _raw
+
 # Everything, including archive members
 find
 ```

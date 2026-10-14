@@ -29,6 +29,12 @@ func buildSpec(cmd rawCmd, first bool) (*Spec, []word, error) {
 		s, err = parseTable(cmd.args)
 	case "fieldsummary":
 		s, err = parseFieldSummary(cmd.args)
+	case "timechart":
+		s, err = parseTimechart(cmd.args)
+	case "search":
+		s, err = parseSearch(args)
+	case "bin", "bucket":
+		s, err = parseBin(name, args)
 	}
 	if s != nil || err != nil {
 		return s, nil, err

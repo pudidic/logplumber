@@ -144,7 +144,7 @@ func lexPos(line string) ([]token, int, error) {
 
 // exprCommands take their whole argument text unparsed by the shell lexer.
 var exprCommands = map[string]bool{"where": true, "eval": true, "stats": true, "top": true,
-	"rare": true, "table": true, "rex": true, "fieldsummary": true}
+	"rare": true, "table": true, "rex": true, "fieldsummary": true, "timechart": true}
 
 // exprCompares are the expression commands where '>' is a comparison; after the
 // others an unquoted '>' starts a redirection.
