@@ -680,11 +680,26 @@ func parseTop(name string, args []word) (*Spec, error) {
 // ---------------- table ----------------
 
 type tableStage struct {
-	cols []string
+	cols []string // patterns; '*' matches any run of characters
+	wild bool
 	rows [][]string
+	vals []map[string]string // with wildcards: the matching fields of each line
 }
 
 func (s *tableStage) Push(l Line, emit Emit) bool {
+	if s.wild {
+		m := map[string]string{}
+		names := append(l.FieldNames(), "_time")
+		for _, n := range names {
+			if matchFieldPats(s.cols, n) {
+				if v, ok := l.Field(n); ok {
+					m[n] = v
+				}
+			}
+		}
+		s.vals = append(s.vals, m)
+		return true
+	}
 	row := make([]string, len(s.cols))
 	for i, c := range s.cols {
 		row[i], _ = l.Field(c)
@@ -692,24 +707,60 @@ func (s *tableStage) Push(l Line, emit Emit) bool {
 	s.rows = append(s.rows, row)
 	return true
 }
-func (s *tableStage) Snapshot(emit Emit) { makeTable(s.cols, s.rows, emit) }
-func (s *tableStage) Finish(emit Emit)   { makeTable(s.cols, s.rows, emit) }
 
+func (s *tableStage) emitAll(emit Emit) {
+	if !s.wild {
+		makeTable(s.cols, s.rows, emit)
+		return
+	}
+	// columns: per pattern, the matching names in sorted order (_time first)
+	all := map[string]struct{}{}
+	for _, m := range s.vals {
+		for k := range m {
+			all[k] = struct{}{}
+		}
+	}
+	var cols []string
+	seen := map[string]bool{}
+	for _, p := range s.cols {
+		names := sortedKeys(all)
+		if _, ok := all["_time"]; ok {
+			names = append([]string{"_time"}, names...)
+		}
+		for _, n := range names {
+			if !seen[n] && wildMatch(p, n) {
+				seen[n] = true
+				cols = append(cols, n)
+			}
+		}
+	}
+	rows := make([][]string, len(s.vals))
+	for i, m := range s.vals {
+		rows[i] = make([]string, len(cols))
+		for j, c := range cols {
+			rows[i][j] = m[c]
+		}
+	}
+	makeTable(cols, rows, emit)
+}
+
+func (s *tableStage) Snapshot(emit Emit) { s.emitAll(emit) }
+func (s *tableStage) Finish(emit Emit)   { s.emitAll(emit) }
+
+// parseTable parses "table field, ..."; field names may contain '*'.
 func parseTable(args []word) (*Spec, error) {
 	src, pos := rawArg(args)
-	toks, err := lexExpr(src, pos)
-	if err != nil {
-		return nil, err
+	ws := splWords(src, pos)
+	if len(ws) == 0 {
+		return nil, errAt(pos, "table: field name expected")
 	}
-	p := &exprParser{toks: toks}
-	cols, err := parseFieldList(p, "table")
-	if err != nil {
-		return nil, err
+	var cols []string
+	wild := false
+	for _, w := range ws {
+		cols = append(cols, w.s)
+		wild = wild || strings.Contains(w.s, "*")
 	}
-	if p.peek().kind != tEOF {
-		return nil, p.errExpected("field name")
-	}
-	return &Spec{Name: "table", Blocking: true, New: func() Stage { return &tableStage{cols: cols} }}, nil
+	return &Spec{Name: "table", Blocking: true, New: func() Stage { return &tableStage{cols: cols, wild: wild} }}, nil
 }
 
 // ---------------- fieldsummary ----------------
@@ -922,57 +973,6 @@ func (s *fieldSortStage) emitAll(emit Emit) {
 func (s *fieldSortStage) Snapshot(emit Emit) { s.emitAll(emit) }
 func (s *fieldSortStage) Finish(emit Emit)   { s.emitAll(emit) }
 
-var reFieldSortArg = regexp.MustCompile(`^[-+]?[A-Za-z_][\w.]*$`)
-
-// fieldSortArgs reports whether sort's arguments are field terms ("sort -count",
-// "sort 10 -count host") rather than POSIX options.
-func fieldSortArgs(args []word) bool {
-	if len(args) == 0 {
-		return false
-	}
-	for i, a := range args {
-		s := a.s
-		if i == 0 && isAllDigits(s) {
-			continue
-		}
-		if s == "-" || s == "+" {
-			continue
-		}
-		if !reFieldSortArg.MatchString(s) {
-			return false
-		}
-		if strings.HasPrefix(s, "-") && !strings.HasPrefix(s, "--") {
-			// "-rn" is a POSIX flag group; "-count" is a field.
-			if strings.Trim(s[1:], "rnufbsdg") == "" || s[1] == 'k' || s[1] == 't' {
-				return false
-			}
-		}
-	}
-	return true
-}
-
 func isAllDigits(s string) bool {
 	return s != "" && strings.IndexFunc(s, func(r rune) bool { return !unicode.IsDigit(r) }) < 0
-}
-
-func parseFieldSort(args []word) *Spec {
-	s := &fieldSortStage{}
-	desc := false
-	for i, a := range args {
-		v := a.s
-		switch {
-		case i == 0 && isAllDigits(v):
-			s.limit, _ = strconv.Atoi(v)
-		case v == "-":
-			desc = true
-		case v == "+":
-			desc = false
-		default:
-			t := sortTerm{field: strings.TrimLeft(v, "+-"), desc: desc || strings.HasPrefix(v, "-")}
-			s.terms = append(s.terms, t)
-			desc = false
-		}
-	}
-	terms, limit := s.terms, s.limit
-	return &Spec{Name: "sort", Blocking: true, New: func() Stage { return &fieldSortStage{terms: terms, limit: limit} }}
 }

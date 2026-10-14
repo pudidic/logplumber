@@ -9,39 +9,11 @@ import (
 
 // buildSpec parses one command into a Spec and its file operands.
 // first tells whether the command starts the pipeline (and may take file operands).
+// buildSpec parses one shell-mode command into a Spec and its file operands.
+// first tells whether the command starts the pipeline (and may take file operands).
 func buildSpec(cmd rawCmd, first bool) (*Spec, []word, error) {
 	name := cmd.args[0].s
 	args := cmd.args[1:]
-	var s *Spec
-	var err error
-	switch name {
-	case "where":
-		s, err = parseWhere(cmd.args)
-	case "eval":
-		s, err = parseEval(cmd.args)
-	case "rex":
-		s, err = parseRex(cmd.args)
-	case "stats":
-		s, err = parseStats(cmd.args)
-	case "top", "rare":
-		s, err = parseTop(name, cmd.args)
-	case "table":
-		s, err = parseTable(cmd.args)
-	case "fieldsummary":
-		s, err = parseFieldSummary(cmd.args)
-	case "timechart":
-		s, err = parseTimechart(cmd.args)
-	case "search":
-		s, err = parseSearch(args)
-	case "bin", "bucket":
-		s, err = parseBin(name, args)
-	}
-	if s != nil || err != nil {
-		return s, nil, err
-	}
-	if name == "sort" && fieldSortArgs(args) && (!first || strings.HasPrefix(args[len(args)-1].s, "-") || strings.HasPrefix(args[0].s, "-")) {
-		return parseFieldSort(args), nil, nil
-	}
 	switch name {
 	case "grep", "egrep", "fgrep":
 		return parseGrep(name, args)
@@ -63,6 +35,9 @@ func buildSpec(cmd rawCmd, first bool) (*Spec, []word, error) {
 		return parseTr(args)
 	case "sed":
 		return parseSed(args)
+	}
+	if splCommands[name] {
+		return nil, nil, fmt.Errorf("%s is an SPL command — press Tab or type spl for SPL mode", name)
 	}
 	return nil, nil, fmt.Errorf("%s: command not found (see help)", name)
 }

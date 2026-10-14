@@ -32,7 +32,24 @@ type Shell struct {
 	cancel  context.CancelFunc
 	lastSig time.Time
 	jobs    *jobCache
-	store   *store // temporary on-disk index (interactive sessions only)
+	store   *store   // temporary on-disk index (interactive sessions only)
+	lang    langMode // SPL or shell syntax
+}
+
+// langMode is the query language: SPL (Splunk's search language, the default)
+// or POSIX shell pipelines.
+type langMode int
+
+const (
+	langSPL langMode = iota
+	langShell
+)
+
+func (m langMode) String() string {
+	if m == langShell {
+		return "shell"
+	}
+	return "SPL"
 }
 
 func main() {
@@ -41,9 +58,14 @@ func main() {
 	jobs := flag.Int("j", runtime.NumCPU(), "number of worker threads")
 	noLive := flag.Bool("nolive", false, "disable type-ahead results (plain line input)")
 	noIndex := flag.Bool("noindex", false, "don't build a temporary index on disk")
+	shellMode := flag.Bool("sh", false, "start in shell mode (POSIX pipelines) instead of SPL")
+	flag.Bool("spl", true, "start in SPL mode (the default)")
 	flag.Parse()
 
 	sh := &Shell{ui: newUI(), threads: max(1, *jobs)}
+	if *shellMode {
+		sh.lang = langShell
+	}
 	sigc := make(chan os.Signal, 1)
 	signal.Notify(sigc, os.Interrupt)
 	go func() {
@@ -70,7 +92,7 @@ func main() {
 
 	interactive := isTerminal(os.Stdin)
 	if interactive {
-		fmt.Printf("psh %s — parallel file shell (%d threads). Type help for commands. Press Esc to exit.\n", version, sh.threads)
+		fmt.Printf("psh %s — parallel file shell (%d threads, %s mode). Type help for commands. Press Esc to exit.\n", version, sh.threads, sh.lang)
 	}
 	if interactive && !*noIndex {
 		st, err := openStore()
@@ -139,7 +161,22 @@ func (sh *Shell) cwdLabel() string {
 	return filepath.ToSlash(wd)
 }
 
-func (sh *Shell) promptPlain() string { return "psh " + sh.cwdLabel() + "> " }
+// modeName is the prompt label of the current mode.
+func (sh *Shell) modeName() string {
+	if sh.lang == langShell {
+		return "psh"
+	}
+	return "spl"
+}
+
+func (sh *Shell) modeColor() string {
+	if sh.lang == langShell {
+		return "\x1b[32m"
+	}
+	return "\x1b[35m"
+}
+
+func (sh *Shell) promptPlain() string { return sh.modeName() + " " + sh.cwdLabel() + "> " }
 
 // livePrompt returns a prompt that leaves at least half of a w-column line for input
 // (a wrapped input line would break the in-place redraw) and its display width.
@@ -149,19 +186,29 @@ func (sh *Shell) livePrompt(w int) (string, int) {
 		label = "…/" + filepath.Base(filepath.FromSlash(label))
 	}
 	if 4+strWidth([]rune(label))+2 > w/2 {
-		return "\x1b[32mpsh\x1b[0m> ", 5
+		return sh.modeColor() + sh.modeName() + "\x1b[0m> ", 5
 	}
-	return "\x1b[32mpsh\x1b[0m \x1b[34m" + label + "\x1b[0m> ", 4 + strWidth([]rune(label)) + 2
+	return sh.modeColor() + sh.modeName() + "\x1b[0m \x1b[34m" + label + "\x1b[0m> ", 4 + strWidth([]rune(label)) + 2
 }
 
 func (sh *Shell) prompt() string {
 	if sh.ui.active {
-		return "\x1b[32mpsh\x1b[0m \x1b[34m" + sh.cwdLabel() + "\x1b[0m> "
+		return sh.modeColor() + sh.modeName() + "\x1b[0m \x1b[34m" + sh.cwdLabel() + "\x1b[0m> "
 	}
 	return sh.promptPlain()
 }
 
 func (sh *Shell) runLine(line string) error {
+	if strings.TrimSpace(line) == "" {
+		return nil
+	}
+	if sh.lang == langSPL && !isBuiltinLine(line) {
+		ast, err := splParse(line)
+		if err != nil {
+			return err
+		}
+		return sh.runAST(ast)
+	}
 	toks, err := lex(line)
 	if err != nil {
 		return err
@@ -179,26 +226,42 @@ func (sh *Shell) runLine(line string) error {
 				continue
 			}
 		}
-		ctx, cancel := context.WithCancel(context.Background())
-		sh.mu.Lock()
-		sh.cancel = cancel
-		sh.mu.Unlock()
-		err = sh.runPipeline(ctx, ast, sh.ui, false)
-		sh.mu.Lock()
-		sh.cancel = nil
-		sh.mu.Unlock()
-		cancel()
-		if err != nil {
+		if err := sh.runAST(ast); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
+// runAST runs one pipeline in the foreground; Ctrl+C cancels it.
+func (sh *Shell) runAST(ast *pipelineAST) error {
+	ctx, cancel := context.WithCancel(context.Background())
+	sh.mu.Lock()
+	sh.cancel = cancel
+	sh.mu.Unlock()
+	err := sh.runPipeline(ctx, ast, sh.ui, false)
+	sh.mu.Lock()
+	sh.cancel = nil
+	sh.mu.Unlock()
+	cancel()
+	return err
+}
+
 func (sh *Shell) builtin(args []word) (bool, error) {
 	switch args[0].s {
 	case "exit", "quit":
 		return true, errExit
+	case "spl", "sh":
+		if len(args) > 1 {
+			return true, fmt.Errorf("%s: switches the query language and takes no arguments", args[0].s)
+		}
+		sh.lang = langSPL
+		if args[0].s == "sh" {
+			sh.lang = langShell
+		}
+		sh.dropJobCache()
+		fmt.Printf("%s mode\n", sh.lang)
+		return true, nil
 	case "cd":
 		dir := ""
 		if len(args) > 1 {
@@ -302,81 +365,67 @@ func (k *scriptedKeys) Read(p []byte) (int, error) {
 
 const helpText = `psh — parallel file shell
 
-Input:  When the first command has no file operands, every file in the current
-        directory and all subdirectories is read. Archives (tar, tar.gz/tgz,
-        tar.bz2, zip/jar, gz, bz2 — nested too) are unpacked on the fly; their
-        members are shown as "archive::member/path". Binary files are skipped.
-        A glob without a path separator (e.g. *.log) matches file names in all
-        subdirectories and inside archives. Quote it to disable globbing.
+psh reads every file below the current directory, including members of
+archives (tar, tar.gz/tgz, tar.bz2, zip/jar, gz, bz2 — nested too), in
+parallel. It has two query languages; Tab (or the built-ins spl and sh)
+switches between them. The prompt shows the mode: spl> or psh>.
 
-Pipeline:  cmd | cmd | ...   [> file | >> file]   separate commands with ;
-
-Commands:
-  grep [-ivcnolLhHFwxE] [-e pattern] pattern [file...]   (BRE unless -E)
-  sort [-rnufs] [-k N[,M]] [-t sep]
-  uniq [-cdui]
-  wc   [-lwcm]               per file + total when used as the first command
-  head [-n N | -N]           tail [-n N | -n +N]
-  cut  -f list [-d delim] [-s] | -c list
-  tr   [-ds] set1 [set2]     ([:upper:] [:lower:] [:digit:] a-z ranges)
-  sed  [-nE] 's/re/repl/[gip]' | '/re/d' | '/re/p'
-  cat  [-n] [file...]
-  find [path...] [-name glob] [-iname glob] [-type f|d]   lists archive members too
-  ls   [-la] [dir]           echo text
-
-Field commands (work on extracted fields; JSON and key=value lines are parsed
-automatically, nested JSON keys are joined with dots, e.g. req.path):
-  rex [field=F] "regex with (?<name>...) groups"
-  where <condition>          e.g. where status >= 500 and req.path like "/api/%"
-  eval name = <expr>[, ...]  e.g. eval sec = round(ms / 1000, 1)
-  stats agg[(field)] [as name], ... [by field, ...]
-        aggs: count dc sum avg min max median p50..p99 values first last
-        rows are ordered by the first aggregation, largest first
-  top [N] [limit=N] field... [by field...]     rare ... (least common)
-  table field...             fieldsummary (fields, coverage, distinct, top values)
-  sort [N] -field +field     (field form; POSIX flags such as sort -rn still work)
-  head N                     same as head -n N
-
-Time (every line gets _time from its first timestamp: ISO 8601, Apache/nginx
-[14/Oct/2026:09:00:00 +0900], syslog "Oct 14 09:00:46", ctime, or an epoch
-time/ts/timestamp field; zoneless times are local):
-  search earliest=-24h [latest=now]   keep events in [earliest, latest)
-        times: now, -15m, -24h, -7d@d, @h, @d+9h, @w1, 2026-10-14T09:00:00, epoch
-  bin [field] span=5m [as name]       round _time down (numeric field: span=100)
-  timechart [span=5m] agg[(field)], ... [by field] [limit=N]
-        one row per time bucket, empty buckets filled, plus a bar chart;
-        span is picked automatically when omitted; extra series go to OTHER
-  sort -_time                         newest first
-  Built-in fields: _raw _src _line _time. Missing fields are null; comparisons with
-  null are false. Operators: = == != < <= > >= + - * / %  and or not  in (..)  like
+SPL mode (default) — Splunk's Search Processing Language
+  The first part of a query is a search; commands follow after '|'.
+    error status>=500 | stats count by req.path | sort -count
+  Search:  error  "db timeout"  fail*  field=value  field!=v  field>=n  field=*
+           level IN (warn, error)  NOT x  x OR y  (x y)   (OR binds tighter than AND)
+           earliest=-24h latest=now   source=*.jsonl (files to read)   index= is ignored
+  Commands:
+    search <terms>             where <expr>          eval name = <expr>, ...
+    rex [field=F] "(?<name>re)"                      regex [field=|field!=]"re"
+    stats agg[(f)] [as n], ... [by f, ...]           top|rare [N] f... [by f...]
+    timechart [span=5m] [limit=N] agg[(f)], ... [by f]   (with a bar chart)
+    bin [f] span=5m [as name]  table f, f*           fields [+|-] f, f*
+    rename f AS g, ...         dedup [N] f... [consecutive=true] [keepempty=true]
+    sort [N] [-|+]f, ...       head N   tail N       reverse
+    fieldsummary               outputcsv file
+    aggs: count dc sum avg min max median p50..p99 values first last
+  Events come newest first. Fields: JSON and key=value are extracted
+  automatically (nested JSON keys joined with dots: req.path); built-ins are
+  _raw _src _line _time. In where/eval, "..." is a string and '...' a field.
   Functions: if case coalesce isnull isnotnull isnum len lower upper trim substr
              round floor ceil abs tonumber tostring match like replace min max
              now time relative_time(t, "-1d@d") strftime(t, "%F %T") strptime(s, fmt)
-  Expression commands take no file operands: use  cat file | where ...
-  '>' inside where/eval is a comparison; redirect after stats/top/table works.
+  Time: _time is the first timestamp of a line (ISO 8601, Apache/nginx
+  [14/Oct/2026:09:00:00 +0900], syslog "Oct 14 09:00:46", ctime, or an epoch
+  time/ts/timestamp field); zoneless times are local. Time values: now, -15m,
+  -24h, -7d@d, @h, @d+9h, @w1, 2026-10-14T09:00:00, epoch seconds.
 
-Built-ins: cd, pwd, threads [N], clear, help, version, exit
+Shell mode — POSIX pipelines
+  grep [-ivcnolLhHFwxE] [-e pattern] pattern [file...]   (BRE unless -E)
+  sort [-rnufs] [-k N[,M]] [-t sep]     uniq [-cdui]
+  wc   [-lwcm]               per file + total when used as the first command
+  head [-n N | -N]           tail [-n N | -n +N]
+  cut  -f list [-d delim] [-s] | -c list
+  tr   [-ds] set1 [set2]     sed [-nE] 's/re/repl/[gip]' | '/re/d' | '/re/p'
+  cat  [-n] [file...]        find [path...] [-name glob] [-iname glob] [-type f|d]
+  ls   [-la] [dir]           echo text
+  cmd | cmd ...  [> file | >> file]   separate commands with ;
+  Without file operands the first command reads every file. A glob without a
+  path separator (*.log) matches file names in all subdirectories and archives.
+
+Built-ins (both modes): spl, sh, cd, pwd, threads [N], clear, help, version, exit
 
 Type-ahead: results are recomputed on every keystroke and shown below the
   prompt. An empty line shows the latest events (newest first). If the last
-  part of a pipeline is incomplete or invalid it is
-  underlined in red and only the complete commands before it are run.
-  Enter runs the line with full output, Up/Down browse history,
-  Ctrl+U clears the line, Ctrl+C stops a run, Esc exits psh.
+  part of a query is incomplete or invalid it is underlined in red and only
+  the complete commands before it are run. Tab switches SPL/shell, Enter runs
+  the line with full output, Up/Down browse results or history, Ctrl+U clears
+  the line, Ctrl+C stops a run, Esc exits psh.
 
-Live progress: the status line shows percent done, throughput and line counts.
-  Commands that need all input (sort, wc, tail) show a live preview while
-  reading. Ctrl+C interrupts a running pipeline.
-
-Examples:
+Examples (SPL):
+  error | stats count by _src
+  source=app/app.jsonl level=error | timechart span=5m count by msg
+  "Failed password" | rex "from (?<ip>\S+) port" | top ip
+  source=app.jsonl | stats count, avg(ms), p95(ms) by req.path | sort -count
+  source=app.jsonl level=error | table _time service msg | outputcsv errors
+Examples (shell):
   grep -i error | wc -l
-  grep -ohE '[A-Za-z_]+' *.go | sort | uniq -c | sort -rn | head
   cat *.log | cut -d' ' -f1 | sort | uniq -c | sort -rn > top.txt
-  find -name '*.txt' | wc -l
-  where level = "error" | top 10 msg
-  where status >= 500 | stats count, avg(ms), p95(ms) by req.path
-  cat access.log | rex "\" (?<status>\d{3}) (?<bytes>\d+)" | stats sum(bytes) by status
-  fieldsummary
-  search earliest=-1h | timechart span=1m count by level
-  where status >= 500 | timechart count by req.path limit=5
 `

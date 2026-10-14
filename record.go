@@ -21,6 +21,25 @@ type Record struct {
 	header *tableHeader // column header shared by the rows of one table
 	tm     int64        // _time in Unix milliseconds, valid when tState == 1
 	tState uint8        // 0 not looked for yet, 1 found, 2 none
+	order  []string     // names set by SetField, in order (new table columns)
+
+	// fields and rename (SPL)
+	filtered bool
+	keep     []string          // "fields a, b*": only these (and _internal) fields; nil = all
+	drop     []string          // "fields - a": patterns of removed fields
+	hidden   map[string]bool   // renamed away
+	renamed  map[string]string // old name -> new name
+}
+
+// visible reports whether fields/rename leave a field in place.
+func (r *Record) visible(name string) bool {
+	if !r.filtered {
+		return true
+	}
+	if r.hidden[name] || matchFieldPats(r.drop, name) {
+		return false
+	}
+	return r.keep == nil || strings.HasPrefix(name, "_") || matchFieldPats(r.keep, name)
 }
 
 type tableHeader struct {
@@ -51,6 +70,9 @@ func (l *Line) Field(name string) (string, bool) {
 	if l.Rec != nil {
 		if v, ok := l.Rec.set[name]; ok {
 			return v, true
+		}
+		if !l.Rec.visible(name) {
+			return "", false
 		}
 	}
 	switch name {
@@ -84,7 +106,13 @@ func (l *Line) SetField(name, v string) {
 	if r.set == nil {
 		r.set = map[string]string{}
 	}
+	if _, ok := r.set[name]; !ok {
+		r.order = append(r.order, name)
+	}
 	r.set[name] = v
+	if r.hidden[name] {
+		delete(r.hidden, name)
+	}
 }
 
 // FieldNames lists all non-internal fields of the line.
@@ -93,7 +121,7 @@ func (l *Line) FieldNames() []string {
 	r := l.Rec
 	names := make([]string, 0, len(r.set)+len(r.auto))
 	for k := range r.auto {
-		if _, dup := r.set[k]; !dup {
+		if _, dup := r.set[k]; !dup && r.visible(k) {
 			names = append(names, k)
 		}
 	}

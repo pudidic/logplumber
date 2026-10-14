@@ -21,7 +21,7 @@ import (
 const liveDebounce = 40 * time.Millisecond
 
 const (
-	liveHint   = " Esc: exit psh │ Enter: run with full output │ ↑/↓: browse results │ Ctrl+P/N: history "
+	liveHint   = " Esc: exit psh │ Tab: SPL/shell │ Enter: run with full output │ ↑/↓: browse results │ Ctrl+P/N: history "
 	listHint   = " ↑/↓ PgUp/PgDn: move │ Enter: details │ Esc: back to input │ type to edit "
 	detailHint = " ↑/↓: previous/next result │ PgUp/PgDn: scroll │ Esc/Enter: back to list "
 )
@@ -51,6 +51,7 @@ const (
 	kPgDn
 	kHistPrev // Ctrl+P
 	kHistNext // Ctrl+N
+	kTab      // switch between SPL and shell mode
 )
 
 type keyEvent struct {
@@ -127,7 +128,7 @@ func parseKeys(b []byte) ([]keyEvent, []byte) {
 			if kind, ok := k[c]; ok {
 				ev = append(ev, keyEvent{kind: kind})
 			} else if c == '\t' {
-				ev = append(ev, keyEvent{kind: kRune, r: ' '})
+				ev = append(ev, keyEvent{kind: kTab})
 			}
 			b = b[1:]
 		default:
@@ -395,6 +396,14 @@ func (e *liveEditor) handle(k keyEvent) (edited, quit, enter bool) {
 		e.mu.Lock()
 		e.drawnRows, e.dirty = 0, true
 		e.mu.Unlock()
+	case kTab:
+		if e.sh.lang == langSPL {
+			e.sh.lang = langShell
+		} else {
+			e.sh.lang = langSPL
+		}
+		e.sh.dropJobCache()
+		return true, false, false
 	case kEsc, kEOF:
 		return false, true, false
 	case kEnter:
@@ -432,7 +441,7 @@ func (e *liveEditor) resetResults(status string) int {
 	return e.gen
 }
 
-var builtinNames = map[string]bool{"exit": true, "quit": true, "cd": true, "pwd": true, "threads": true,
+var builtinNames = map[string]bool{"exit": true, "quit": true, "spl": true, "sh": true, "cd": true, "pwd": true, "threads": true,
 	"jobs": true, "clear": true, "cls": true, "help": true, "?": true, "version": true, "index": true}
 
 // analysis is the type-ahead view of the current line: the longest runnable prefix
@@ -445,30 +454,37 @@ type analysis struct {
 	latest  bool // the line is empty: ast shows the latest events
 }
 
-// latestQuery is previewed while the command line is empty: the newest events first.
-const latestQuery = "where isnotnull(_time) | sort 1000 -_time"
+// latestQuery (SPL) is previewed while the command line is empty: the newest
+// events first.
+const latestQuery = "_time=*"
+
+// isBuiltinLine reports whether line is a single built-in command (cd, help, ...),
+// which works the same in both modes.
+func isBuiltinLine(line string) bool {
+	toks, err := lex(line)
+	if err != nil || len(toks) == 0 || toks[0].op != "" || !builtinNames[toks[0].s] {
+		return false
+	}
+	for _, t := range toks {
+		if t.op != "" {
+			return false
+		}
+	}
+	return true
+}
 
 func (sh *Shell) analyze(line string) analysis {
 	a := analysis{badFrom: -1}
 	if strings.TrimSpace(line) == "" {
-		if toks, err := lex(latestQuery); err == nil {
-			if ast, err := parsePipeline(toks); err == nil {
-				a.ast, a.latest = ast, true
-				a.note = "latest events — type a command to search"
-			}
+		if ast, err := splParse(latestQuery); err == nil {
+			a.ast, a.latest = ast, true
+			a.note = "latest events — type a query to search"
 		}
 		return a
 	}
-	toks, errPos, lexErr := lexPos(line)
-	for _, t := range toks {
-		switch t.op {
-		case ";":
-			a.note = "several commands (;) are not previewed — press Enter to run"
-			return a
-		case ">", ">>":
-			a.note = "redirection is not previewed — press Enter to run"
-			return a
-		}
+	if isBuiltinLine(line) {
+		a.note = "built-in command — press Enter to run"
+		return a
 	}
 	type seg struct {
 		cmd   rawCmd
@@ -476,39 +492,59 @@ func (sh *Shell) analyze(line string) analysis {
 		err   error
 	}
 	var segs []seg
-	cur := seg{start: -1}
-	for _, t := range toks {
-		if t.op == "|" {
-			if len(cur.cmd.args) == 0 {
-				cur.start, cur.err = t.pos, errors.New("missing command before '|'")
+	spl := sh.lang == langSPL
+	notPreviewed := ""
+	if spl {
+		for _, s := range splitSPL(line) {
+			if s.err == nil && s.cmd.args[0].s == "outputcsv" {
+				notPreviewed = "outputcsv is not previewed — press Enter to run"
+				break
 			}
+			segs = append(segs, seg{cmd: s.cmd, start: s.start, err: s.err})
+		}
+	} else {
+		toks, errPos, lexErr := lexPos(line)
+		for _, t := range toks {
+			switch t.op {
+			case ";":
+				a.note = "several commands (;) are not previewed — press Enter to run"
+				return a
+			case ">", ">>":
+				a.note = "redirection is not previewed — press Enter to run"
+				return a
+			}
+		}
+		cur := seg{start: -1}
+		for _, t := range toks {
+			if t.op == "|" {
+				if len(cur.cmd.args) == 0 {
+					cur.start, cur.err = t.pos, errors.New("missing command before '|'")
+				}
+				segs = append(segs, cur)
+				cur = seg{start: -1}
+				continue
+			}
+			if cur.start < 0 {
+				cur.start = t.pos
+			}
+			cur.cmd.args = append(cur.cmd.args, word{s: t.s, quoted: t.quoted, pos: t.pos})
+		}
+		switch {
+		case lexErr != nil:
+			if cur.start < 0 {
+				cur.start = errPos
+			}
+			cur.err = lexErr
 			segs = append(segs, cur)
-			cur = seg{start: -1}
-			continue
+		case len(cur.cmd.args) > 0:
+			segs = append(segs, cur)
+		case len(segs) > 0: // trailing '|'
+			last := toks[len(toks)-1]
+			segs = append(segs, seg{start: last.pos, err: errors.New("command expected after '|'")})
 		}
-		if cur.start < 0 {
-			cur.start = t.pos
-		}
-		cur.cmd.args = append(cur.cmd.args, word{s: t.s, quoted: t.quoted, raw: t.raw, pos: t.pos})
-	}
-	switch {
-	case lexErr != nil:
-		if cur.start < 0 || len(cur.cmd.args) > 0 && exprCommands[cur.cmd.args[0].s] {
-			cur.start = errPos // inside an expression: underline from the open quote
-		}
-		cur.err = lexErr
-		segs = append(segs, cur)
-	case len(cur.cmd.args) > 0:
-		segs = append(segs, cur)
-	case len(segs) > 0: // trailing '|'
-		last := toks[len(toks)-1]
-		segs = append(segs, seg{start: last.pos, err: errors.New("command expected after '|'")})
 	}
 	if len(segs) == 0 {
-		return a
-	}
-	if len(segs) == 1 && segs[0].err == nil && builtinNames[segs[0].cmd.args[0].s] {
-		a.note = "built-in command — press Enter to run"
+		a.note = notPreviewed
 		return a
 	}
 	valid := 0
@@ -516,7 +552,7 @@ func (sh *Shell) analyze(line string) analysis {
 	for _, s := range segs {
 		err := s.err
 		if err == nil {
-			_, err = sh.plan(&pipelineAST{cmds: append(cmds, s.cmd)}, nil)
+			_, err = sh.plan(&pipelineAST{cmds: append(cmds, s.cmd), spl: spl}, nil)
 		}
 		if err != nil {
 			a.badFrom, a.noteErr = s.start, true
@@ -531,9 +567,18 @@ func (sh *Shell) analyze(line string) analysis {
 		valid++
 	}
 	if valid > 0 {
-		a.ast = &pipelineAST{cmds: cmds}
+		a.ast = &pipelineAST{cmds: cmds, spl: spl}
 		if a.badFrom >= 0 {
 			a.note += fmt.Sprintf(" — showing results of the first %d command(s)", valid)
+		}
+	}
+	if a.note == "" {
+		a.note = notPreviewed
+	}
+	if a.note == "" && spl {
+		// "stats count" as a whole query searches for the words "stats" and "count"
+		if f := strings.Fields(line); splCommands[f[0]] && f[0] != "search" {
+			a.note = fmt.Sprintf("searching for the word %q — start with * | %s ... to use the command on all events", f[0], f[0])
 		}
 	}
 	return a
