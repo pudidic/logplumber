@@ -60,6 +60,7 @@ operators follow Splunk: `"..."` is a string, `'...'` is a field name inside
 | `level IN (warn, error)` | any of the values |
 | `NOT a`, `a OR b`, `a AND b`, `(a b)` | uppercase operators; terms side by side mean AND; as in Splunk, OR binds tighter than AND |
 | `earliest=-24h latest=now` | time range `[earliest, latest)` |
+| `earliest=rt`, `earliest=rt-5m latest=rt` | real-time: follow the files (see below) |
 | `source=*.jsonl` `source=app/app.log` | files to read: a name matches in all subdirectories and archives |
 | `index=main` | accepted and ignored (psh has no indexes) |
 
@@ -99,7 +100,7 @@ this out.
   that make their own order (`stats`, `sort`, `timechart`, …) skip the sort.
 - Aggregations: `count`, `dc`, `sum`, `avg`, `min`, `max`, `median`, `p50`…`p99`,
   `values`, `first`, `last`. `stats` rows are ordered by the first aggregation,
-  largest first.
+  largest first. Without `by`, `stats` gives one row even for no events (`count 0`).
 - Expression operators: `= == != < <= > >= + - * / %`, `and or not`, `in (...)`,
   `like` (`%` and `_` wildcards). Functions: `if case coalesce isnull isnotnull
   isnum len lower upper trim substr round floor ceil abs tonumber tostring match
@@ -111,6 +112,29 @@ this out.
   `rename` or `fields` them; the table is redrawn with the new columns.
 - `stats`, `top` and `timechart` pre-aggregate in every worker thread and merge
   the partial results, and they update a live preview while reading.
+
+## Real-time
+
+psh can keep following the files and show what is written to them, like
+`tail -f` and Splunk's real-time searches.
+
+| Query | Shows |
+|---|---|
+| `earliest=rt level=error` | new matching events as they are written |
+| `earliest=rt-5m latest=rt \| stats count by status` | the last 5 minutes first, then a sliding 5-minute window: events older than 5 minutes drop out of the counts |
+| `earliest=rt-1m latest=rt \| timechart span=5s count by level` | a chart of the last minute that moves along |
+| `tail -f [-n N] [file...]` (shell mode) | the last N lines (default 10) of each file, then new lines: `tail -f app.log \| grep -i error` |
+
+- Events print as they arrive; tables (`stats`, `timechart`, `top`, …) are
+  redrawn in place. The status line shows the files followed and the new lines.
+- **Ctrl+C stops following** and prints the final results. In type-ahead mode
+  the preview follows while you look at it; typing starts a new query.
+- psh checks the files four times a second. Files that appear later are read
+  from the beginning (also files named on `tail -f` that do not exist yet), and
+  a file that becomes shorter (truncated or rotated) is read again from the
+  start. Archives are not followed. psh never follows the file its own output
+  is redirected to.
+- `earliest=rt` and `latest=rt` go at the top level of the first search.
 
 ## Sourcetypes and `.psh.conf`
 
@@ -178,8 +202,8 @@ arguments are written `$name$` in the definition; macros may use other macros.
 
 ## Shell mode
 
-POSIX text tools: `grep`, `sort`, `uniq`, `wc`, `head`, `tail`, `cat`, `cut`,
-`tr`, `sed`, `find`, `ls`, `echo`, with `|`, `;`, `> file` and `>> file`. Without
+POSIX text tools: `grep`, `sort`, `uniq`, `wc`, `head`, `tail` (also `tail -f`),
+`cat`, `cut`, `tr`, `sed`, `find`, `ls`, `echo`, with `|`, `;`, `> file` and `>> file`. Without
 file operands the first command reads every file. A glob without a path separator
 (`*.log`) matches file names in all subdirectories and inside archives. SPL
 commands are not available here (and shell commands not in SPL mode); the error
@@ -264,6 +288,7 @@ appears at start-up and again whenever the line is cleared.
 | `timeutil.go` | Timestamp detection, spans and bucketing, relative times, strftime/strptime |
 | `timecmds.go` | bin, timechart (on the stats engine, bar charts) |
 | `source.go` | File discovery, archive decoding (tar/gz/bz2/zip, nested), worker threads, progress counters |
+| `follow.go` | Real-time: following files (appends, new files, truncation), `tail -f`, sliding window |
 | `run.go` | Execution engine: parallel/serial split, live previews, status line, file-list cache |
 | `ui.go`, `term_*.go` | ANSI live-region rendering, OS-specific terminal handling |
 

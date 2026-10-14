@@ -455,6 +455,9 @@ func (s *statsStage) emitRows(emit Emit) {
 	for _, a := range c.aggs {
 		cols = append(cols, a.name)
 	}
+	if len(groups) == 0 && len(c.by) == 0 { // no events: one row, as in Splunk ("count 0")
+		groups = []*group{{vals: make([]aggVal, len(c.aggs))}}
+	}
 	rows := make([][]string, len(groups))
 	for i, g := range groups {
 		row := append([]string(nil), g.keys...)

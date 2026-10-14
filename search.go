@@ -291,6 +291,9 @@ type searchParser struct {
 	depth   int      // inside parentheses, NOT or OR
 	// selectFiles: top-level source= terms choose the files to read (first search only)
 	selectFiles bool
+	rt          *followCfg // earliest=rt...: a real-time search
+	rtLatest    bool       // latest=rt
+	latestSet   bool       // latest= with a time
 }
 
 func (p *searchParser) peek() *stok {
@@ -320,13 +323,21 @@ func (p *searchParser) errHere(format string, a ...any) error {
 // parseSearchText parses the text of a search into a matcher. It also returns the
 // source= patterns that select the files to read.
 func parseSearchText(src string, base int, selectFiles bool) (snode, []string, error) {
+	n, p, err := parseSearch(src, base, selectFiles)
+	if err != nil {
+		return nil, nil, err
+	}
+	return n, p.sources, nil
+}
+
+func parseSearch(src string, base int, selectFiles bool) (snode, *searchParser, error) {
 	toks, err := lexSearch(src, base)
 	if err != nil {
 		return nil, nil, err
 	}
 	p := &searchParser{toks: toks, end: base + len([]rune(src)), now: time.Now(), selectFiles: selectFiles}
 	if len(toks) == 0 {
-		return sAll{}, nil, nil
+		return sAll{}, p, nil
 	}
 	n, err := p.parseAnd()
 	if err != nil {
@@ -335,7 +346,13 @@ func parseSearchText(src string, base int, selectFiles bool) (snode, []string, e
 	if t := p.peek(); t != nil {
 		return nil, nil, errAt(t.pos, "unexpected %q", t.s)
 	}
-	return n, p.sources, nil
+	switch {
+	case p.rtLatest && p.rt == nil:
+		return nil, nil, errAt(base, "latest=rt needs earliest=rt or earliest=rt-<span>, e.g. earliest=rt-5m latest=rt")
+	case p.rt != nil && p.latestSet:
+		return nil, nil, errAt(base, "a real-time search (earliest=rt) takes latest=rt or no latest")
+	}
+	return n, p, nil
 }
 
 func (p *searchParser) parseAnd() (snode, error) {
@@ -521,6 +538,12 @@ func (p *searchParser) comparison(f *stok, op string, v *stok) (snode, error) {
 		if op != "=" {
 			return nil, errAt(f.pos, "%s takes '=', e.g. %s=-24h", f.s, f.s)
 		}
+		if low := strings.ToLower(v.s); strings.HasPrefix(low, "rt") {
+			return p.realtime(f, v, low)
+		}
+		if strings.EqualFold(f.s, "latest") {
+			p.latestSet = true
+		}
 		tm, err := parseTimeSpec(v.s, p.now)
 		if err != nil {
 			return nil, errAt(v.pos, "%v", err)
@@ -547,6 +570,30 @@ func (p *searchParser) comparison(f *stok, op string, v *stok) (snode, error) {
 	return newCmp(f.s, op, v.s), nil
 }
 
+// realtime handles earliest=rt, earliest=rt-<span> and latest=rt.
+func (p *searchParser) realtime(f, v *stok, low string) (snode, error) {
+	if !p.selectFiles || p.depth > 0 {
+		return nil, errAt(v.pos, "real-time (rt) only works at the top level of the first search")
+	}
+	if strings.EqualFold(f.s, "latest") {
+		if low != "rt" {
+			return nil, errAt(v.pos, "use latest=rt in a real-time search")
+		}
+		p.rtLatest = true
+		return nil, nil
+	}
+	p.rt = &followCfg{}
+	if low == "rt" {
+		return nil, nil // only new events
+	}
+	t, err := parseTimeSpec(v.s[2:], p.now)
+	if err != nil || !strings.HasPrefix(low, "rt-") || !t.Before(p.now) {
+		return nil, errAt(v.pos, "real-time window expected, e.g. earliest=rt-5m")
+	}
+	p.rt.window, p.rt.backfill = p.now.Sub(t), true
+	return sTime{r: timeRange{earliest: t.UnixMilli(), hasE: true}}, nil // the backfill
+}
+
 // ---------------- search command ----------------
 
 type searchStage struct{ n snode }
@@ -571,12 +618,13 @@ func (r timeRange) contains(ms int64) bool {
 // parseSearchCmd parses the text of a search. sources are the source= patterns
 // that select files; they only apply to the first search of a query.
 func parseSearchCmd(src string, pos int, first bool) (*Spec, []string, error) {
-	n, sources, err := parseSearchText(src, pos, first)
+	n, p, err := parseSearch(src, pos, first)
 	if err != nil {
 		return nil, nil, err
 	}
+	s := &Spec{Name: "search", Parallel: true, rt: p.rt, New: func() Stage { return searchStage{n: n} }}
 	if _, all := n.(sAll); all || n == nil {
-		return &Spec{Name: "search", Parallel: true, New: func() Stage { return passStage{} }}, sources, nil
+		s.New = func() Stage { return passStage{} }
 	}
-	return &Spec{Name: "search", Parallel: true, New: func() Stage { return searchStage{n: n} }}, sources, nil
+	return s, p.sources, nil
 }

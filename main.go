@@ -396,6 +396,7 @@ SPL mode (default) — Splunk's Search Processing Language
   Search:  error  "db timeout"  fail*  field=value  field!=v  field>=n  field=*
            level IN (warn, error)  NOT x  x OR y  (x y)   (OR binds tighter than AND)
            earliest=-24h latest=now   source=*.jsonl (files to read)   index= is ignored
+           earliest=rt (follow new events)   earliest=rt-5m latest=rt (sliding window)
   Commands:
     search <terms>             where <expr>          eval name = <expr>, ...
     rex [field=F] "(?<name>re)"                      regex [field=|field!=]"re"
@@ -421,7 +422,7 @@ Shell mode — POSIX pipelines
   grep [-ivcnolLhHFwxE] [-e pattern] pattern [file...]   (BRE unless -E)
   sort [-rnufs] [-k N[,M]] [-t sep]     uniq [-cdui]
   wc   [-lwcm]               per file + total when used as the first command
-  head [-n N | -N]           tail [-n N | -n +N]
+  head [-n N | -N]           tail [-n N | -n +N]   tail -f [-n N] [file...] (follow)
   cut  -f list [-d delim] [-s] | -c list
   tr   [-ds] set1 [set2]     sed [-nE] 's/re/repl/[gip]' | '/re/d' | '/re/p'
   cat  [-n] [file...]        find [path...] [-name glob] [-iname glob] [-type f|d]
@@ -441,6 +442,10 @@ Sourcetypes: fields are extracted by the sourcetype of each line, detected
 Built-ins (both modes): spl, sh, config [reload], cd, pwd, threads [N], clear,
   help, version, exit
 
+Real-time: earliest=rt... (SPL) and tail -f (shell) keep reading what is
+  written to the files; new files are picked up and truncated files reread.
+  Tables are redrawn in place. Ctrl+C stops following and shows the results.
+
 Type-ahead: results are recomputed on every keystroke and shown below the
   prompt. An empty line shows the latest events (newest first). If the last
   part of a query is incomplete or invalid it is underlined in red and only
@@ -454,7 +459,9 @@ Examples (SPL):
   "Failed password" | rex "from (?<ip>\S+) port" | top ip
   source=app.jsonl | stats count, avg(ms), p95(ms) by req.path | sort -count
   source=app.jsonl level=error | table _time service msg | outputcsv errors
+  earliest=rt-5m latest=rt | timechart span=10s count by sourcetype
 Examples (shell):
   grep -i error | wc -l
   cat *.log | cut -d' ' -f1 | sort | uniq -c | sort -rn > top.txt
+  tail -f *.log | grep -i error
 `

@@ -169,7 +169,7 @@ func parseHeadTail(name string, args []word) (*Spec, []word, error) {
 			norm = append(norm, a)
 		}
 	}
-	p, err := getopt(name, norm, "", "n", map[string]string{"lines": "n"})
+	p, err := getopt(name, norm, "fF", "n", map[string]string{"lines": "n", "follow": "f"})
 	if err != nil {
 		return nil, nil, err
 	}
@@ -186,7 +186,16 @@ func parseHeadTail(name string, args []word) (*Spec, []word, error) {
 		return nil, nil, fmt.Errorf("%s: invalid line count: %q", name, nStr)
 	}
 	if name == "head" {
+		if p.has('f') || p.has('F') {
+			return nil, nil, fmt.Errorf("head: unknown option -f")
+		}
 		return &Spec{Name: "head", New: func() Stage { return &headStage{n: n} }}, p.ops, nil
+	}
+	if p.has('f') || p.has('F') { // follow: the source sends the last n lines, then new ones
+		if from {
+			return nil, nil, fmt.Errorf("tail: -f with -n +N is not supported")
+		}
+		return &Spec{Name: "tail", rt: &followCfg{tailN: n, shell: true}, New: func() Stage { return passStage{} }}, p.ops, nil
 	}
 	if from {
 		return &Spec{Name: "tail", New: func() Stage { return &tailFromStage{from: n} }}, p.ops, nil
