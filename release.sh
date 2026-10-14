@@ -13,7 +13,7 @@ for target in linux/amd64 linux/arm64 darwin/amd64 darwin/arm64 windows/amd64 wi
 	[ "$os" = windows ] && exe=plumb.exe
 	mkdir -p "dist/$name"
 	CGO_ENABLED=0 GOOS=$os GOARCH=$arch go build -trimpath \
-		-ldflags "-s -w -X main.version=$ver" -o "dist/$name/$exe" .
+		-ldflags "-s -w -X main.version=$ver" -o "dist/$name/$exe" ./cmd/plumb
 	cp README.md "dist/$name/"
 	if [ "$os" = windows ]; then
 		(cd dist && zip -qr "$name.zip" "$name")
