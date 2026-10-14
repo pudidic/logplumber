@@ -124,3 +124,29 @@ func TestColorModes(t *testing.T) {
 		t.Errorf("never, live screen: %q", got)
 	}
 }
+
+func TestColumnHint(t *testing.T) {
+	grep := func(flags string) *Spec {
+		toks, _ := lex("grep " + flags + " x")
+		ast, _ := parsePipeline(toks)
+		s, _, _ := buildSpec(ast.cmds[0], true)
+		return s
+	}
+	jobs := []job{{disp: "a.log", path: "a.log", size: 5000}, {disp: "dir/longer.log", path: "dir/longer.log", size: 120}}
+	cases := []struct {
+		r    *runner
+		jobs []job
+		want int
+	}{
+		{&runner{specs: []*Spec{grep("")}}, jobs, len("dir/longer.log")},
+		{&runner{specs: []*Spec{grep("-n")}}, jobs, len("dir/longer.log") + 1 + 4}, // 5000: 4 digits
+		{&runner{specs: []*Spec{grep("-h")}}, jobs, 0},                             // no labels
+		{&runner{specs: []*Spec{{Name: "search"}}, srcCol: true}, jobs, len("dir/longer.log")},
+		{&runner{specs: []*Spec{{Name: "search"}}, srcCol: true}, append(jobs, job{disp: "x.zip", path: "x.zip"}), maxSrcColumn}, // members unknown
+	}
+	for i, c := range cases {
+		if got := c.r.columnHint(c.jobs); got != c.want {
+			t.Errorf("case %d: width %d, want %d", i, got, c.want)
+		}
+	}
+}

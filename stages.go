@@ -64,6 +64,8 @@ type Spec struct {
 	out        string     // file written by the command (outputcsv)
 	rt         *followCfg // real-time search (SPL earliest=rt...) or tail -f
 	need       []needAlt  // first command: what a line must contain (see indexNeeds)
+	labels     bool       // output lines may start with a file name (grep -H)
+	numbered   bool       // ... and a line number (grep -n)
 }
 
 // ---------------- grep ----------------

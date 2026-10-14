@@ -819,8 +819,8 @@ func (r *liveRun) SetLive(lines []string) {
 	r.update(func() { r.e.preview = lines })
 }
 
-func (r *liveRun) SetTimeline(t *timeline) { r.update(func() { r.e.timeline = t }) }
-func (r *liveRun) SetColumns(src bool)     { r.update(func() { r.e.srcCol = src }) }
+func (r *liveRun) SetTimeline(t *timeline)    { r.update(func() { r.e.timeline = t }) }
+func (r *liveRun) SetColumns(src bool, _ int) { r.update(func() { r.e.srcCol = src }) }
 
 func (r *liveRun) PreviewRows() int {
 	_, h := r.e.size()
