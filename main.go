@@ -21,7 +21,8 @@ import (
 	"time"
 )
 
-const version = "0.2.0"
+// version is set by release builds (-ldflags "-X main.version=...").
+var version = "0.3.0"
 
 var errExit = errors.New("exit")
 

@@ -3,3 +3,4 @@
 /plumb.exe
 /plumb-*
 *.test
+/dist/
